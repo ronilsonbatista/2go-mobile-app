@@ -1,0 +1,3 @@
+class TwoGoSupportModule {
+  const TwoGoSupportModule();
+}

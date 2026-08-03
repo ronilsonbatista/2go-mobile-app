@@ -1,0 +1,39 @@
+name: twogo_mobile
+
+packages:
+  - apps/*
+  - packages/foundation/*
+  - packages/design_system
+  - packages/identity/*
+  - packages/travel/*
+  - packages/commerce/*
+  - packages/engagement/*
+
+scripts:
+  analyze:
+    run: melos exec -- flutter analyze .
+    description: Run static analysis across all packages.
+
+  format:
+    run: melos exec -- dart format --set-exit-if-changed .
+    description: Verify code formatting across all packages.
+
+  format:fix:
+    run: melos exec -- dart format .
+    description: Apply code formatting across all packages.
+
+  test:
+    run: melos exec --dir-exists="test" -- flutter test
+    description: Run unit tests across all packages.
+
+  lint:arch:
+    run: dart run tools/lint_rules/architecture_lint_test.dart
+    description: Enforce architecture dependency boundaries.
+
+  build:android:dev:
+    run: cd apps/mobile_app && flutter build apk --debug --flavor development -t lib/main_development.dart
+    description: Build Android APK for development.
+
+  build:ios:dev:
+    run: cd apps/mobile_app && flutter build ios --debug --no-codesign --flavor development -t lib/main_development.dart
+    description: Build iOS app for development.

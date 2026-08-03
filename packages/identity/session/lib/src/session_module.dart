@@ -1,0 +1,3 @@
+class TwoGoSessionModule {
+  const TwoGoSessionModule();
+}

@@ -1,0 +1,3 @@
+class TwoGoRefundsModule {
+  const TwoGoRefundsModule();
+}

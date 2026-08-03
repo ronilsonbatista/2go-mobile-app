@@ -1,0 +1,3 @@
+class TwoGoQuotationsModule {
+  const TwoGoQuotationsModule();
+}

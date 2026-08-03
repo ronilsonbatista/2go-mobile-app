@@ -1,0 +1,3 @@
+class TwoGoSecurity {
+  const TwoGoSecurity();
+}

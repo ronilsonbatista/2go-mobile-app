@@ -1,0 +1,3 @@
+class TwoGoPaymentsModule {
+  const TwoGoPaymentsModule();
+}

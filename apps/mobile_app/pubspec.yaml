@@ -1,0 +1,49 @@
+name: twogo_mobile_app
+publish_to: none
+description: 2GO Main Mobile Application (Composition Root)
+version: 1.0.0+1
+
+environment:
+  sdk: '^3.8.0'
+  flutter: '>=3.32.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  twogo_core:
+    path: ../../packages/foundation/core
+  twogo_config:
+    path: ../../packages/foundation/config
+  twogo_networking:
+    path: ../../packages/foundation/networking
+  twogo_analytics:
+    path: ../../packages/foundation/analytics
+  twogo_observability:
+    path: ../../packages/foundation/observability
+  twogo_feature_flags:
+    path: ../../packages/foundation/feature_flags
+  twogo_storage:
+    path: ../../packages/foundation/storage
+  twogo_security:
+    path: ../../packages/foundation/security
+  twogo_localization:
+    path: ../../packages/foundation/localization
+  twogo_sync:
+    path: ../../packages/foundation/sync
+  twogo_test_support:
+    path: ../../packages/foundation/test_support
+  twogo_design_system:
+    path: ../../packages/design_system
+  twogo_authentication:
+    path: ../../packages/identity/authentication
+  twogo_session:
+    path: ../../packages/identity/session
+  twogo_trips:
+    path: ../../packages/travel/trips
+  twogo_payments:
+    path: ../../packages/commerce/payments
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0

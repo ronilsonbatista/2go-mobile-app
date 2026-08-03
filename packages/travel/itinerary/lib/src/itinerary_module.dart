@@ -1,0 +1,3 @@
+class TwoGoItineraryModule {
+  const TwoGoItineraryModule();
+}

@@ -1,0 +1,3 @@
+class TwoGoCheckoutModule {
+  const TwoGoCheckoutModule();
+}

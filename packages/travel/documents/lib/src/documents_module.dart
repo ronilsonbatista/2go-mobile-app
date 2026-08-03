@@ -1,0 +1,3 @@
+class TwoGoDocumentsModule {
+  const TwoGoDocumentsModule();
+}

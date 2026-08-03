@@ -1,0 +1,3 @@
+class TwoGoBookingsModule {
+  const TwoGoBookingsModule();
+}

@@ -1,0 +1,3 @@
+class TwoGoAnalytics {
+  const TwoGoAnalytics();
+}

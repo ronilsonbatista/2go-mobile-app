@@ -1,0 +1,3 @@
+class TwoGoSettingsModule {
+  const TwoGoSettingsModule();
+}

@@ -1,0 +1,3 @@
+class TwoGoAuthenticationModule {
+  const TwoGoAuthenticationModule();
+}

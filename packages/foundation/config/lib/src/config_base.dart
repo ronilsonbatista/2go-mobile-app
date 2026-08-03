@@ -1,0 +1,3 @@
+class TwoGoConfig {
+  const TwoGoConfig();
+}

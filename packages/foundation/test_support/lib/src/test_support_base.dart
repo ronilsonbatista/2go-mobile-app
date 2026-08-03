@@ -1,0 +1,3 @@
+class TwoGoTestSupport {
+  const TwoGoTestSupport();
+}

@@ -1,0 +1,3 @@
+class TwoGoReviewsModule {
+  const TwoGoReviewsModule();
+}

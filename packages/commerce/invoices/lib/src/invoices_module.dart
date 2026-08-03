@@ -1,0 +1,3 @@
+class TwoGoInvoicesModule {
+  const TwoGoInvoicesModule();
+}

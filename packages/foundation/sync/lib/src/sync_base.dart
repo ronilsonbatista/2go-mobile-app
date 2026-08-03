@@ -1,0 +1,3 @@
+class TwoGoSync {
+  const TwoGoSync();
+}

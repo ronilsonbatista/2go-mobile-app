@@ -1,0 +1,3 @@
+class TwoGoFeatureFlags {
+  const TwoGoFeatureFlags();
+}

@@ -1,0 +1,3 @@
+class TwoGoCore {
+  const TwoGoCore();
+}

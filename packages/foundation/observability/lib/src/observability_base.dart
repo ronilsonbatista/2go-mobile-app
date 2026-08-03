@@ -1,0 +1,3 @@
+class TwoGoObservability {
+  const TwoGoObservability();
+}

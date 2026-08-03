@@ -1,0 +1,3 @@
+class TwoGoProfileModule {
+  const TwoGoProfileModule();
+}

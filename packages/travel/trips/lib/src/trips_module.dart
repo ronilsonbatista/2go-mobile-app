@@ -1,0 +1,3 @@
+class TwoGoTripsModule {
+  const TwoGoTripsModule();
+}

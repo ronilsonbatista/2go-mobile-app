@@ -1,0 +1,3 @@
+class TwoGoLocalization {
+  const TwoGoLocalization();
+}

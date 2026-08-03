@@ -1,0 +1,3 @@
+class TwoGoChatModule {
+  const TwoGoChatModule();
+}

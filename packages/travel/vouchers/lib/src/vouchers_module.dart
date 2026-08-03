@@ -1,0 +1,3 @@
+class TwoGoVouchersModule {
+  const TwoGoVouchersModule();
+}

@@ -1,0 +1,3 @@
+class TwoGoNetworking {
+  const TwoGoNetworking();
+}

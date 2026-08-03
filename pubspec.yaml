@@ -1,0 +1,14 @@
+name: twogo_mobile_workspace
+description: Monorepo workspace for 2GO Mobile App
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '^3.8.0'
+  flutter: '>=3.32.0'
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  melos: ^6.3.3

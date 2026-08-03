@@ -1,0 +1,3 @@
+class TwoGoNotificationsModule {
+  const TwoGoNotificationsModule();
+}

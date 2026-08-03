@@ -1,0 +1,48 @@
+# Flutter / Dart
+.dart_tool/
+.pub-cache/
+.pub/
+build/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Melos
+.melos_tool/
+
+# Android
+android/**/*.iml
+android/.gradle
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/key.jks
+android/app/release/
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.fltdefinition
+ios/Runner.xcworkspace/
+ios/Runner.xcodeproj/project.xcworkspace/
+ios/Runner.xcodeproj/xcuserdata/
+
+# Environments / Secrets
+.env
+.env.*
+!.env.example
+*.keystore
+*.cer
+*.crt
+*.p12
+*.mobileprovision
+
+# IDE / OS
+.DS_Store
+.idea/
+*.iml
+.vscode/

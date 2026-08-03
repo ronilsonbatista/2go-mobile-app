@@ -1,0 +1,3 @@
+class TwoGoStorage {
+  const TwoGoStorage();
+}
