@@ -1,54 +1,69 @@
-# Contrato de Paginação
+# Contrato de Paginação (app-roteiros-core)
 
 ## 1. Estratégia de Paginação
-O backend 2GO utiliza a estratégia de paginação baseada em **Range Headers** do protocolo PostgREST do Supabase, suportando também parâmetros legados `offset` / `limit`.
+O backend `app-roteiros-core` utiliza paginação baseada em query parameters `page` (1-indexed) e `limit`.
 
 ---
 
-## 2. Paginação via Range Headers (Recomendada para Supabase PostgREST)
+## 2. Parâmetros da Requisição
 
-### Request:
 ```http
-GET /rest/v1/destinations?select=* HTTP/1.1
-Host: placeholder.supabase.co
-apikey: <SUPABASE_ANON_KEY>
-Range: 0-9
-Range-Unit: items
+GET /admin/users?page=1&limit=10&search=joao HTTP/1.1
+Host: api.2go.com
+Authorization: Bearer <accessToken>
 ```
 
-### Response Headers:
-```http
-HTTP/1.1 206 Partial Content
-Content-Range: 0-9/45
-Content-Type: application/json
-```
-
-* `0-9`: Itens retornados na página atual (10 itens).
-* `/45`: Total absoluto de registros disponíveis na tabela.
+| Parâmetro | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `page` | Integer | 1 | Número da página solicitada (inicia em 1) |
+| `limit` | Integer | 10 | Quantidade de itens por página |
+| `search` | String | Opcional | Termo de busca/filtro |
 
 ---
 
-## 3. Paginação via Parâmetros de Query (Offset & Limit)
+## 3. Resposta Padrão Paginada
 
-### Request:
-```http
-GET /rest/v1/itineraries?select=*&limit=10&offset=0 HTTP/1.1
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "u49a21b3-5e18-4931-8544-a68394848a68",
+        "email": "passageiro@2go.com",
+        "fullName": "João da Silva"
+      }
+    ],
+    "meta": {
+      "total": 45,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 5
+    }
+  },
+  "timestamp": "2026-08-17T11:45:00.000Z"
+}
 ```
 
-### DTO de Resposta Paginada (no Flutter Domain):
+---
+
+## 4. DTO de Paginação no Flutter
+
 ```dart
 class PaginatedResponse<T> {
   final List<T> items;
-  final int offset;
+  final int page;
   final int limit;
   final int total;
-  final bool hasMore;
+  final int totalPages;
+  final bool hasNextPage;
 
   PaginatedResponse({
     required this.items,
-    required this.offset,
+    required this.page,
     required this.limit,
     required this.total,
-  }) : hasMore = (offset + items.length) < total;
+    required this.totalPages,
+  }) : hasNextPage = page < totalPages;
 }
 ```

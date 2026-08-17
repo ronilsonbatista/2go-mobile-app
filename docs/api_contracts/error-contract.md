@@ -1,37 +1,44 @@
-# Contrato Unificado de Erros (PostgREST & REST API)
+# Contrato de Erros e Exceções (NestJS GlobalExceptionFilter)
 
-## 1. Schema do Erro Padrão Supabase / PostgREST
-Todos os erros retornados pela API seguem o formato padronizado abaixo:
+## 1. Envelope Padrão de Resposta de Erro
+Todas as exceções capturadas pelo backend `app-roteiros-core` retornam um envelope JSON unificado através do `GlobalExceptionFilter`:
 
 ```json
 {
-  "code": "PGRST116",
-  "message": "The result contains 0 rows",
-  "details": "Results contain 0 rows, application expected 1 row",
-  "hint": "Check query parameters or permissions."
+  "success": false,
+  "message": "Credenciais inválidas",
+  "statusCode": 401,
+  "timestamp": "2026-08-17T11:45:00.000Z",
+  "path": "/auth/login"
 }
 ```
 
-Para chamadas HTTP genéricas e validações de input:
+### Validações de Formato (ClassValidator 400 Bad Request):
+Quando ocorrem erros de validação de DTO, o campo `message` contém uma lista de strings explicativas:
+
 ```json
 {
-  "code": "invalid_credentials",
-  "message": "E-mail ou senha incorretos.",
-  "status": 400
+  "success": false,
+  "message": [
+    "email deve ser um e-mail válido",
+    "password deve ser uma string"
+  ],
+  "statusCode": 400,
+  "timestamp": "2026-08-17T11:45:00.000Z",
+  "path": "/auth/signup"
 }
 ```
 
 ---
 
-## 2. Tabela de Mapeamento de Status HTTP
+## 2. Mapeamento de Status HTTP
 
-| Código HTTP | Significado | Exemplo de Causa no App Mobile | Ação Recomendada no App |
+| Código HTTP | Exceção NestJS | Cenário no App Mobile | Ação Recomendada no App |
 |---|---|---|---|
-| `400 Bad Request` | Parâmetros ou payload inválidos | Código OTP com menos de 6 dígitos, e-mail malformado | Exibir mensagem no `TwoGoTextField` ou `TwoGoSnackbar` |
-| `401 Unauthorized` | Access Token ausente, expirado ou inválido | Sessão expirada | Trigar interseptor de Refresh Token; se falhar, redirecionar para Login |
-| `403 Forbidden` | Sem permissão de acesso ao recurso | Tentativa de acessar voucher de outro usuário | Exibir `TwoGoStatusMessage` de erro de permissão |
-| `404 Not Found` | Recurso não localizado | Roteiro ou destino inexistente | Exibir tela de estado vazio/404 |
-| `409 Conflict` | Conflito de dados | E-mail já cadastrado | Exibir alerta de e-mail em uso no formulário de cadastro |
-| `422 Unprocessable Entity` | Erro de regra de negócio | Cupom expirado ou inválido | Exibir erro no BottomSheet de Cupom |
-| `429 Too Many Requests` | Limite de requisições excedido | Múltiplas solicitações consecutivas de OTP | Bloquear temporariamente o botão e exibir cronômetro de espera |
-| `500 / 503 Server Error` | Instabilidade no servidor ou banco de dados | Erro de banco de dados no Supabase | Exibir `TwoGoStatusMessage` de erro com botão "Tentar novamente" |
+| `400 Bad Request` | `BadRequestException` | E-mail duplicado ou campos malformados | Exibir validação em campos ou `TwoGoSnackbar` de alerta |
+| `401 Unauthorized` | `UnauthorizedException` | Token ausente, expirado ou usuário bloqueado | Executar refresh token silencioso; se falhar, redirecionar para tela de Login |
+| `403 Forbidden` | `ForbiddenException` | Usuário tentando acessar recurso administrativo | Exibir tela de permissão negada |
+| `404 Not Found` | `NotFoundException` | Viagem ou item de roteiro inexistente | Exibir estado vazio ou voltar tela |
+| `422 Unprocessable Entity` | `HttpStatus.UNPROCESSABLE_ENTITY` | Upload de mídia excedendo tamanho limite ou formato inválido | Informar erro de formato de arquivo no app |
+| `429 Too Many Requests` | `ThrottlerException` | Limite de requisições por minuto excedido (ex: 5 logins/min) | Desabilitar botão temporariamente |
+| `500 Internal Server Error` | `InternalServerErrorException` | Falha inesperada | Exibir `TwoGoStatusMessage` com opção de tentar novamente |

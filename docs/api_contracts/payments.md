@@ -1,77 +1,88 @@
-# Contratos de API — Pagamentos e Checkout
+# Contratos de API — Billing, Compras e Pagamentos (app-roteiros-core)
 
-## 1. Métodos de Pagamento Suportados
-* **PIX**: QR Code estático/dinâmico + chave Copia e Cola.
-* **Cartão de Crédito**: À vista e parcelado (em até 12x).
+## 1. Módulo de Billing Existente
+O backend `app-roteiros-core` possui um módulo funcional de **Billing & Purchases** (`src/billing`) com provedor mock de pagamentos (`MockPaymentProvider`), gerenciando a venda e liberação de produtos digitais.
+
+### Produtos Suportados (`ProductType`):
+* `ITINERARY_FULL_ACCESS`: Acesso completo ao roteiro premium
+* `AI_CREDITS`: Créditos adicionais para geração via IA
+* `PREMIUM_TEMPLATE`: Template base premium
 
 ---
 
-## 2. Processar Pagamento via PIX
-
-* **Endpoint**: `POST /rest/v1/payments`
-* **Headers**:
-  ```http
-  Content-Type: application/json
-  Authorization: Bearer <access_token>
-  Idempotency-Key: <UUID-v4>
+## 2. Listagem de Produtos Ativos
+* **Endpoint**: `GET /products`
+* **Header**: `Authorization: Bearer <accessToken>`
+* **Response Body (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "prod_full_access_01",
+        "name": "Roteiro Completo Paris Premium",
+        "description": "Desbloqueio de todas as atrações e mapas",
+        "type": "ITINERARY_FULL_ACCESS",
+        "price": 29.90,
+        "currency": "BRL",
+        "active": true
+      }
+    ],
+    "timestamp": "2026-08-17T11:45:00.000Z"
+  }
   ```
+
+---
+
+## 3. Criar Pedido de Compra (Mock)
+* **Endpoint**: `POST /purchases/mock`
+* **Header**: `Authorization: Bearer <accessToken>`
 * **Request Body**:
   ```json
   {
-    "booking_id": "b78a9c11-4e92-4110-8b01-f51948381180",
-    "method": "pix",
-    "amount": 299.90,
-    "coupon_code": "PROMO2GO10"
+    "productId": "prod_full_access_01",
+    "tripId": "t78a9c11-4e92-4110-8b01-f51948381180"
   }
   ```
 * **Response Body (201 Created)**:
   ```json
   {
-    "payment_id": "p_91823192031",
-    "status": "pending",
-    "method": "pix",
-    "amount": 269.91,
-    "pix_copy_paste": "00020126580014BR.GOV.BCB.PIX0136123e4567-e89b-12d3-a456-4266141740005204000053039865405269.915802BR59102GO TRAVEL6009SAO PAULO62070503***6304E2CA",
-    "qr_code_url": "https://api.2go.com/qr/p_91823192031.png",
-    "expires_at": "2026-08-17T12:00:00Z"
+    "success": true,
+    "data": {
+      "id": "pur_9910283",
+      "userId": "u49a21b3-5e18-4931-8544-a68394848a68",
+      "productId": "prod_full_access_01",
+      "tripId": "t78a9c11-4e92-4110-8b01-f51948381180",
+      "status": "PENDING",
+      "amount": 29.90,
+      "currency": "BRL",
+      "createdAt": "2026-08-17T11:45:00.000Z"
+    },
+    "timestamp": "2026-08-17T11:45:00.000Z"
   }
   ```
 
 ---
 
-## 3. Processar Pagamento via Cartão de Crédito
-
-* **Endpoint**: `POST /rest/v1/payments`
-* **Request Body**:
+## 4. Confirmar Pagamento do Pedido (Mock Payment)
+* **Endpoint**: `POST /purchases/:id/confirm-mock-payment`
+* **Header**: `Authorization: Bearer <accessToken>`
+* **Response Body (200 OK)**:
   ```json
   {
-    "booking_id": "b78a9c11-4e92-4110-8b01-f51948381180",
-    "method": "credit_card",
-    "amount": 299.90,
-    "installments": 3,
-    "card_token": "tok_1N82h02eZvKYlo2C",
-    "billing_address": {
-      "street": "Av. Paulista",
-      "number": "1000",
-      "zip_code": "01310-100",
-      "city": "São Paulo",
-      "state": "SP"
-    }
-  }
-  ```
-* **Response Body (201 Created)**:
-  ```json
-  {
-    "payment_id": "p_91823192032",
-    "status": "approved",
-    "method": "credit_card",
-    "amount": 299.90,
-    "installments": 3,
-    "transaction_code": "TX991203819"
+    "success": true,
+    "data": {
+      "id": "pur_9910283",
+      "status": "PAID",
+      "paidAt": "2026-08-17T11:45:05.000Z",
+      "mockPaymentId": "mock_pay_881923"
+    },
+    "timestamp": "2026-08-17T11:45:05.000Z"
   }
   ```
 
 ---
 
-## 4. Idempotência e Segurança Garantida
-* O header `Idempotency-Key` (UUID v4) é obrigatório em requisições de pagamento e reservas para evitar cobranças duplicadas em caso de instabilidade de rede ou retry no cliente mobile.
+## 5. Auditoria de Gateways Reais e Recomendações
+* **Gateways Reais (Stripe / MercadoPago / PIX / Webhooks / Idempotency-Key)**: **NÃO IMPLEMENTADOS** na versão atual do backend `app-roteiros-core`.
+* **Recomendação Futura P1**: Quando a integração real com gateways for solicitada no backend, os segredos de API e webhooks deverão permanecer estritamente no servidor NestJS, nunca expostos no cliente mobile.

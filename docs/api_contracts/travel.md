@@ -1,76 +1,80 @@
-# Contratos de API — Viagens, Roteiros e Vouchers
+# Contratos de API — Viagens, Roteiros e Colaboradores (app-roteiros-core)
 
-## 1. Consulta de Destinos
-
-* **Endpoint**: `GET /rest/v1/destinations?slug=eq.paris&select=*`
+## 1. Listagem de Viagens do Usuário
+* **Endpoint**: `GET /trips`
+* **Header**: `Authorization: Bearer <accessToken>`
 * **Response Body (200 OK)**:
   ```json
-  [
-    {
-      "id": "dest_paris_01",
-      "name": "Paris",
-      "slug": "paris",
-      "country": "França",
-      "emoji": "🇫🇷",
-      "description": "A capital da luz, arte, bistrôs tradicionais e passeios românticos.",
-      "best_time": "Primavera (Abril a Junho) e Outono (Setembro a Novembro)",
-      "visa_required": false,
-      "currency": "EUR",
-      "language": "Francês",
-      "costs": {
-        "economy": { "daily": 70, "meal": 20, "hotel": 30 },
-        "comfort": { "daily": 160, "meal": 45, "hotel": 75 },
-        "luxury": { "daily": 450, "meal": 120, "hotel": 220 }
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "t78a9c11-4e92-4110-8b01-f51948381180",
+        "title": "Minha Viagem para Paris",
+        "destination": "Paris, França",
+        "coverImage": "https://api.2go.com/uploads/trips/cover_paris.jpg",
+        "startDate": "2026-09-01T00:00:00.000Z",
+        "endDate": "2026-09-07T00:00:00.000Z",
+        "status": "ACTIVE",
+        "premiumUnlockedAt": "2026-08-17T11:45:00.000Z"
       }
-    }
-  ]
+    ],
+    "timestamp": "2026-08-17T11:45:00.000Z"
+  }
   ```
 
 ---
 
-## 2. Consulta de Roteiro de Viagem por Dias
-
-* **Endpoint**: `GET /rest/v1/itineraries?slug=eq.paris-3-dias&select=*,days(*)`
-* **Response Body (200 OK)**:
+## 2. Criar Nova Viagem
+* **Endpoint**: `POST /trips`
+* **Request Body**:
   ```json
-  [
-    {
-      "id": "itin_paris_3d",
-      "slug": "paris-3-dias",
-      "destination_slug": "paris",
-      "title": "Roteiro Paris 3 dias: O Clássico Essencial",
-      "duration": 3,
-      "days": [
-        {
-          "day_number": 1,
-          "title": "Do Louvre à Torre Eiffel",
-          "events": [
-            { "time": "09:00", "title": "Visita matinal guiada no Museu do Louvre" },
-            { "time": "13:00", "title": "Almoço no Jardin des Tuileries" },
-            { "time": "18:30", "title": "Pôr do sol nos Jardins do Trocadéro" }
-          ]
-        }
-      ]
-    }
-  ]
+  {
+    "title": "Férias em Tóquio",
+    "destination": "Tóquio, Japão",
+    "startDate": "2026-10-10T00:00:00.000Z",
+    "endDate": "2026-10-20T00:00:00.000Z"
+  }
   ```
 
 ---
 
-## 3. Emissão e Consulta de Vouchers Virtuais
-
-* **Endpoint**: `GET /rest/v1/vouchers?user_id=eq.u49a21b3`
-* **Headers**: `Authorization: Bearer <access_token>`
-* **Response Body (200 OK)**:
+## 3. Gerar Roteiro via IA (OpenAI GPT)
+* **Endpoint**: `POST /trips/:tripId/generate-itinerary`
+* **Rate Limit**: 3 requisições por minuto
+* **Request Body**:
   ```json
-  [
-    {
-      "id": "vch_8819203",
-      "booking_id": "b78a9c11-4e92-4110-8b01-f51948381180",
-      "title": "Ingresso Museu do Louvre - Acesso Fura-Fila",
-      "qr_code_data": "2GO-VOUCHER-LOUVRE-8819203",
-      "pdf_url": "https://api.2go.com/vouchers/vch_8819203.pdf",
-      "valid_until": "2026-12-31T23:59:59Z"
-    }
-  ]
+  {
+    "style": "CULTURAL",
+    "budget": "COMFORT",
+    "interests": ["museus", "gastronomia", "parques"]
+  }
   ```
+* **Response Body (200 OK)**: Retorna a estrutura da `Trip` atualizada com todos os `TripDay` e `ItineraryItem` gerados.
+
+---
+
+## 4. Gerenciamento do Roteiro (Dias e Atividades)
+* **Adicionar Dia**: `POST /trips/:id/days` (`{ dayNumber: 1, title: "Chegada em Paris" }`)
+* **Adicionar Item/Atividade**: `POST /trip-days/:id/items`
+  ```json
+  {
+    "title": "Visita à Torre Eiffel",
+    "description": "Subida ao topo e almoço no Trocadéro",
+    "category": "TOURIST_ATTRACTION",
+    "period": "MANHA",
+    "duration": 180,
+    "cost": 30.00,
+    "currency": "EUR",
+    "order": 1
+  }
+  ```
+* **Reordenar Item**: `PATCH /itinerary-items/:id/reorder` (`{ newOrder: 2 }`)
+* **Enriquecer com Google Places**: `PATCH /itinerary-items/:id/place` (`{ providerPlaceId: "ChIJLU7jZClu5kcR4PcD-5xMwVV" }`)
+
+---
+
+## 5. Colaboradores e Viagens Compartilhadas
+* **Convidar Participante**: `POST /trips/:tripId/participants` (`{ email: "amigo@2go.com", role: "VIEWER" }`)
+* **Aceitar Convite**: `POST /trip-invites/accept` (`{ inviteToken: "tok_invite_991203" }`)
+* **Listar Viagens Compartilhadas Comigo**: `GET /users/me/shared-trips`
