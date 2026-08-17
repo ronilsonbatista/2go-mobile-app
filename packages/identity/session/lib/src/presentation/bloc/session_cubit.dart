@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:twogo_security/twogo_security.dart';
 import '../../domain/entities/session_state.dart';
 
-class SessionCubit extends ValueNotifier<SessionState> {
+class SessionCubit extends Cubit<SessionState> {
   final TokenStorage _tokenStorage;
 
   SessionCubit({required TokenStorage tokenStorage})
@@ -10,31 +10,48 @@ class SessionCubit extends ValueNotifier<SessionState> {
       super(SessionState.unknown());
 
   Future<void> restoreSession() async {
-    value = SessionState.restoring();
+    emit(SessionState.restoring());
     try {
       final tokens = await _tokenStorage.readTokens();
       if (tokens != null && tokens.accessToken.isNotEmpty) {
-        value = SessionState.authenticated(tokens);
+        emit(SessionState.authenticated(tokens));
       } else {
-        value = SessionState.unauthenticated();
+        emit(SessionState.unauthenticated());
       }
     } catch (e) {
       await _tokenStorage.clearTokens();
-      value = SessionState.unauthenticated();
+      emit(SessionState.unauthenticated());
     }
   }
 
+  Future<void> onTokensReceived({
+    required String accessToken,
+    required String refreshToken,
+    String? email,
+  }) async {
+    final tokens = AuthTokens(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    );
+    await _tokenStorage.saveTokens(tokens);
+    emit(SessionState.authenticated(tokens, email));
+  }
+
   void onAuthenticated(AuthTokens tokens, [String? userId]) {
-    value = SessionState.authenticated(tokens, userId);
+    emit(SessionState.authenticated(tokens, userId));
+  }
+
+  Future<void> logout() async {
+    await onLogout();
   }
 
   Future<void> onLogout() async {
     await _tokenStorage.clearTokens();
-    value = SessionState.unauthenticated();
+    emit(SessionState.unauthenticated());
   }
 
   Future<void> onSessionExpired() async {
     await _tokenStorage.clearTokens();
-    value = SessionState.expired();
+    emit(SessionState.expired());
   }
 }

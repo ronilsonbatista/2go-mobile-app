@@ -11,6 +11,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.7
   app_roteiros_api: any
   twogo_core: any
   twogo_design_system: any

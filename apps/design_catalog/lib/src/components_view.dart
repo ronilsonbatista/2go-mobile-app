@@ -164,6 +164,42 @@ class _ComponentsCatalogViewState extends State<ComponentsCatalogView> {
 
         const TwoGoDivider(space: TwoGoSpacing.xl),
 
+        // Pills & Badges
+        const Text('Pills & Badges', style: TwoGoTypography.headlineMedium),
+        const SizedBox(height: TwoGoSpacing.sm),
+        const Wrap(
+          spacing: TwoGoSpacing.xs,
+          runSpacing: TwoGoSpacing.xs,
+          children: [
+            TwoGoPill(
+              label: 'Aguarde 60 seg',
+              variant: TwoGoPillVariant.neutral,
+            ),
+            TwoGoPill(
+              label: 'Reenviar código',
+              variant: TwoGoPillVariant.outlined,
+            ),
+            TwoGoPill(label: 'Ativo', variant: TwoGoPillVariant.active),
+          ],
+        ),
+
+        const TwoGoDivider(space: TwoGoSpacing.xl),
+
+        // Inline Feedback
+        const Text('Inline Feedback', style: TwoGoTypography.headlineMedium),
+        const SizedBox(height: TwoGoSpacing.sm),
+        const TwoGoInlineFeedback(
+          message: 'Verifique o código e tente novamente!',
+          variant: TwoGoInlineFeedbackVariant.error,
+        ),
+        const SizedBox(height: TwoGoSpacing.xs),
+        const TwoGoInlineFeedback(
+          message: 'Código validado com sucesso!',
+          variant: TwoGoInlineFeedbackVariant.success,
+        ),
+
+        const TwoGoDivider(space: TwoGoSpacing.xl),
+
         // Indicators
         const Text(
           'Indicators & Skeleton',

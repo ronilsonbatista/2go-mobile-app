@@ -14,15 +14,15 @@ void main() {
     });
 
     tearDown(() {
-      sessionCubit.dispose();
+      sessionCubit.close();
     });
 
     test(
       'restoreSession transitions to unauthenticated when storage is empty',
       () async {
         await sessionCubit.restoreSession();
-        expect(sessionCubit.value.status, SessionStatus.unauthenticated);
-        expect(sessionCubit.value.isAuthenticated, isFalse);
+        expect(sessionCubit.state.status, SessionStatus.unauthenticated);
+        expect(sessionCubit.state.isAuthenticated, isFalse);
       },
     );
 
@@ -37,9 +37,9 @@ void main() {
 
         await sessionCubit.restoreSession();
 
-        expect(sessionCubit.value.status, SessionStatus.authenticated);
-        expect(sessionCubit.value.isAuthenticated, isTrue);
-        expect(sessionCubit.value.tokens, equals(tokens));
+        expect(sessionCubit.state.status, SessionStatus.authenticated);
+        expect(sessionCubit.state.isAuthenticated, isTrue);
+        expect(sessionCubit.state.tokens, equals(tokens));
       },
     );
 
@@ -53,7 +53,7 @@ void main() {
 
       await sessionCubit.onLogout();
 
-      expect(sessionCubit.value.status, SessionStatus.unauthenticated);
+      expect(sessionCubit.state.status, SessionStatus.unauthenticated);
       expect(await storage.readTokens(), isNull);
     });
   });
