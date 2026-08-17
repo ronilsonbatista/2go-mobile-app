@@ -13,8 +13,9 @@
 
 ```text
 app-roteiros-core (PostgreSQL Database)
-├── users                     # Conta do usuário (email, fullName, passwordHash, role: USER/ADMIN)
+├── users                     # Conta do usuário (email, fullName, passwordHash?, role: USER/ADMIN)
 ├── refresh_tokens            # Rotação de Refresh Tokens (tokenHash, expiresAt, revokedAt)
+├── auth_otps                 # Códigos OTP de 6 dígitos hashed (email, purpose, codeHash, expiresAt, attemptCount)
 ├── trips                     # Viagens do usuário (title, destination, dates, status: DRAFT/ACTIVE/COMPLETED)
 ├── trip_days                 # Dias da viagem (dayNumber, date, title, description)
 ├── itinerary_items           # Atividades/Pontos do roteiro (category, location, lat/lng, providerPlaceId)
@@ -35,9 +36,15 @@ app-roteiros-core (PostgreSQL Database)
 
 | Domínio | Rota API | Método HTTP | Auth (JwtAuthGuard) | Descrição |
 |---|---|---|---|---|
-| Auth | `/auth/signup` | POST | NÃO | Registrar novo usuário |
-| Auth | `/auth/login` | POST | NÃO | Login e geração de Access (15m) + Refresh (7d) |
-| Auth | `/auth/refresh` | POST | NÃO | Renovação de tokens com rotação de refresh token |
+| Auth | `/auth/otp/request` | POST | NÃO | Solicitar código OTP por e-mail |
+| Auth | `/auth/otp/verify` | POST | NÃO | Validar OTP e iniciar sessão (Passwordless) |
+| Auth | `/auth/signup` | POST | NÃO | Registrar novo usuário com senha |
+| Auth | `/auth/login` | POST | NÃO | Login com e-mail e senha |
+| Auth | `/auth/refresh` | POST | NÃO | Renovação de tokens com rotação |
+| Auth | `/auth/logout` | POST | SIM | Encerrar sessão atual no servidor |
+| Auth | `/auth/logout-all` | POST | SIM | Encerrar todas as sessões do usuário |
+| Auth | `/auth/password/forgot` | POST | NÃO | Solicitar OTP de recuperação de senha |
+| Auth | `/auth/password/reset` | POST | NÃO | Redefinir senha utilizando OTP |
 | Users | `/users/me` | GET | SIM | Perfil do usuário autenticado |
 | Users | `/users/me/travel-profile` | GET / POST / PATCH | SIM | Perfil de preferências do viajante |
 | Trips | `/trips` | GET / POST | SIM | Listar e criar viagens próprias |
@@ -60,18 +67,15 @@ app-roteiros-core (PostgreSQL Database)
 | Billing | `/users/me/purchases` | GET | SIM | Listar compras efetuadas pelo usuário |
 | Billing | `/purchases/mock` | POST | SIM | Criar pedido de compra |
 | Billing | `/purchases/:id/confirm-mock-payment` | POST | SIM | Confirmar pagamento do pedido |
-| System | `/health` | GET | NÃO | Health check do sistema (DB, OpenAI, Google Maps) |
+| System | `/health` | GET | NÃO | Health check do sistema |
 
 ---
 
 ## 4. Avaliação Arquitetural — Mobile BFF vs Consumo Direto
 
-### Pergunta Arquitetural:
-> *O aplicativo Flutter deve consumir diretamente o backend `app-roteiros-core` ou necessita de um Mobile BFF intermediário?*
-
 ### Veredito: **CONSUMO DIRETO RECOMENDADO (MOBILE BFF DESNECESSÁRIO)**
 
 #### Justificativa Técnica:
-1. **APIs Especializadas**: O backend NestJS já fornece endpoints granulares e DTOs especificamente formatados para consumo mobile.
-2. **Geração de SDK**: A presença do Swagger 3.0 em `/api` permite a geração automatizada de clientes OpenAPI fortemente tipados para o Flutter.
+1. **APIs Especializadas**: O backend NestJS fornece endpoints granulares e DTOs especificamente formatados para consumo mobile.
+2. **Geração de SDK**: A presença do Swagger 3.0 em `/api` e a exportação do `openapi.json` permite a geração automatizada de clientes OpenAPI fortemente tipados para o Flutter.
 3. **Desempenho**: O consumo direto via `Dio` com interceptor de autenticação garante a menor latência possível sem adicionar custos de manutenção de infraestrutura extra.
