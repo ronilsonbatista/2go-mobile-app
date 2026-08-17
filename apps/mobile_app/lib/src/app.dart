@@ -10,28 +10,27 @@ class TwoGoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '2GO ($environment)',
-      theme: ThemeData(
-        scaffoldBackgroundColor: TwoGoColors.background,
-        colorScheme: ColorScheme.fromSeed(seedColor: TwoGoColors.primary),
-      ),
+      theme: TwoGoTheme.light,
       home: Scaffold(
-        appBar: AppBar(
-          title: Text('2GO App - $environment'),
-          backgroundColor: TwoGoColors.primary,
-          foregroundColor: Colors.white,
+        appBar: TwoGoAppBar(
+          title: '2GO App - $environment',
+          showBackButton: false,
         ),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Welcome to 2GO Mobile ($environment)',
-                style: TwoGoTypography.heading1,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: TwoGoSpacing.md),
-              TwoGoButton(label: 'Explore Trips', onPressed: () {}),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(TwoGoSpacing.md),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Welcome to 2GO Mobile ($environment)',
+                  style: TwoGoTypography.headlineMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: TwoGoSpacing.md),
+                TwoGoButton(text: 'Explore Trips', onPressed: () {}),
+              ],
+            ),
           ),
         ),
       ),

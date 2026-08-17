@@ -20,7 +20,9 @@ void main() {
             content.contains('package:analytics/') ||
             content.contains('package:trips/') ||
             content.contains('package:payments/')) {
-          print('VIOLATION in Design System: ${entity.path} contains forbidden import.');
+          print(
+            'VIOLATION in Design System: ${entity.path} contains forbidden import.',
+          );
           violations++;
         }
       }
