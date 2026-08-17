@@ -7,8 +7,45 @@ environment:
   sdk: '^3.8.0'
   flutter: '>=3.32.0'
 
+workspace:
+  - apps/mobile_app
+  - apps/design_catalog
+  - packages/foundation/analytics
+  - packages/foundation/config
+  - packages/foundation/core
+  - packages/foundation/feature_flags
+  - packages/foundation/localization
+  - packages/foundation/networking
+  - packages/foundation/observability
+  - packages/foundation/security
+  - packages/foundation/storage
+  - packages/foundation/sync
+  - packages/foundation/test_support
+  - packages/design_system
+  - packages/identity/authentication
+  - packages/identity/profile
+  - packages/identity/session
+  - packages/travel/documents
+  - packages/travel/itinerary
+  - packages/travel/maps
+  - packages/travel/places
+  - packages/travel/trips
+  - packages/travel/vouchers
+  - packages/commerce/bookings
+  - packages/commerce/checkout
+  - packages/commerce/invoices
+  - packages/commerce/payments
+  - packages/commerce/quotations
+  - packages/commerce/refunds
+  - packages/engagement/chat
+  - packages/engagement/notifications
+  - packages/engagement/reviews
+  - packages/engagement/settings
+  - packages/engagement/support
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
   melos: ^6.3.3
+

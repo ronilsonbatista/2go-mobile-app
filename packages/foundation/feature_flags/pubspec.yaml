@@ -1,4 +1,5 @@
 name: twogo_feature_flags
+resolution: workspace
 publish_to: none
 description: 2GO Foundation Feature_flags Package
 version: 1.0.0

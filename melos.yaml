@@ -1,5 +1,11 @@
 name: twogo_mobile
 
+command:
+  bootstrap:
+    usePubWorkspaces: true
+    skipLinking: true
+    generatePubspecOverrides: false
+
 packages:
   - apps/*
   - packages/foundation/*
@@ -11,8 +17,8 @@ packages:
 
 scripts:
   analyze:
-    run: melos exec -- flutter analyze .
-    description: Run static analysis across all packages.
+    run: dart analyze .
+    description: Run static analysis across all packages in the workspace.
 
   format:
     run: melos exec -- dart format --set-exit-if-changed .
@@ -23,7 +29,7 @@ scripts:
     description: Apply code formatting across all packages.
 
   test:
-    run: melos exec --dir-exists="test" -- flutter test
+    run: melos exec --dir-exists="test" -- flutter test --no-pub
     description: Run unit tests across all packages.
 
   lint:arch:

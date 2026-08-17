@@ -1,4 +1,5 @@
 name: twogo_localization
+resolution: workspace
 publish_to: none
 description: 2GO Foundation Localization Package
 version: 1.0.0

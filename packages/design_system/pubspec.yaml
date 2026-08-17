@@ -1,4 +1,5 @@
 name: twogo_design_system
+resolution: workspace
 publish_to: none
 description: 2GO Design System Package
 version: 1.0.0

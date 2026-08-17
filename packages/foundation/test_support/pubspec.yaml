@@ -1,4 +1,5 @@
 name: twogo_test_support
+resolution: workspace
 publish_to: none
 description: 2GO Foundation Test_support Package
 version: 1.0.0

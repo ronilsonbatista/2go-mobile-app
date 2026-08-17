@@ -1,4 +1,5 @@
 name: twogo_places
+resolution: workspace
 publish_to: none
 description: 2GO Domain Places Module
 version: 1.0.0
@@ -10,10 +11,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  twogo_core:
-    path: ../../foundation/core
-  twogo_design_system:
-    path: ../../design_system
+  twogo_core: any
+  twogo_design_system: any
 
 dev_dependencies:
   flutter_test:

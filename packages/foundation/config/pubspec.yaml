@@ -1,4 +1,5 @@
 name: twogo_config
+resolution: workspace
 publish_to: none
 description: 2GO Foundation Config Package
 version: 1.0.0
