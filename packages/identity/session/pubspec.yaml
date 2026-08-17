@@ -13,8 +13,10 @@ dependencies:
     sdk: flutter
   twogo_core: any
   twogo_design_system: any
+  twogo_security: any
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  twogo_test_support: any

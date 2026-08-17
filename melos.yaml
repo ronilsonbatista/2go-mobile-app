@@ -8,6 +8,7 @@ command:
 
 packages:
   - apps/*
+  - packages/generated/*
   - packages/foundation/*
   - packages/design_system
   - packages/identity/*
@@ -16,6 +17,10 @@ packages:
   - packages/engagement/*
 
 scripts:
+  generate:api:
+    run: ./tools/scripts/generate_api.sh
+    description: Generate Dart OpenAPI transport client from backend openapi.json.
+
   analyze:
     run: dart analyze .
     description: Run static analysis across all packages in the workspace.

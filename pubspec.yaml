@@ -10,6 +10,7 @@ environment:
 workspace:
   - apps/mobile_app
   - apps/design_catalog
+  - packages/generated/app_roteiros_api
   - packages/foundation/analytics
   - packages/foundation/config
   - packages/foundation/core

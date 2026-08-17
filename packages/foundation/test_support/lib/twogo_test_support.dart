@@ -1,3 +1,3 @@
 library;
 
-export 'src/test_support_base.dart';
+export 'src/fakes/in_memory_token_storage.dart';

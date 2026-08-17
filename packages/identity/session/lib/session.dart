@@ -1,3 +1,3 @@
 library;
 
-export 'src/session_module.dart';
+export 'twogo_session.dart';

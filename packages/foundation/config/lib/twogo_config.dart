@@ -1,3 +1,3 @@
 library;
 
-export 'src/config_base.dart';
+export 'src/api_config.dart';

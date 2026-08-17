@@ -3,7 +3,7 @@ import 'package:twogo_test_support/twogo_test_support.dart';
 
 void main() {
   test('TwoGoTestSupport initialization test', () {
-    const instance = TwoGoTestSupport();
+    final instance = InMemoryTokenStorage();
     expect(instance, isNotNull);
   });
 }

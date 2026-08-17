@@ -1,0 +1,19 @@
+name: app_roteiros_api
+resolution: workspace
+publish_to: none
+description: Generated OpenAPI Transport Client for app-roteiros-core Backend
+version: 1.0.0
+
+environment:
+  sdk: '^3.8.0'
+  flutter: '>=3.32.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: ^5.8.0+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
