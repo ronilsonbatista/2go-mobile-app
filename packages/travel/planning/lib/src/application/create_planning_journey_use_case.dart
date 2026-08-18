@@ -4,7 +4,6 @@ import '../domain/models/guest_journey.dart';
 import '../domain/models/planning_draft.dart';
 import '../domain/repositories/planning_draft_storage.dart';
 import '../domain/repositories/planning_repository.dart';
-import '../infrastructure/storage/persistent_planning_draft_storage.dart';
 
 class CreatePlanningJourneyUseCase {
   final PlanningRepository _repository;
@@ -14,10 +13,10 @@ class CreatePlanningJourneyUseCase {
   CreatePlanningJourneyUseCase({
     required PlanningRepository repository,
     required GuestJourneyCredentialStorage credentialStorage,
-    PlanningDraftStorage? draftStorage,
+    required PlanningDraftStorage draftStorage,
   }) : _repository = repository,
        _credentialStorage = credentialStorage,
-       _draftStorage = draftStorage ?? PersistentPlanningDraftStorage();
+       _draftStorage = draftStorage;
 
   Future<Result<GuestJourney>> call({
     int? answersVersion,

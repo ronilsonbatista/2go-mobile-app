@@ -1,4 +1,6 @@
+import '../../domain/models/planning_activity_window.dart';
 import '../../domain/models/planning_destination.dart';
+import '../../domain/models/planning_interest.dart';
 import '../../domain/models/planning_travelers.dart';
 
 abstract class PlanningWizardEvent {
@@ -58,4 +60,38 @@ class UpdateTravelersEvent extends PlanningWizardEvent {
   final PlanningTravelers travelers;
 
   const UpdateTravelersEvent(this.travelers);
+}
+
+// Step 3 Events
+class ToggleInterestEvent extends PlanningWizardEvent {
+  final PlanningInterest interest;
+
+  const ToggleInterestEvent(this.interest);
+}
+
+class UpdateInterestsEvent extends PlanningWizardEvent {
+  final List<PlanningInterest> interests;
+
+  const UpdateInterestsEvent(this.interests);
+}
+
+// Step 4 Events
+class UpdateActivityWindowEvent extends PlanningWizardEvent {
+  final PlanningActivityWindow activityWindow;
+
+  const UpdateActivityWindowEvent(this.activityWindow);
+}
+
+// Step 5 Events
+class SelectBudgetLevelEvent extends PlanningWizardEvent {
+  final String budgetLevel;
+
+  const SelectBudgetLevelEvent(this.budgetLevel);
+}
+
+// Review / Navigation Events
+class EditSectionEvent extends PlanningWizardEvent {
+  final int targetStep;
+
+  const EditSectionEvent(this.targetStep);
 }

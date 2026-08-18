@@ -9,6 +9,29 @@ enum PlanningInterest {
   localHistory,
   nature;
 
+  String get label {
+    switch (this) {
+      case PlanningInterest.art:
+        return 'Arte';
+      case PlanningInterest.gastronomy:
+        return 'Gastronomia';
+      case PlanningInterest.sports:
+        return 'Esporte';
+      case PlanningInterest.architecture:
+        return 'Arquitetura';
+      case PlanningInterest.outdoor:
+        return 'Atividades ao ar livre';
+      case PlanningInterest.music:
+        return 'Música';
+      case PlanningInterest.geekCulture:
+        return 'Cultura geek';
+      case PlanningInterest.localHistory:
+        return 'História local';
+      case PlanningInterest.nature:
+        return 'Natureza';
+    }
+  }
+
   static PlanningInterest fromRaw(String raw) {
     switch (raw.toUpperCase()) {
       case 'ART':

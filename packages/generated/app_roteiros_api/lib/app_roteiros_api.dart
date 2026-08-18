@@ -7,6 +7,7 @@ export 'src/models/api_error_response_dto.dart';
 export 'src/models/auth_tokens_response_dto.dart';
 export 'src/models/create_planning_session_dto.dart';
 export 'src/models/forgot_password_dto.dart';
+export 'src/models/generation_status_response_dto.dart';
 export 'src/models/login_dto.dart';
 export 'src/models/planning_activity_window_dto.dart';
 export 'src/models/planning_destination_dto.dart';

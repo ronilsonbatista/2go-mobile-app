@@ -77,7 +77,7 @@ class DestinationCardWidget extends StatelessWidget {
   Future<void> _selectArrivalTime(BuildContext context) async {
     final parts = destination.arrivalTime.split(':');
     final initialTime = TimeOfDay(
-      hour: parts.length > 0 ? int.tryParse(parts[0]) ?? 9 : 9,
+      hour: parts.isNotEmpty ? int.tryParse(parts[0]) ?? 9 : 9,
       minute: parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0,
     );
     final picked = await showTimePicker(
@@ -94,7 +94,7 @@ class DestinationCardWidget extends StatelessWidget {
   Future<void> _selectDepartureTime(BuildContext context) async {
     final parts = destination.departureTime.split(':');
     final initialTime = TimeOfDay(
-      hour: parts.length > 0 ? int.tryParse(parts[0]) ?? 18 : 18,
+      hour: parts.isNotEmpty ? int.tryParse(parts[0]) ?? 18 : 18,
       minute: parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0,
     );
     final picked = await showTimePicker(

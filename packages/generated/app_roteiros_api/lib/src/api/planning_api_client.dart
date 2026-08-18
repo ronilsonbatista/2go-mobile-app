@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../models/create_planning_session_dto.dart';
+import '../models/generation_status_response_dto.dart';
 import '../models/planning_session_response_dto.dart';
 import '../models/update_planning_session_dto.dart';
 
@@ -51,5 +52,27 @@ class PlanningApiClient {
       options: Options(headers: {'X-Guest-Token': guestToken}),
     );
     return PlanningSessionResponseDto.fromJson(response.data ?? {});
+  }
+
+  Future<GenerationStatusResponseDto> startGeneration(
+    String id, {
+    required String guestToken,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/planning-sessions/$id/generate',
+      options: Options(headers: {'X-Guest-Token': guestToken}),
+    );
+    return GenerationStatusResponseDto.fromJson(response.data ?? {});
+  }
+
+  Future<GenerationStatusResponseDto> getGenerationStatus(
+    String id, {
+    required String guestToken,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/planning-sessions/$id/generation-status',
+      options: Options(headers: {'X-Guest-Token': guestToken}),
+    );
+    return GenerationStatusResponseDto.fromJson(response.data ?? {});
   }
 }

@@ -6,20 +6,26 @@ import '../bloc/planning_wizard_bloc.dart';
 import '../bloc/planning_wizard_event.dart';
 import '../bloc/planning_wizard_state.dart';
 import 'planning_wizard_scaffold.dart';
+import 'widgets/activity_hours_step_content.dart';
+import 'widgets/budget_step_content.dart';
 import 'widgets/destinations_step_content.dart';
-import 'widgets/planning_step_placeholder_view.dart';
+import 'widgets/interests_step_content.dart';
+import 'widgets/planning_confirmation_sheet.dart';
+import 'widgets/review_step_content.dart';
 import 'widgets/travelers_step_content.dart';
 
 class PlanningWizardPage extends StatelessWidget {
   final PlanningWizardBloc? bloc;
   final SearchPlacesUseCase? searchPlacesUseCase;
   final VoidCallback? onExit;
+  final ValueChanged<String>? onReadyToGenerate;
 
   const PlanningWizardPage({
     super.key,
     this.bloc,
     this.searchPlacesUseCase,
     this.onExit,
+    this.onReadyToGenerate,
   });
 
   static const List<String> _stepTitles = [
@@ -27,17 +33,8 @@ class PlanningWizardPage extends StatelessWidget {
     'Quem vai?',
     'Selecione os interesses que combinam com você.',
     'Defina o horário das atividades',
-    'Qual o estilo da viagem?',
+    'Qual o perfil financeiro da viagem?',
     'Tudo pronto para criarmos seu roteiro?',
-  ];
-
-  static const List<String> _stepNames = [
-    'Onde',
-    'Quem vai',
-    'Interesses',
-    'Horários',
-    'Estilo',
-    'Revisão',
   ];
 
   @override
@@ -48,12 +45,14 @@ class PlanningWizardPage extends StatelessWidget {
         child: _PlanningWizardView(
           searchPlacesUseCase: searchPlacesUseCase,
           onExit: onExit,
+          onReadyToGenerate: onReadyToGenerate,
         ),
       );
     }
     return _PlanningWizardView(
       searchPlacesUseCase: searchPlacesUseCase,
       onExit: onExit,
+      onReadyToGenerate: onReadyToGenerate,
     );
   }
 }
@@ -61,43 +60,19 @@ class PlanningWizardPage extends StatelessWidget {
 class _PlanningWizardView extends StatelessWidget {
   final SearchPlacesUseCase? searchPlacesUseCase;
   final VoidCallback? onExit;
+  final ValueChanged<String>? onReadyToGenerate;
 
-  const _PlanningWizardView({this.searchPlacesUseCase, this.onExit});
+  const _PlanningWizardView({
+    this.searchPlacesUseCase,
+    this.onExit,
+    this.onReadyToGenerate,
+  });
 
-  void _showConfirmationModal(BuildContext context) {
-    TwoGoBottomSheet.show<void>(
-      context,
-      title: 'Deseja continuar?',
-      child: Column(
-        children: [
-          Text(
-            'Após essa etapa, não será possível alterar as informações.',
-            textAlign: TextAlign.center,
-            style: TwoGoTypography.bodyMedium.copyWith(
-              color: TwoGoColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: TwoGoSpacing.lg),
-          TwoGoButton(
-            text: 'Criar meu roteiro agora',
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Jornada finalizada com sucesso!'),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: TwoGoSpacing.xs),
-          TwoGoButton(
-            text: 'Cancelar',
-            variant: TwoGoButtonVariant.tertiary,
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
-    );
+  Future<void> _handleFinalizeConfirmation(BuildContext context) async {
+    final confirmed = await PlanningConfirmationSheet.show(context);
+    if (confirmed == true && context.mounted) {
+      context.read<PlanningWizardBloc>().add(const FinalizeWizardEvent());
+    }
   }
 
   @override
@@ -111,6 +86,31 @@ class _PlanningWizardView extends StatelessWidget {
             Navigator.of(context).maybePop();
           }
         }
+
+        if (state.status == PlanningWizardStatus.finalized) {
+          final journeyId = state.journey?.id ?? state.draft?.activeJourneyId;
+          if (journeyId != null && onReadyToGenerate != null) {
+            onReadyToGenerate!(journeyId);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Jornada finalizada com sucesso! Pronta para geração por IA.',
+                ),
+              ),
+            );
+          }
+        }
+
+        if (state.status == PlanningWizardStatus.failure &&
+            state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: TwoGoColors.feedbackError,
+            ),
+          );
+        }
       },
       builder: (context, state) {
         if (state.status == PlanningWizardStatus.loading) {
@@ -119,7 +119,6 @@ class _PlanningWizardView extends StatelessWidget {
 
         final stepIndex = (state.currentStep - 1).clamp(0, 5);
         final title = PlanningWizardPage._stepTitles[stepIndex];
-        final stepName = PlanningWizardPage._stepNames[stepIndex];
 
         Widget stepBody;
         switch (state.currentStep) {
@@ -154,10 +153,49 @@ class _PlanningWizardView extends StatelessWidget {
               },
             );
             break;
+          case 3:
+            stepBody = InterestsStepContent(
+              selectedInterests: state.interests,
+              onToggleInterest: (interest) {
+                context.read<PlanningWizardBloc>().add(
+                  ToggleInterestEvent(interest),
+                );
+              },
+            );
+            break;
+          case 4:
+            stepBody = ActivityHoursStepContent(
+              activityWindow: state.activityWindow,
+              onChanged: (updated) {
+                context.read<PlanningWizardBloc>().add(
+                  UpdateActivityWindowEvent(updated),
+                );
+              },
+            );
+            break;
+          case 5:
+            stepBody = BudgetStepContent(
+              selectedBudgetLevel: state.budgetLevel,
+              onSelectBudgetLevel: (level) {
+                context.read<PlanningWizardBloc>().add(
+                  SelectBudgetLevelEvent(level),
+                );
+              },
+            );
+            break;
+          case 6:
           default:
-            stepBody = PlanningStepPlaceholderView(
-              currentStep: state.currentStep,
-              stepName: stepName,
+            stepBody = ReviewStepContent(
+              destinations: state.destinations,
+              travelers: state.travelers,
+              interests: state.interests,
+              activityWindow: state.activityWindow,
+              budgetLevel: state.budgetLevel,
+              onEditSection: (targetStep) {
+                context.read<PlanningWizardBloc>().add(
+                  EditSectionEvent(targetStep),
+                );
+              },
             );
             break;
         }
@@ -176,7 +214,7 @@ class _PlanningWizardView extends StatelessWidget {
           },
           onNext: () {
             if (state.currentStep == 6) {
-              _showConfirmationModal(context);
+              _handleFinalizeConfirmation(context);
             } else {
               context.read<PlanningWizardBloc>().add(const NextStepEvent());
             }

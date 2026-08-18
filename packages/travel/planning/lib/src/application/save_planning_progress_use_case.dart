@@ -7,7 +7,6 @@ import '../domain/models/planning_interest.dart';
 import '../domain/models/planning_travelers.dart';
 import '../domain/repositories/planning_draft_storage.dart';
 import '../domain/repositories/planning_repository.dart';
-import '../infrastructure/storage/persistent_planning_draft_storage.dart';
 
 class SavePlanningProgressUseCase {
   final PlanningRepository _repository;
@@ -15,9 +14,9 @@ class SavePlanningProgressUseCase {
 
   SavePlanningProgressUseCase({
     required PlanningRepository repository,
-    PlanningDraftStorage? draftStorage,
+    required PlanningDraftStorage draftStorage,
   }) : _repository = repository,
-       _draftStorage = draftStorage ?? PersistentPlanningDraftStorage();
+       _draftStorage = draftStorage;
 
   Future<Result<GuestJourney>> call({
     required String journeyId,
@@ -52,6 +51,12 @@ class SavePlanningProgressUseCase {
           travelers: travelers != null
               ? travelers.toJson()
               : currentDraft?.travelers,
+          interests: interests != null
+              ? interests.map((i) => i.name).toList()
+              : currentDraft?.interests,
+          activityWindow: activityWindow != null
+              ? activityWindow.toJson()
+              : currentDraft?.activityWindow,
           budgetLevel: updated.budgetLevel,
           travelStyle: updated.travelStyle,
           lastSyncedAt: DateTime.now(),

@@ -142,6 +142,64 @@ class FakePlanningApiClient implements PlanningApiClient {
     sessions[id] = finalized;
     return finalized;
   }
+
+  @override
+  Future<GenerationStatusResponseDto> startGeneration(
+    String id, {
+    required String guestToken,
+  }) async {
+    if (guestToken == 'expired-token') {
+      throw DioException(
+        requestOptions: RequestOptions(path: '/planning-sessions/$id/generate'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/planning-sessions/$id/generate'),
+          statusCode: 401,
+          data: {
+            'code': 'PLANNING_JOURNEY_EXPIRED',
+            'message': 'Sessão expirada',
+          },
+        ),
+      );
+    }
+    final s = await getSession(id, guestToken: guestToken);
+    final status = GenerationStatusResponseDto(
+      id: s.id,
+      status: 'GENERATING',
+      generationStartedAt: DateTime.now().toIso8601String(),
+    );
+    return status;
+  }
+
+  @override
+  Future<GenerationStatusResponseDto> getGenerationStatus(
+    String id, {
+    required String guestToken,
+  }) async {
+    if (guestToken == 'expired-token') {
+      throw DioException(
+        requestOptions: RequestOptions(
+          path: '/planning-sessions/$id/generation-status',
+        ),
+        response: Response(
+          requestOptions: RequestOptions(
+            path: '/planning-sessions/$id/generation-status',
+          ),
+          statusCode: 401,
+          data: {
+            'code': 'PLANNING_JOURNEY_EXPIRED',
+            'message': 'Sessão expirada',
+          },
+        ),
+      );
+    }
+    final s = await getSession(id, guestToken: guestToken);
+    final status = GenerationStatusResponseDto(
+      id: s.id,
+      status: s.status == 'COLLECTING' ? 'GENERATING' : s.status,
+      generationStartedAt: DateTime.now().toIso8601String(),
+    );
+    return status;
+  }
 }
 
 void main() {
@@ -222,6 +280,39 @@ void main() {
         expect(
           finalizeRes.getOrNull()!.status,
           GuestJourneyStatus.readyToGenerate,
+        );
+      },
+    );
+
+    test(
+      'startGeneration and getGenerationStatus return generation status and handle 401 guest error without auth refresh',
+      () async {
+        await credentialStorage.saveGuestToken(
+          journeyId: 'journey-123',
+          guestToken: 'secret-token-abc',
+        );
+        await apiClient.createSession(const CreatePlanningSessionDto());
+
+        final startRes = await repository.startGeneration('journey-123');
+        expect(startRes.isSuccess, true);
+        expect(startRes.getOrNull()!.status, GuestJourneyStatus.generating);
+
+        final statusRes = await repository.getGenerationStatus('journey-123');
+        expect(statusRes.isSuccess, true);
+        expect(statusRes.getOrNull()!.status, GuestJourneyStatus.generating);
+
+        // Test 401 Guest isolation
+        await credentialStorage.saveGuestToken(
+          journeyId: 'expired-journey',
+          guestToken: 'expired-token',
+        );
+        final expiredRes = await repository.getGenerationStatus(
+          'expired-journey',
+        );
+        expect(expiredRes.isFailure, true);
+        expect(
+          expiredRes.exceptionOrNull(),
+          isA<GuestJourneyExpiredFailure>(),
         );
       },
     );

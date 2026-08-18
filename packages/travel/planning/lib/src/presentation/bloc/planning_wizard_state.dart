@@ -1,6 +1,8 @@
 import '../../domain/models/guest_journey.dart';
+import '../../domain/models/planning_activity_window.dart';
 import '../../domain/models/planning_destination.dart';
 import '../../domain/models/planning_draft.dart';
+import '../../domain/models/planning_interest.dart';
 import '../../domain/models/planning_travelers.dart';
 
 enum PlanningWizardStatus {
@@ -23,6 +25,10 @@ class PlanningWizardState {
   final PlanningDraft? draft;
   final List<PlanningDestination> destinations;
   final PlanningTravelers travelers;
+  final List<PlanningInterest> interests;
+  final PlanningActivityWindow activityWindow;
+  final String? budgetLevel;
+  final bool returnToReview;
   final String? errorMessage;
   final bool isDirty;
 
@@ -43,6 +49,13 @@ class PlanningWizardState {
       ),
     ],
     this.travelers = const PlanningTravelers(adults: 1, children: 0, elders: 0),
+    this.interests = const [],
+    this.activityWindow = const PlanningActivityWindow(
+      start: '09:00',
+      end: '18:30',
+    ),
+    this.budgetLevel,
+    this.returnToReview = false,
     this.errorMessage,
     this.isDirty = false,
   });
@@ -73,7 +86,16 @@ class PlanningWizardState {
     return true;
   }
 
-  bool get isStep2Valid => travelers.total > 0 && travelers.adults >= 1;
+  bool get isStep2Valid => travelers.total > 0;
+
+  bool get isStep3Valid => interests.isNotEmpty;
+
+  bool get isStep4Valid =>
+      activityWindow.startTime.isNotEmpty &&
+      activityWindow.endTime.isNotEmpty &&
+      activityWindow.startTime.compareTo(activityWindow.endTime) < 0;
+
+  bool get isStep5Valid => budgetLevel != null && budgetLevel!.isNotEmpty;
 
   bool get isCurrentStepValid {
     switch (currentStep) {
@@ -81,6 +103,13 @@ class PlanningWizardState {
         return isStep1Valid;
       case 2:
         return isStep2Valid;
+      case 3:
+        return isStep3Valid;
+      case 4:
+        return isStep4Valid;
+      case 5:
+        return isStep5Valid;
+      case 6:
       default:
         return true;
     }
@@ -94,6 +123,10 @@ class PlanningWizardState {
     PlanningDraft? draft,
     List<PlanningDestination>? destinations,
     PlanningTravelers? travelers,
+    List<PlanningInterest>? interests,
+    PlanningActivityWindow? activityWindow,
+    String? budgetLevel,
+    bool? returnToReview,
     String? errorMessage,
     bool? isDirty,
   }) {
@@ -105,6 +138,10 @@ class PlanningWizardState {
       draft: draft ?? this.draft,
       destinations: destinations ?? this.destinations,
       travelers: travelers ?? this.travelers,
+      interests: interests ?? this.interests,
+      activityWindow: activityWindow ?? this.activityWindow,
+      budgetLevel: budgetLevel ?? this.budgetLevel,
+      returnToReview: returnToReview ?? this.returnToReview,
       errorMessage: errorMessage ?? this.errorMessage,
       isDirty: isDirty ?? this.isDirty,
     );

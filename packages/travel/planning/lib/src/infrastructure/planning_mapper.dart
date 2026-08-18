@@ -3,6 +3,7 @@ import '../domain/models/guest_journey.dart';
 import '../domain/models/guest_journey_status.dart';
 import '../domain/models/planning_activity_window.dart';
 import '../domain/models/planning_destination.dart';
+import '../domain/models/planning_generation_status.dart';
 import '../domain/models/planning_interest.dart';
 import '../domain/models/planning_travelers.dart';
 
@@ -24,6 +25,25 @@ class PlanningMapper {
       budgetLevel: dto.budgetLevel,
       travelStyle: dto.travelStyle,
       expiresAt: DateTime.tryParse(dto.expiresAt) ?? DateTime.now(),
+    );
+  }
+
+  static PlanningGenerationStatus toGenerationStatusDomain(
+    GenerationStatusResponseDto dto,
+  ) {
+    return PlanningGenerationStatus(
+      journeyId: dto.id,
+      status: GuestJourneyStatus.fromRaw(dto.status),
+      generationStartedAt: dto.generationStartedAt != null
+          ? DateTime.tryParse(dto.generationStartedAt!)
+          : null,
+      generationCompletedAt: dto.generationCompletedAt != null
+          ? DateTime.tryParse(dto.generationCompletedAt!)
+          : null,
+      generationFailedAt: dto.generationFailedAt != null
+          ? DateTime.tryParse(dto.generationFailedAt!)
+          : null,
+      generationErrorCode: dto.generationErrorCode,
     );
   }
 

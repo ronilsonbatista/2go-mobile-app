@@ -3,7 +3,9 @@ import '../../application/create_planning_journey_use_case.dart';
 import '../../application/finalize_planning_journey_use_case.dart';
 import '../../application/restore_planning_journey_use_case.dart';
 import '../../application/save_planning_progress_use_case.dart';
+import '../../domain/models/planning_activity_window.dart';
 import '../../domain/models/planning_destination.dart';
+import '../../domain/models/planning_interest.dart';
 import '../../domain/models/planning_travelers.dart';
 import '../../domain/repositories/planning_draft_storage.dart';
 import 'planning_wizard_event.dart';
@@ -23,12 +25,13 @@ class PlanningWizardBloc
     required SavePlanningProgressUseCase saveUseCase,
     required FinalizePlanningJourneyUseCase finalizeUseCase,
     required PlanningDraftStorage draftStorage,
+    PlanningWizardState? initialState,
   }) : _createUseCase = createUseCase,
        _restoreUseCase = restoreUseCase,
        _saveUseCase = saveUseCase,
        _finalizeUseCase = finalizeUseCase,
        _draftStorage = draftStorage,
-       super(const PlanningWizardState()) {
+       super(initialState ?? const PlanningWizardState()) {
     on<InitializeWizardEvent>(_onInitialize);
     on<NextStepEvent>(_onNextStep);
     on<PreviousStepEvent>(_onPreviousStep);
@@ -39,6 +42,11 @@ class PlanningWizardBloc
     on<RemoveDestinationEvent>(_onRemoveDestination);
     on<UpdateDestinationAtEvent>(_onUpdateDestinationAt);
     on<UpdateTravelersEvent>(_onUpdateTravelers);
+    on<ToggleInterestEvent>(_onToggleInterest);
+    on<UpdateInterestsEvent>(_onUpdateInterests);
+    on<UpdateActivityWindowEvent>(_onUpdateActivityWindow);
+    on<SelectBudgetLevelEvent>(_onSelectBudgetLevel);
+    on<EditSectionEvent>(_onEditSection);
   }
 
   Future<void> _onInitialize(
@@ -64,6 +72,21 @@ class PlanningWizardBloc
               ? PlanningTravelers.fromJson(localDraft!.travelers!)
               : state.travelers;
 
+          final restoredInterests = localDraft?.interests != null
+              ? localDraft!.interests!
+                    .map((raw) => PlanningInterest.fromRaw(raw))
+                    .toList()
+              : (journey.interests ?? state.interests);
+
+          final restoredActivityWindow = localDraft?.activityWindow != null
+              ? PlanningActivityWindow.fromJson(localDraft!.activityWindow!)
+              : (journey.activityWindow ?? state.activityWindow);
+
+          final restoredBudgetLevel =
+              localDraft?.budgetLevel ??
+              journey.budgetLevel ??
+              state.budgetLevel;
+
           emit(
             state.copyWith(
               status: PlanningWizardStatus.editing,
@@ -72,6 +95,9 @@ class PlanningWizardBloc
               draft: localDraft,
               destinations: restoredDestinations,
               travelers: restoredTravelers,
+              interests: restoredInterests,
+              activityWindow: restoredActivityWindow,
+              budgetLevel: restoredBudgetLevel,
             ),
           );
         },
@@ -87,6 +113,16 @@ class PlanningWizardBloc
                 ? PlanningTravelers.fromJson(localDraft.travelers!)
                 : state.travelers;
 
+            final restoredInterests = localDraft.interests != null
+                ? localDraft.interests!
+                      .map((raw) => PlanningInterest.fromRaw(raw))
+                      .toList()
+                : state.interests;
+
+            final restoredActivityWindow = localDraft.activityWindow != null
+                ? PlanningActivityWindow.fromJson(localDraft.activityWindow!)
+                : state.activityWindow;
+
             emit(
               state.copyWith(
                 status: PlanningWizardStatus.editing,
@@ -94,6 +130,9 @@ class PlanningWizardBloc
                 draft: localDraft,
                 destinations: restoredDestinations,
                 travelers: restoredTravelers,
+                interests: restoredInterests,
+                activityWindow: restoredActivityWindow,
+                budgetLevel: localDraft.budgetLevel ?? state.budgetLevel,
                 isDirty: true,
               ),
             );
@@ -140,7 +179,7 @@ class PlanningWizardBloc
 
     emit(state.copyWith(status: PlanningWizardStatus.submitting));
 
-    final nextStep = state.currentStep + 1;
+    final nextStep = state.returnToReview ? 6 : state.currentStep + 1;
     final journeyId = state.journey?.id ?? state.draft?.activeJourneyId;
 
     if (journeyId != null && journeyId.isNotEmpty) {
@@ -151,11 +190,14 @@ class PlanningWizardBloc
             : state.currentStep,
         destinations: state.currentStep == 1 ? state.destinations : null,
         travelers: state.currentStep == 2 ? state.travelers : null,
+        interests: state.currentStep == 3 ? state.interests : null,
+        activityWindow: state.currentStep == 4 ? state.activityWindow : null,
+        budgetLevel: state.currentStep == 5 ? state.budgetLevel : null,
       );
 
       saveResult.fold(
         (updatedJourney) {
-          if (state.currentStep >= state.totalSteps) {
+          if (state.currentStep >= state.totalSteps && !state.returnToReview) {
             add(const FinalizeWizardEvent());
           } else {
             emit(
@@ -163,6 +205,7 @@ class PlanningWizardBloc
                 status: PlanningWizardStatus.editing,
                 currentStep: nextStep,
                 journey: updatedJourney,
+                returnToReview: false,
                 isDirty: false,
               ),
             );
@@ -175,6 +218,7 @@ class PlanningWizardBloc
               currentStep: nextStep <= state.totalSteps
                   ? nextStep
                   : state.currentStep,
+              returnToReview: false,
               isDirty: true,
             ),
           );
@@ -187,6 +231,7 @@ class PlanningWizardBloc
           currentStep: nextStep <= state.totalSteps
               ? nextStep
               : state.currentStep,
+          returnToReview: false,
         ),
       );
     }
@@ -231,7 +276,6 @@ class PlanningWizardBloc
     final updated = List<PlanningDestination>.from(state.destinations);
     if (event.index >= 0 && event.index < updated.length) {
       updated.removeAt(event.index);
-      // Re-index order 0..N
       final reindexed = updated
           .asMap()
           .entries
@@ -257,6 +301,52 @@ class PlanningWizardBloc
     Emitter<PlanningWizardState> emit,
   ) {
     emit(state.copyWith(travelers: event.travelers));
+  }
+
+  void _onToggleInterest(
+    ToggleInterestEvent event,
+    Emitter<PlanningWizardState> emit,
+  ) {
+    final updated = List<PlanningInterest>.from(state.interests);
+    if (updated.contains(event.interest)) {
+      updated.remove(event.interest);
+    } else {
+      updated.add(event.interest);
+    }
+    emit(state.copyWith(interests: updated));
+  }
+
+  void _onUpdateInterests(
+    UpdateInterestsEvent event,
+    Emitter<PlanningWizardState> emit,
+  ) {
+    emit(state.copyWith(interests: event.interests));
+  }
+
+  void _onUpdateActivityWindow(
+    UpdateActivityWindowEvent event,
+    Emitter<PlanningWizardState> emit,
+  ) {
+    emit(state.copyWith(activityWindow: event.activityWindow));
+  }
+
+  void _onSelectBudgetLevel(
+    SelectBudgetLevelEvent event,
+    Emitter<PlanningWizardState> emit,
+  ) {
+    emit(state.copyWith(budgetLevel: event.budgetLevel));
+  }
+
+  void _onEditSection(
+    EditSectionEvent event,
+    Emitter<PlanningWizardState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        currentStep: event.targetStep.clamp(1, state.totalSteps),
+        returnToReview: true,
+      ),
+    );
   }
 
   Future<void> _onFinalize(
@@ -326,6 +416,9 @@ class PlanningWizardBloc
       currentStep: state.currentStep,
       destinations: state.currentStep == 1 ? state.destinations : null,
       travelers: state.currentStep == 2 ? state.travelers : null,
+      interests: state.currentStep == 3 ? state.interests : null,
+      activityWindow: state.currentStep == 4 ? state.activityWindow : null,
+      budgetLevel: state.currentStep == 5 ? state.budgetLevel : null,
     );
 
     result.fold(

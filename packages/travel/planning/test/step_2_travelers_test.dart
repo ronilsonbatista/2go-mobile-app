@@ -81,10 +81,10 @@ void main() {
       expect(bloc.state.isStep2Valid, isTrue);
     });
 
-    test('invalidates when adults count is 0', () async {
+    test('invalidates when total travelers count is 0', () async {
       bloc.add(
         const UpdateTravelersEvent(
-          PlanningTravelers(adults: 0, children: 1, elders: 0),
+          PlanningTravelers(adults: 0, children: 0, elders: 0),
         ),
       );
       await Future<void>.delayed(Duration.zero);
