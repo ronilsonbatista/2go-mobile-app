@@ -236,11 +236,17 @@ class _ComponentsCatalogViewState extends State<ComponentsCatalogView> {
 
         const TwoGoDivider(space: TwoGoSpacing.xl),
 
-        // Indicators
+        const TwoGoDivider(space: TwoGoSpacing.xl),
+
+        // Indicators & Progress
         const Text(
-          'Indicators & Skeleton',
+          'Indicators & Progress',
           style: TwoGoTypography.headlineMedium,
         ),
+        const SizedBox(height: TwoGoSpacing.sm),
+        const TwoGoProgressBar(progress: 0.33),
+        const SizedBox(height: TwoGoSpacing.xs),
+        const TwoGoProgressBar(progress: 0.66),
         const SizedBox(height: TwoGoSpacing.sm),
         const Row(
           children: [
@@ -248,6 +254,18 @@ class _ComponentsCatalogViewState extends State<ComponentsCatalogView> {
             SizedBox(width: TwoGoSpacing.md),
             Expanded(child: TwoGoSkeleton(height: 24)),
           ],
+        ),
+
+        const TwoGoDivider(space: TwoGoSpacing.xl),
+
+        // Counters
+        const Text('Counters', style: TwoGoTypography.headlineMedium),
+        const SizedBox(height: TwoGoSpacing.sm),
+        TwoGoCounter(
+          label: 'Adultos',
+          subtitle: '18 anos ou mais',
+          value: 2,
+          onChanged: (_) {},
         ),
       ],
     );

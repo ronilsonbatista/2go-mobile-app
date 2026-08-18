@@ -12,6 +12,7 @@ dependencies:
   dio: ^5.7.0
   flutter:
     sdk: flutter
+  flutter_bloc: ^8.1.6
   app_roteiros_api: any
   twogo_core: any
   twogo_design_system: any

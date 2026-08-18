@@ -90,4 +90,6 @@ abstract class TwoGoColors {
   // Legacy alias getters for backwards compatibility
   static Color get primary => actionPrimary;
   static Color get background => backgroundPrimary;
+  static Color get textPrimary => contentPrimary;
+  static Color get textSecondary => contentSecondary;
 }

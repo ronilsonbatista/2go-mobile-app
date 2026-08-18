@@ -1,5 +1,5 @@
-import '../contracts/planning_draft_storage.dart';
-import '../models/planning_draft.dart';
+import '../../domain/models/planning_draft.dart';
+import '../../domain/repositories/planning_draft_storage.dart';
 
 class InMemoryPlanningDraftStorage implements PlanningDraftStorage {
   PlanningDraft? _draft;

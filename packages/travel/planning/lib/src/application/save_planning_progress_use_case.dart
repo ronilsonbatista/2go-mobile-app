@@ -1,10 +1,11 @@
 import 'package:twogo_core/twogo_core.dart';
-import 'package:twogo_storage/twogo_storage.dart';
 import '../domain/models/guest_journey.dart';
 import '../domain/models/planning_activity_window.dart';
 import '../domain/models/planning_destination.dart';
+import '../domain/models/planning_draft.dart';
 import '../domain/models/planning_interest.dart';
 import '../domain/models/planning_travelers.dart';
+import '../domain/repositories/planning_draft_storage.dart';
 import '../domain/repositories/planning_repository.dart';
 
 class SavePlanningProgressUseCase {

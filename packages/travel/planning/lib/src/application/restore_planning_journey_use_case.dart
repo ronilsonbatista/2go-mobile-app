@@ -1,8 +1,9 @@
 import 'package:twogo_core/twogo_core.dart';
 import 'package:twogo_security/twogo_security.dart';
-import 'package:twogo_storage/twogo_storage.dart';
 import '../domain/failures/planning_failures.dart';
 import '../domain/models/guest_journey.dart';
+import '../domain/models/planning_draft.dart';
+import '../domain/repositories/planning_draft_storage.dart';
 import '../domain/repositories/planning_repository.dart';
 
 class RestorePlanningJourneyUseCase {

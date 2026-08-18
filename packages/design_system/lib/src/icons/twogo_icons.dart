@@ -35,4 +35,9 @@ abstract class TwoGoIcons {
   static const IconData notificationsOutlined = Icons.notifications_outlined;
   static const IconData profile = Icons.person_rounded;
   static const IconData profileOutlined = Icons.person_outline_rounded;
+
+  // Counter & Wizard primitives
+  static const IconData add = Icons.add_rounded;
+  static const IconData remove = Icons.remove_rounded;
+  static const IconData flight = Icons.flight_takeoff_rounded;
 }

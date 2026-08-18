@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:twogo_planning/twogo_planning.dart';
-import 'package:twogo_storage/twogo_storage.dart';
 import 'planning_repository_test.dart';
 
 void main() {

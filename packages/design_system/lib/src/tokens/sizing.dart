@@ -6,6 +6,9 @@ abstract class TwoGoSizing {
   static const double iconMedium = 24.0;
   static const double iconLarge = 32.0;
 
+  static double get iconSm => iconSmall;
+  static double get iconXl => 48.0;
+
   static const double touchTargetMin = 48.0;
 
   static const double buttonHeight = 48.0;

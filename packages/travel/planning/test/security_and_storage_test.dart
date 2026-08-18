@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:twogo_planning/twogo_planning.dart';
 import 'package:twogo_security/twogo_security.dart';
-import 'package:twogo_storage/twogo_storage.dart';
 
 class MemorySecureStorage implements GuestJourneyCredentialStorage {
   final Map<String, String> _data = {};
