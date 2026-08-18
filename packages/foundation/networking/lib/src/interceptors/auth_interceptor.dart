@@ -16,6 +16,8 @@ class AuthInterceptor extends Interceptor {
     '/auth/password/reset',
   ];
 
+  static const List<String> _guestPaths = ['/planning-sessions'];
+
   AuthInterceptor({
     required TokenStorage tokenStorage,
     RefreshCoordinator? refreshCoordinator,
@@ -29,7 +31,7 @@ class AuthInterceptor extends Interceptor {
   ) async {
     final path = options.path;
 
-    if (_isUnprotectedPath(path)) {
+    if (_isUnprotectedPath(path) || _isGuestPath(options)) {
       return handler.next(options);
     }
 
@@ -50,7 +52,7 @@ class AuthInterceptor extends Interceptor {
     final requestOptions = err.requestOptions;
 
     if (response?.statusCode == 401 &&
-        !_isUnprotectedPath(requestOptions.path) &&
+        !_shouldSkipJwtRefresh(requestOptions) &&
         _refreshCoordinator != null) {
       try {
         final newTokens = await _refreshCoordinator.handleRefresh();
@@ -80,5 +82,15 @@ class AuthInterceptor extends Interceptor {
 
   bool _isUnprotectedPath(String path) {
     return _unprotectedPaths.any((p) => path.contains(p));
+  }
+
+  bool _isGuestPath(RequestOptions options) {
+    if (options.extra['isGuestRequest'] == true) return true;
+    return _guestPaths.any((p) => options.path.contains(p));
+  }
+
+  bool _shouldSkipJwtRefresh(RequestOptions options) {
+    if (options.extra['skipAuthRefresh'] == true) return true;
+    return _isUnprotectedPath(options.path) || _isGuestPath(options);
   }
 }

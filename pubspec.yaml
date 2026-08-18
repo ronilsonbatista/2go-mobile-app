@@ -30,6 +30,7 @@ workspace:
   - packages/travel/itinerary
   - packages/travel/maps
   - packages/travel/places
+  - packages/travel/planning
   - packages/travel/trips
   - packages/travel/vouchers
   - packages/commerce/bookings
