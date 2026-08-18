@@ -4,7 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:twogo_authentication/twogo_authentication.dart';
 import 'package:twogo_session/twogo_session.dart';
 
-import '../pages/authenticated_placeholder_page.dart';
+import '../pages/home_page.dart';
+import '../pages/launch_page.dart';
+import '../pages/notifications_page.dart';
+import '../pages/profile_page.dart';
+import '../pages/trips_page.dart';
+import '../shell/app_shell.dart';
 
 class AppRouter {
   static GoRouter createRouter({
@@ -12,27 +17,39 @@ class AppRouter {
     required AuthRepository authRepository,
   }) {
     return GoRouter(
-      initialLocation: sessionCubit.state.status == SessionStatus.authenticated
-          ? '/home'
-          : '/auth',
+      initialLocation: _getInitialLocation(sessionCubit.state.status),
       refreshListenable: _GoRouterRefreshStream(sessionCubit.stream),
       redirect: (context, state) {
-        final sessionState = sessionCubit.state;
-        final isAuthenticated =
-            sessionState.status == SessionStatus.authenticated;
-        final isAuthRoute = state.matchedLocation == '/auth';
+        final sessionStatus = sessionCubit.state.status;
+        final location = state.matchedLocation;
+
+        if (sessionStatus == SessionStatus.restoring ||
+            sessionStatus == SessionStatus.unknown) {
+          if (location != '/launch') {
+            return '/launch';
+          }
+          return null;
+        }
+
+        final isAuthenticated = sessionStatus == SessionStatus.authenticated;
+        final isAuthRoute = location.startsWith('/auth');
 
         if (!isAuthenticated && !isAuthRoute) {
           return '/auth';
         }
 
-        if (isAuthenticated && isAuthRoute) {
-          return '/home';
+        if (isAuthenticated &&
+            (isAuthRoute || location == '/launch' || location == '/')) {
+          return '/app/home';
         }
 
         return null;
       },
       routes: [
+        GoRoute(
+          path: '/launch',
+          builder: (context, state) => const LaunchPage(),
+        ),
         GoRoute(
           path: '/auth',
           builder: (context, state) {
@@ -60,14 +77,60 @@ class AppRouter {
             );
           },
         ),
-        GoRoute(
-          path: '/home',
-          builder: (context, state) {
-            return const AuthenticatedPlaceholderPage();
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) {
+            return AppShell(navigationShell: navigationShell);
           },
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/app/home',
+                  builder: (context, state) => const HomePage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/app/trips',
+                  builder: (context, state) => const TripsPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/app/notifications',
+                  builder: (context, state) => const NotificationsPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/app/profile',
+                  builder: (context, state) => const ProfilePage(),
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     );
+  }
+
+  static String _getInitialLocation(SessionStatus status) {
+    switch (status) {
+      case SessionStatus.restoring:
+      case SessionStatus.unknown:
+        return '/launch';
+      case SessionStatus.authenticated:
+        return '/app/home';
+      case SessionStatus.unauthenticated:
+      case SessionStatus.expired:
+        return '/auth';
+    }
   }
 }
 

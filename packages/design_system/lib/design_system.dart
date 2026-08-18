@@ -27,6 +27,8 @@ export 'src/components/selection/twogo_checkbox.dart';
 export 'src/components/cards/twogo_card.dart';
 export 'src/components/navigation/twogo_list_tile.dart';
 export 'src/components/navigation/twogo_app_bar.dart';
+export 'src/components/navigation/two_go_bottom_navigation.dart';
+export 'src/components/badges/two_go_badge.dart';
 export 'src/components/feedback/twogo_snackbar.dart';
 export 'src/components/feedback/twogo_status_message.dart';
 export 'src/components/feedback/two_go_inline_feedback.dart';

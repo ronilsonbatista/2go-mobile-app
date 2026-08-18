@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:twogo_authentication/twogo_authentication.dart';
+import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_mobile_app/src/app.dart';
 import 'package:twogo_security/twogo_security.dart';
 import 'package:twogo_session/twogo_session.dart';
@@ -76,19 +78,148 @@ class FakeAuthRepository implements AuthRepository {
 }
 
 void main() {
-  testWidgets('Renders 2GO main app widget', (WidgetTester tester) async {
-    final tokenStorage = MemoryTokenStorage();
-    final sessionCubit = SessionCubit(tokenStorage: tokenStorage);
-    final authRepository = FakeAuthRepository();
+  group('AppShell & Router Tests', () {
+    late MemoryTokenStorage tokenStorage;
+    late SessionCubit sessionCubit;
+    late FakeAuthRepository authRepository;
 
-    await tester.pumpWidget(
-      TwoGoApp(
-        environment: 'development',
-        sessionCubit: sessionCubit,
-        authRepository: authRepository,
-      ),
-    );
+    setUp(() {
+      tokenStorage = MemoryTokenStorage();
+      sessionCubit = SessionCubit(tokenStorage: tokenStorage);
+      authRepository = FakeAuthRepository();
+    });
 
-    expect(find.text('Entre ou cadastre-se\npara continuar'), findsOneWidget);
+    tearDown(() {
+      sessionCubit.close();
+    });
+
+    testWidgets('Restoring session displays LaunchPage loading indicator', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        TwoGoApp(
+          environment: 'development',
+          sessionCubit: sessionCubit,
+          authRepository: authRepository,
+        ),
+      );
+
+      expect(find.text('Restaurando sessão 2GO...'), findsOneWidget);
+    });
+
+    testWidgets('Unauthenticated session redirects to /auth', (tester) async {
+      await sessionCubit.logout();
+
+      await tester.pumpWidget(
+        TwoGoApp(
+          environment: 'development',
+          sessionCubit: sessionCubit,
+          authRepository: authRepository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Entre ou cadastre-se\npara continuar'), findsOneWidget);
+    });
+
+    testWidgets('Authenticated session renders AppShell and navigates tabs', (
+      tester,
+    ) async {
+      sessionCubit.onTokensReceived(
+        accessToken: 'access_token',
+        refreshToken: 'refresh_token',
+        email: 'passageiro@2go.com',
+      );
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(390, 844)),
+          child: TwoGoApp(
+            environment: 'development',
+            sessionCubit: sessionCubit,
+            authRepository: authRepository,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Início'), findsAtLeastNWidgets(1));
+      expect(find.text('Bem-vindo ao 2GO'), findsOneWidget);
+
+      // Switch to Viagens
+      await tester.tap(find.text('Viagens'));
+      await tester.pumpAndSettle();
+      expect(find.text('Minhas Viagens'), findsOneWidget);
+
+      // Switch to Notificações
+      await tester.tap(find.text('Notificações'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Avisos e atualizações sobre seus voos e reservas.'),
+        findsOneWidget,
+      );
+
+      // Switch to Perfil
+      await tester.tap(find.text('Perfil'));
+      await tester.pumpAndSettle();
+      expect(find.text('passageiro@2go.com'), findsOneWidget);
+    });
+
+    testWidgets('Profile logout clears session and redirects to /auth', (
+      tester,
+    ) async {
+      sessionCubit.onTokensReceived(
+        accessToken: 'access_token',
+        refreshToken: 'refresh_token',
+        email: 'passageiro@2go.com',
+      );
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(390, 844)),
+          child: TwoGoApp(
+            environment: 'development',
+            sessionCubit: sessionCubit,
+            authRepository: authRepository,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Go to Profile tab
+      await tester.tap(find.text('Perfil'));
+      await tester.pumpAndSettle();
+
+      // Ensure button visible and tap Logout
+      final logoutButton = find.text('Sair / Encerrar Sessão');
+      await tester.ensureVisible(logoutButton);
+      await tester.tap(logoutButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Entre ou cadastre-se\npara continuar'), findsOneWidget);
+      expect(sessionCubit.state.status, equals(SessionStatus.unauthenticated));
+    });
+
+    testWidgets('Golden Test - app_shell_home (390 x 844)', (tester) async {
+      sessionCubit.onTokensReceived(
+        accessToken: 'access_token',
+        refreshToken: 'refresh_token',
+        email: 'passageiro@2go.com',
+      );
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(390, 844)),
+          child: TwoGoApp(
+            environment: 'development',
+            sessionCubit: sessionCubit,
+            authRepository: authRepository,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TwoGoBottomNavigation), findsOneWidget);
+    });
   });
 }

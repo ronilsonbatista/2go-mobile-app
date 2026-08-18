@@ -25,4 +25,14 @@ abstract class TwoGoIcons {
   // Input actions
   static const IconData visibility = Icons.visibility_outlined;
   static const IconData visibilityOff = Icons.visibility_off_outlined;
+
+  // Navigation / Shell primitives
+  static const IconData home = Icons.home_rounded;
+  static const IconData homeOutlined = Icons.home_outlined;
+  static const IconData travel = Icons.card_travel_rounded;
+  static const IconData travelOutlined = Icons.card_travel_outlined;
+  static const IconData notifications = Icons.notifications_rounded;
+  static const IconData notificationsOutlined = Icons.notifications_outlined;
+  static const IconData profile = Icons.person_rounded;
+  static const IconData profileOutlined = Icons.person_outline_rounded;
 }

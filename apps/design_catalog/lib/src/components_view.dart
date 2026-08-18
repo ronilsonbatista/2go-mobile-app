@@ -180,6 +180,42 @@ class _ComponentsCatalogViewState extends State<ComponentsCatalogView> {
               variant: TwoGoPillVariant.outlined,
             ),
             TwoGoPill(label: 'Ativo', variant: TwoGoPillVariant.active),
+            TwoGoBadge(isDot: true),
+            TwoGoBadge(count: 3),
+            TwoGoBadge(count: 12, variant: TwoGoBadgeVariant.brand),
+          ],
+        ),
+
+        const TwoGoDivider(space: TwoGoSpacing.xl),
+
+        // Bottom Navigation Primitive
+        const Text('Bottom Navigation', style: TwoGoTypography.headlineMedium),
+        const SizedBox(height: TwoGoSpacing.sm),
+        TwoGoBottomNavigation(
+          selectedIndex: 0,
+          onSelected: (_) {},
+          items: const [
+            TwoGoBottomNavigationItem(
+              icon: Icon(TwoGoIcons.homeOutlined),
+              selectedIcon: Icon(TwoGoIcons.home),
+              label: 'Início',
+            ),
+            TwoGoBottomNavigationItem(
+              icon: Icon(TwoGoIcons.travelOutlined),
+              selectedIcon: Icon(TwoGoIcons.travel),
+              label: 'Viagens',
+            ),
+            TwoGoBottomNavigationItem(
+              icon: Icon(TwoGoIcons.notificationsOutlined),
+              selectedIcon: Icon(TwoGoIcons.notifications),
+              label: 'Notificações',
+              badge: TwoGoBadge(count: 2),
+            ),
+            TwoGoBottomNavigationItem(
+              icon: Icon(TwoGoIcons.profileOutlined),
+              selectedIcon: Icon(TwoGoIcons.profile),
+              label: 'Perfil',
+            ),
           ],
         ),
 
