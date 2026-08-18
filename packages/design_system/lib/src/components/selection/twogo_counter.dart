@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../accessibility/twogo_touch_target.dart';
 import '../buttons/twogo_icon_button.dart';
 import '../../icons/twogo_icons.dart';
 import '../../tokens/colors.dart';

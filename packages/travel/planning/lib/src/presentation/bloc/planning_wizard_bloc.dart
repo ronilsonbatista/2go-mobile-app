@@ -3,6 +3,8 @@ import '../../application/create_planning_journey_use_case.dart';
 import '../../application/finalize_planning_journey_use_case.dart';
 import '../../application/restore_planning_journey_use_case.dart';
 import '../../application/save_planning_progress_use_case.dart';
+import '../../domain/models/planning_destination.dart';
+import '../../domain/models/planning_travelers.dart';
 import '../../domain/repositories/planning_draft_storage.dart';
 import 'planning_wizard_event.dart';
 import 'planning_wizard_state.dart';
@@ -33,6 +35,10 @@ class PlanningWizardBloc
     on<GoToStepEvent>(_onGoToStep);
     on<FinalizeWizardEvent>(_onFinalize);
     on<RetrySyncEvent>(_onRetrySync);
+    on<AddDestinationEvent>(_onAddDestination);
+    on<RemoveDestinationEvent>(_onRemoveDestination);
+    on<UpdateDestinationAtEvent>(_onUpdateDestinationAt);
+    on<UpdateTravelersEvent>(_onUpdateTravelers);
   }
 
   Future<void> _onInitialize(
@@ -48,22 +54,46 @@ class PlanningWizardBloc
       final restoreResult = await _restoreUseCase(targetJourneyId);
       await restoreResult.fold(
         (journey) async {
+          final restoredDestinations = localDraft?.destinations != null
+              ? localDraft!.destinations!
+                    .map((e) => PlanningDestination.fromJson(e))
+                    .toList()
+              : state.destinations;
+
+          final restoredTravelers = localDraft?.travelers != null
+              ? PlanningTravelers.fromJson(localDraft!.travelers!)
+              : state.travelers;
+
           emit(
             state.copyWith(
               status: PlanningWizardStatus.editing,
               journey: journey,
               currentStep: journey.currentStep.clamp(1, state.totalSteps),
               draft: localDraft,
+              destinations: restoredDestinations,
+              travelers: restoredTravelers,
             ),
           );
         },
         (failure) async {
           if (localDraft != null) {
+            final restoredDestinations = localDraft.destinations != null
+                ? localDraft.destinations!
+                      .map((e) => PlanningDestination.fromJson(e))
+                      .toList()
+                : state.destinations;
+
+            final restoredTravelers = localDraft.travelers != null
+                ? PlanningTravelers.fromJson(localDraft.travelers!)
+                : state.travelers;
+
             emit(
               state.copyWith(
                 status: PlanningWizardStatus.editing,
                 currentStep: localDraft.currentStep.clamp(1, state.totalSteps),
                 draft: localDraft,
+                destinations: restoredDestinations,
+                travelers: restoredTravelers,
                 isDirty: true,
               ),
             );
@@ -106,6 +136,8 @@ class PlanningWizardBloc
   ) async {
     if (state.status == PlanningWizardStatus.submitting) return;
 
+    if (!state.isCurrentStepValid) return;
+
     emit(state.copyWith(status: PlanningWizardStatus.submitting));
 
     final nextStep = state.currentStep + 1;
@@ -117,6 +149,8 @@ class PlanningWizardBloc
         currentStep: nextStep <= state.totalSteps
             ? nextStep
             : state.currentStep,
+        destinations: state.currentStep == 1 ? state.destinations : null,
+        travelers: state.currentStep == 2 ? state.travelers : null,
       );
 
       saveResult.fold(
@@ -156,6 +190,73 @@ class PlanningWizardBloc
         ),
       );
     }
+  }
+
+  void _onAddDestination(
+    AddDestinationEvent event,
+    Emitter<PlanningWizardState> emit,
+  ) {
+    final updated = List<PlanningDestination>.from(state.destinations);
+    final lastDest = updated.isNotEmpty ? updated.last : null;
+
+    DateTime nextArrival = DateTime.now().add(const Duration(days: 7));
+    if (lastDest != null && lastDest.departureDate.isNotEmpty) {
+      final parsedDep = DateTime.tryParse(lastDest.departureDate);
+      if (parsedDep != null) {
+        nextArrival = parsedDep.add(const Duration(days: 1));
+      }
+    }
+    final nextDeparture = nextArrival.add(const Duration(days: 4));
+
+    updated.add(
+      PlanningDestination(
+        name: '',
+        arrivalDate: nextArrival.toIso8601String().split('T').first,
+        arrivalTime: '09:00',
+        departureDate: nextDeparture.toIso8601String().split('T').first,
+        departureTime: '18:00',
+        order: updated.length,
+      ),
+    );
+
+    emit(state.copyWith(destinations: updated));
+  }
+
+  void _onRemoveDestination(
+    RemoveDestinationEvent event,
+    Emitter<PlanningWizardState> emit,
+  ) {
+    if (state.destinations.length <= 1) return;
+
+    final updated = List<PlanningDestination>.from(state.destinations);
+    if (event.index >= 0 && event.index < updated.length) {
+      updated.removeAt(event.index);
+      // Re-index order 0..N
+      final reindexed = updated
+          .asMap()
+          .entries
+          .map((entry) => entry.value.copyWith(order: entry.key))
+          .toList();
+      emit(state.copyWith(destinations: reindexed));
+    }
+  }
+
+  void _onUpdateDestinationAt(
+    UpdateDestinationAtEvent event,
+    Emitter<PlanningWizardState> emit,
+  ) {
+    final updated = List<PlanningDestination>.from(state.destinations);
+    if (event.index >= 0 && event.index < updated.length) {
+      updated[event.index] = event.destination.copyWith(order: event.index);
+      emit(state.copyWith(destinations: updated));
+    }
+  }
+
+  void _onUpdateTravelers(
+    UpdateTravelersEvent event,
+    Emitter<PlanningWizardState> emit,
+  ) {
+    emit(state.copyWith(travelers: event.travelers));
   }
 
   Future<void> _onFinalize(
@@ -223,6 +324,8 @@ class PlanningWizardBloc
     final result = await _saveUseCase(
       journeyId: journeyId,
       currentStep: state.currentStep,
+      destinations: state.currentStep == 1 ? state.destinations : null,
+      travelers: state.currentStep == 2 ? state.travelers : null,
     );
 
     result.fold(

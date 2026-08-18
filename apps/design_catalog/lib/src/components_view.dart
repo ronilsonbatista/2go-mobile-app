@@ -45,12 +45,9 @@ class _ComponentsCatalogViewState extends State<ComponentsCatalogView> {
         // Inputs
         const Text('Inputs', style: TwoGoTypography.headlineMedium),
         const SizedBox(height: TwoGoSpacing.sm),
-        const TwoGoTextField(
-          label: 'Entrar com e-mail',
-          hint: 'seu.email@gmail.com',
-        ),
+        TwoGoTextField(label: 'Entrar com e-mail', hint: 'seu.email@gmail.com'),
         const SizedBox(height: TwoGoSpacing.sm),
-        const TwoGoTextField(
+        TwoGoTextField(
           label: 'Campo com erro',
           hint: '123456',
           errorText: 'Código inválido. Verifique e tente novamente.',
@@ -147,10 +144,7 @@ class _ComponentsCatalogViewState extends State<ComponentsCatalogView> {
               title: 'Adicionar cupom',
               child: Column(
                 children: [
-                  const TwoGoTextField(
-                    label: 'Código do cupom:',
-                    hint: 'CUPOM2GO',
-                  ),
+                  TwoGoTextField(label: 'Código do cupom:', hint: 'CUPOM2GO'),
                   const SizedBox(height: TwoGoSpacing.md),
                   TwoGoButton(
                     text: 'Aplicar',

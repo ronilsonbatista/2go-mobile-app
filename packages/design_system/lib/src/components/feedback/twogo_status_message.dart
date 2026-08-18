@@ -3,13 +3,11 @@ import '../../icons/twogo_icons.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/spacing.dart';
 import '../../tokens/typography.dart';
+import '../buttons/twogo_button.dart';
 
 enum TwoGoStatusMessageType { success, error, warning, info }
 
 /// Generic Status Message layout primitive for 2GO Mobile Design System.
-///
-/// Can be composed by feature screens (e.g. Payment success/failure) without
-/// tying the component itself to domain business rules.
 class TwoGoStatusMessage extends StatelessWidget {
   final TwoGoStatusMessageType type;
   final Widget? icon;
@@ -17,14 +15,20 @@ class TwoGoStatusMessage extends StatelessWidget {
   final String? description;
   final Widget? action;
 
-  const TwoGoStatusMessage({
+  TwoGoStatusMessage({
     super.key,
     this.type = TwoGoStatusMessageType.info,
     this.icon,
     required this.title,
     this.description,
-    this.action,
-  });
+    Widget? action,
+    String? actionText,
+    VoidCallback? onActionPressed,
+  }) : action =
+           action ??
+           (actionText != null
+               ? TwoGoButton(text: actionText, onPressed: onActionPressed)
+               : null);
 
   @override
   Widget build(BuildContext context) {

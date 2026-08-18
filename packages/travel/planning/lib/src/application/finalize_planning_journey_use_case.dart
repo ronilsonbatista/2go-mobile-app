@@ -3,6 +3,7 @@ import '../domain/models/guest_journey.dart';
 import '../domain/models/planning_draft.dart';
 import '../domain/repositories/planning_draft_storage.dart';
 import '../domain/repositories/planning_repository.dart';
+import '../infrastructure/storage/persistent_planning_draft_storage.dart';
 
 class FinalizePlanningJourneyUseCase {
   final PlanningRepository _repository;
@@ -10,9 +11,9 @@ class FinalizePlanningJourneyUseCase {
 
   FinalizePlanningJourneyUseCase({
     required PlanningRepository repository,
-    required PlanningDraftStorage draftStorage,
+    PlanningDraftStorage? draftStorage,
   }) : _repository = repository,
-       _draftStorage = draftStorage;
+       _draftStorage = draftStorage ?? PersistentPlanningDraftStorage();
 
   Future<Result<GuestJourney>> call(String journeyId) async {
     final result = await _repository.finalizeJourney(journeyId);

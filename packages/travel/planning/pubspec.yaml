@@ -17,6 +17,7 @@ dependencies:
   twogo_core: any
   twogo_design_system: any
   twogo_networking: any
+  twogo_places: any
   twogo_security: any
   twogo_storage: any
 
@@ -24,3 +25,4 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  shared_preferences: ^2.5.2

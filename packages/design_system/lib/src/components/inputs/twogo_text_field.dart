@@ -25,13 +25,15 @@ class TwoGoTextField extends StatefulWidget {
   final bool autofocus;
   final bool isSuccess;
 
-  const TwoGoTextField({
+  TwoGoTextField({
     super.key,
     this.label,
-    this.hint,
+    String? hint,
+    String? hintText,
     this.helperText,
     this.errorText,
-    this.prefix,
+    Widget? prefix,
+    IconData? prefixIcon,
     this.suffix,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
@@ -45,7 +47,12 @@ class TwoGoTextField extends StatefulWidget {
     this.maxLines = 1,
     this.autofocus = false,
     this.isSuccess = false,
-  });
+  }) : hint = hint ?? hintText,
+       prefix =
+           prefix ??
+           (prefixIcon != null
+               ? Icon(prefixIcon, color: TwoGoColors.contentSecondary)
+               : null);
 
   @override
   State<TwoGoTextField> createState() => _TwoGoTextFieldState();

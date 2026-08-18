@@ -40,4 +40,8 @@ abstract class TwoGoIcons {
   static const IconData add = Icons.add_rounded;
   static const IconData remove = Icons.remove_rounded;
   static const IconData flight = Icons.flight_takeoff_rounded;
+  static const IconData search = Icons.search_rounded;
+  static const IconData calendar = Icons.calendar_today_rounded;
+  static const IconData clock = Icons.access_time_rounded;
+  static const IconData trash = Icons.delete_outline_rounded;
 }

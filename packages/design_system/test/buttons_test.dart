@@ -25,7 +25,7 @@ void main() {
     testWidgets('disabled state does not trigger callback', (tester) async {
       bool tapped = false;
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
           home: Scaffold(body: TwoGoButton(text: 'Continuar', onPressed: null)),
         ),
       );

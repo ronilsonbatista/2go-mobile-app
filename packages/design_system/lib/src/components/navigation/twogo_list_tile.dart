@@ -16,9 +16,10 @@ class TwoGoListTile extends StatelessWidget {
   final bool enabled;
   final EdgeInsetsGeometry padding;
 
-  const TwoGoListTile({
+  TwoGoListTile({
     super.key,
-    this.leading,
+    Widget? leading,
+    IconData? leadingIcon,
     required this.title,
     this.subtitle,
     this.trailing,
@@ -28,7 +29,11 @@ class TwoGoListTile extends StatelessWidget {
       horizontal: TwoGoSpacing.md,
       vertical: TwoGoSpacing.sm,
     ),
-  });
+  }) : leading =
+           leading ??
+           (leadingIcon != null
+               ? Icon(leadingIcon, color: TwoGoColors.contentSecondary)
+               : null);
 
   @override
   Widget build(BuildContext context) {

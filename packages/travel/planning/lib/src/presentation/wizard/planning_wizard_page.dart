@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:twogo_design_system/design_system.dart';
+import 'package:twogo_places/places.dart';
 import '../bloc/planning_wizard_bloc.dart';
 import '../bloc/planning_wizard_event.dart';
 import '../bloc/planning_wizard_state.dart';
 import 'planning_wizard_scaffold.dart';
+import 'widgets/destinations_step_content.dart';
 import 'widgets/planning_step_placeholder_view.dart';
+import 'widgets/travelers_step_content.dart';
 
 class PlanningWizardPage extends StatelessWidget {
   final PlanningWizardBloc? bloc;
+  final SearchPlacesUseCase? searchPlacesUseCase;
   final VoidCallback? onExit;
 
-  const PlanningWizardPage({super.key, this.bloc, this.onExit});
+  const PlanningWizardPage({
+    super.key,
+    this.bloc,
+    this.searchPlacesUseCase,
+    this.onExit,
+  });
 
   static const List<String> _stepTitles = [
     'Para onde você quer viajar?',
@@ -36,17 +45,24 @@ class PlanningWizardPage extends StatelessWidget {
     if (bloc != null) {
       return BlocProvider.value(
         value: bloc!,
-        child: _PlanningWizardView(onExit: onExit),
+        child: _PlanningWizardView(
+          searchPlacesUseCase: searchPlacesUseCase,
+          onExit: onExit,
+        ),
       );
     }
-    return _PlanningWizardView(onExit: onExit);
+    return _PlanningWizardView(
+      searchPlacesUseCase: searchPlacesUseCase,
+      onExit: onExit,
+    );
   }
 }
 
 class _PlanningWizardView extends StatelessWidget {
+  final SearchPlacesUseCase? searchPlacesUseCase;
   final VoidCallback? onExit;
 
-  const _PlanningWizardView({this.onExit});
+  const _PlanningWizardView({this.searchPlacesUseCase, this.onExit});
 
   void _showConfirmationModal(BuildContext context) {
     TwoGoBottomSheet.show<void>(
@@ -105,11 +121,53 @@ class _PlanningWizardView extends StatelessWidget {
         final title = PlanningWizardPage._stepTitles[stepIndex];
         final stepName = PlanningWizardPage._stepNames[stepIndex];
 
+        Widget stepBody;
+        switch (state.currentStep) {
+          case 1:
+            stepBody = DestinationsStepContent(
+              destinations: state.destinations,
+              searchPlacesUseCase: searchPlacesUseCase,
+              onDestinationChanged: (dest) {
+                context.read<PlanningWizardBloc>().add(
+                  UpdateDestinationAtEvent(dest.order, dest),
+                );
+              },
+              onAddDestination: () {
+                context.read<PlanningWizardBloc>().add(
+                  const AddDestinationEvent(),
+                );
+              },
+              onRemoveDestination: (idx) {
+                context.read<PlanningWizardBloc>().add(
+                  RemoveDestinationEvent(idx),
+                );
+              },
+            );
+            break;
+          case 2:
+            stepBody = TravelersStepContent(
+              travelers: state.travelers,
+              onChanged: (updated) {
+                context.read<PlanningWizardBloc>().add(
+                  UpdateTravelersEvent(updated),
+                );
+              },
+            );
+            break;
+          default:
+            stepBody = PlanningStepPlaceholderView(
+              currentStep: state.currentStep,
+              stepName: stepName,
+            );
+            break;
+        }
+
         return PlanningWizardScaffold(
           currentStep: state.currentStep,
           totalSteps: state.totalSteps,
           title: title,
           isSubmitting: state.status == PlanningWizardStatus.submitting,
+          isButtonEnabled: state.isCurrentStepValid,
           buttonText: state.currentStep == 6
               ? 'Criar meu roteiro'
               : 'Continuar',
@@ -123,10 +181,7 @@ class _PlanningWizardView extends StatelessWidget {
               context.read<PlanningWizardBloc>().add(const NextStepEvent());
             }
           },
-          body: PlanningStepPlaceholderView(
-            currentStep: state.currentStep,
-            stepName: stepName,
-          ),
+          body: stepBody,
         );
       },
     );

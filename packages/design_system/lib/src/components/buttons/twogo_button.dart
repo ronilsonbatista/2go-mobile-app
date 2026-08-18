@@ -18,16 +18,17 @@ class TwoGoButton extends StatelessWidget {
   final Widget? leadingIcon;
   final Widget? trailingIcon;
 
-  const TwoGoButton({
+  TwoGoButton({
     super.key,
     required this.text,
     required this.onPressed,
     this.variant = TwoGoButtonVariant.primary,
     this.loading = false,
     this.fullWidth = true,
-    this.leadingIcon,
+    Widget? leadingIcon,
+    IconData? icon,
     this.trailingIcon,
-  });
+  }) : leadingIcon = leadingIcon ?? (icon != null ? Icon(icon) : null);
 
   /// Alias property for backwards compatibility with earlier scaffold
   String get label => text;

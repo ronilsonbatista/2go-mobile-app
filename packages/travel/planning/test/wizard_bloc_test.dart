@@ -83,12 +83,29 @@ void main() {
     );
 
     test(
-      'NextStepEvent advances step and PreviousStepEvent decrements step',
+      'NextStepEvent advances step when valid and PreviousStepEvent decrements step',
       () async {
         bloc.add(const InitializeWizardEvent());
         await bloc.stream.firstWhere(
           (s) => s.status == PlanningWizardStatus.editing,
         );
+
+        // Make Step 1 valid
+        bloc.add(
+          const UpdateDestinationAtEvent(
+            0,
+            PlanningDestination(
+              providerPlaceId: 'place_paris_001',
+              name: 'Paris',
+              arrivalDate: '2026-09-01',
+              arrivalTime: '09:00',
+              departureDate: '2026-09-05',
+              departureTime: '18:00',
+              order: 0,
+            ),
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
 
         bloc.add(const NextStepEvent());
         await bloc.stream.firstWhere((s) => s.currentStep == 2);

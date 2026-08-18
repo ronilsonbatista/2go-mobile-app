@@ -11,8 +11,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  app_roteiros_api: any
+  dio: ^5.7.0
   twogo_core: any
   twogo_design_system: any
+  twogo_networking: any
 
 dev_dependencies:
   flutter_test:
