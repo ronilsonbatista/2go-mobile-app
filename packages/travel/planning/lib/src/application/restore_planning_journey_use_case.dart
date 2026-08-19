@@ -22,6 +22,7 @@ class RestorePlanningJourneyUseCase {
   Future<Result<GuestJourney>> call(String journeyId) async {
     final token = await _credentialStorage.readGuestToken(journeyId);
     if (token == null || token.isEmpty) {
+      await _draftStorage.clearDraft();
       return Result.failure(const MissingGuestJourneyCredentialFailure());
     }
 
@@ -40,6 +41,13 @@ class RestorePlanningJourneyUseCase {
         ),
       );
       return Result.success(journey);
-    }, (failure) => Result.failure(failure));
+    }, (failure) async {
+      if (failure is GuestJourneyExpiredFailure ||
+          failure is GuestJourneyNotFoundFailure) {
+        await _draftStorage.clearDraft();
+        await _credentialStorage.clearGuestToken(journeyId);
+      }
+      return Result.failure(failure);
+    });
   }
 }

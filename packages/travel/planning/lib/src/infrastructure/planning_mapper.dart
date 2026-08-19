@@ -5,6 +5,7 @@ import '../domain/models/planning_activity_window.dart';
 import '../domain/models/planning_destination.dart';
 import '../domain/models/planning_generation_status.dart';
 import '../domain/models/planning_interest.dart';
+import '../domain/models/planning_preview.dart';
 import '../domain/models/planning_travelers.dart';
 
 class PlanningMapper {
@@ -44,6 +45,75 @@ class PlanningMapper {
           ? DateTime.tryParse(dto.generationFailedAt!)
           : null,
       generationErrorCode: dto.generationErrorCode,
+    );
+  }
+
+  static PlanningPreview toPreviewDomain(PlanningPreviewResponseDto dto) {
+    return PlanningPreview(
+      id: dto.id,
+      status: GuestJourneyStatus.fromRaw(dto.status),
+      summary: PlanningPreviewSummary(
+        destinations: dto.summary.destinations,
+        startDate: dto.summary.startDate,
+        endDate: dto.summary.endDate,
+        totalDays: dto.summary.totalDays,
+        coverImageUrl: dto.summary.coverImageUrl,
+      ),
+      policy: PlanningPreviewPolicy(
+        visibleDayCount: dto.previewPolicy.visibleDayCount,
+        autoPaywallDelaySeconds: dto.previewPolicy.autoPaywallDelaySeconds,
+      ),
+      visibleDays: dto.visibleDays
+          .map(
+            (day) => PlanningVisibleDay(
+              dayNumber: day.dayNumber,
+              date: day.date,
+              destination: day.destination,
+              title: day.title,
+              description: day.description,
+              activities: day.activities
+                  .map(
+                    (act) => PlanningVisibleActivity(
+                      title: act.title,
+                      description: act.description,
+                      category: act.category,
+                      period: act.period,
+                      cost: act.cost,
+                      order: act.order,
+                      location: act.location,
+                      latitude: act.latitude,
+                      longitude: act.longitude,
+                      providerPlaceId: act.providerPlaceId,
+                      imageUrl: act.imageUrl,
+                      reservationUrl: act.reservationUrl,
+                      ticketUrl: act.ticketUrl,
+                      sourceType: act.sourceType,
+                      sourceId: act.sourceId,
+                    ),
+                  )
+                  .toList(),
+            ),
+          )
+          .toList(),
+      lockedDays: dto.lockedDays
+          .map(
+            (day) => PlanningLockedDay(
+              dayNumber: day.dayNumber,
+              date: day.date,
+              destination: day.destination,
+              title: day.title,
+              locked: day.locked,
+            ),
+          )
+          .toList(),
+      unlockOffer: PlanningUnlockOffer(
+        productId: dto.unlockOffer.productId,
+        code: dto.unlockOffer.code,
+        name: dto.unlockOffer.name,
+        price: dto.unlockOffer.price,
+        currency: dto.unlockOffer.currency,
+        available: dto.unlockOffer.available,
+      ),
     );
   }
 

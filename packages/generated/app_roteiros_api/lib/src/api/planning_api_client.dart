@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../models/create_planning_session_dto.dart';
 import '../models/generation_status_response_dto.dart';
+import '../models/planning_preview_response_dto.dart';
 import '../models/planning_session_response_dto.dart';
 import '../models/update_planning_session_dto.dart';
 
@@ -74,5 +75,16 @@ class PlanningApiClient {
       options: Options(headers: {'X-Guest-Token': guestToken}),
     );
     return GenerationStatusResponseDto.fromJson(response.data ?? {});
+  }
+
+  Future<PlanningPreviewResponseDto> getPreview(
+    String id, {
+    required String guestToken,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/planning-sessions/$id/preview',
+      options: Options(headers: {'X-Guest-Token': guestToken}),
+    );
+    return PlanningPreviewResponseDto.fromJson(response.data ?? {});
   }
 }

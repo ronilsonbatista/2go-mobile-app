@@ -200,6 +200,73 @@ class FakePlanningApiClient implements PlanningApiClient {
     );
     return status;
   }
+
+  @override
+  Future<PlanningPreviewResponseDto> getPreview(
+    String id, {
+    required String guestToken,
+  }) async {
+    if (guestToken == 'expired-token') {
+      throw DioException(
+        requestOptions: RequestOptions(path: '/planning-sessions/$id/preview'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/planning-sessions/$id/preview'),
+          statusCode: 401,
+          data: {
+            'code': 'PLANNING_JOURNEY_EXPIRED',
+            'message': 'Sessão expirada',
+          },
+        ),
+      );
+    }
+
+    return PlanningPreviewResponseDto(
+      id: id,
+      status: 'PREVIEW_READY',
+      summary: PlanningPreviewSummaryDto(
+        destinations: [
+          {'name': 'Roma'}
+        ],
+        totalDays: 4,
+      ),
+      previewPolicy: PlanningPreviewPolicyDto(
+        visibleDayCount: 1,
+        autoPaywallDelaySeconds: 10,
+      ),
+      visibleDays: [
+        PlanningVisibleDayDto(
+          dayNumber: 1,
+          destination: 'Roma',
+          title: 'Dia 1',
+          activities: [
+            PlanningVisibleActivityDto(
+              title: 'Coliseu',
+              category: 'TOURIST_ATTRACTION',
+              cost: 20.0,
+              order: 1,
+              sourceType: 'BASE_ATTRACTION',
+            ),
+          ],
+        ),
+      ],
+      lockedDays: [
+        PlanningLockedDayDto(
+          dayNumber: 2,
+          destination: 'Roma',
+          title: 'Dia 2',
+          locked: true,
+        ),
+      ],
+      unlockOffer: PlanningUnlockOfferDto(
+        productId: 'prod-123',
+        code: 'ITINERARY_FULL_ACCESS',
+        name: 'Acesso Completo',
+        price: 19.99,
+        currency: 'BRL',
+        available: true,
+      ),
+    );
+  }
 }
 
 void main() {
@@ -285,7 +352,7 @@ void main() {
     );
 
     test(
-      'startGeneration and getGenerationStatus return generation status and handle 401 guest error without auth refresh',
+      'startGeneration, getGenerationStatus, and getPreview handle 401 guest error without auth refresh',
       () async {
         await credentialStorage.saveGuestToken(
           journeyId: 'journey-123',
@@ -301,14 +368,16 @@ void main() {
         expect(statusRes.isSuccess, true);
         expect(statusRes.getOrNull()!.status, GuestJourneyStatus.generating);
 
-        // Test 401 Guest isolation
+        final previewRes = await repository.getPreview('journey-123');
+        expect(previewRes.isSuccess, true);
+        expect(previewRes.getOrNull()!.status, GuestJourneyStatus.previewReady);
+
+        // Test 401 Guest isolation on getPreview
         await credentialStorage.saveGuestToken(
           journeyId: 'expired-journey',
           guestToken: 'expired-token',
         );
-        final expiredRes = await repository.getGenerationStatus(
-          'expired-journey',
-        );
+        final expiredRes = await repository.getPreview('expired-journey');
         expect(expiredRes.isFailure, true);
         expect(
           expiredRes.exceptionOrNull(),

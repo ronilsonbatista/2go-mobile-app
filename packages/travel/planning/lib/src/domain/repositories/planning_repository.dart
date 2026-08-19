@@ -4,6 +4,7 @@ import '../models/planning_activity_window.dart';
 import '../models/planning_destination.dart';
 import '../models/planning_generation_status.dart';
 import '../models/planning_interest.dart';
+import '../models/planning_preview.dart';
 import '../models/planning_travelers.dart';
 
 abstract interface class PlanningRepository {
@@ -32,4 +33,6 @@ abstract interface class PlanningRepository {
   Future<Result<PlanningGenerationStatus>> getGenerationStatus(
     String journeyId,
   );
+
+  Future<Result<PlanningPreview>> getPreview(String journeyId);
 }

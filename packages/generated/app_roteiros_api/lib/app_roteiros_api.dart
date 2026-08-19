@@ -11,6 +11,7 @@ export 'src/models/generation_status_response_dto.dart';
 export 'src/models/login_dto.dart';
 export 'src/models/planning_activity_window_dto.dart';
 export 'src/models/planning_destination_dto.dart';
+export 'src/models/planning_preview_response_dto.dart';
 export 'src/models/planning_session_response_dto.dart';
 export 'src/models/planning_travelers_dto.dart';
 export 'src/models/refresh_token_dto.dart';

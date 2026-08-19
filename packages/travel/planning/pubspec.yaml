@@ -14,6 +14,7 @@ dependencies:
     sdk: flutter
   flutter_bloc: ^8.1.6
   app_roteiros_api: any
+  equatable: any
   twogo_core: any
   twogo_design_system: any
   twogo_networking: any

@@ -8,6 +8,7 @@ import '../../domain/models/planning_activity_window.dart';
 import '../../domain/models/planning_destination.dart';
 import '../../domain/models/planning_generation_status.dart';
 import '../../domain/models/planning_interest.dart';
+import '../../domain/models/planning_preview.dart';
 import '../../domain/models/planning_travelers.dart';
 import '../../domain/repositories/planning_repository.dart';
 import '../planning_mapper.dart';
@@ -155,6 +156,24 @@ class PlanningRepositoryImpl implements PlanningRepository {
         guestToken: token,
       );
       return Result.success(PlanningMapper.toGenerationStatusDomain(response));
+    } catch (e) {
+      return Result.failure(_mapError(e));
+    }
+  }
+
+  @override
+  Future<Result<PlanningPreview>> getPreview(String journeyId) async {
+    final token = await _credentialStorage.readGuestToken(journeyId);
+    if (token == null || token.isEmpty) {
+      return Result.failure(const MissingGuestJourneyCredentialFailure());
+    }
+
+    try {
+      final response = await _apiClient.getPreview(
+        journeyId,
+        guestToken: token,
+      );
+      return Result.success(PlanningMapper.toPreviewDomain(response));
     } catch (e) {
       return Result.failure(_mapError(e));
     }
