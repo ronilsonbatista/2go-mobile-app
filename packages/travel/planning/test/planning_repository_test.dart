@@ -152,7 +152,9 @@ class FakePlanningApiClient implements PlanningApiClient {
       throw DioException(
         requestOptions: RequestOptions(path: '/planning-sessions/$id/generate'),
         response: Response(
-          requestOptions: RequestOptions(path: '/planning-sessions/$id/generate'),
+          requestOptions: RequestOptions(
+            path: '/planning-sessions/$id/generate',
+          ),
           statusCode: 401,
           data: {
             'code': 'PLANNING_JOURNEY_EXPIRED',
@@ -210,7 +212,9 @@ class FakePlanningApiClient implements PlanningApiClient {
       throw DioException(
         requestOptions: RequestOptions(path: '/planning-sessions/$id/preview'),
         response: Response(
-          requestOptions: RequestOptions(path: '/planning-sessions/$id/preview'),
+          requestOptions: RequestOptions(
+            path: '/planning-sessions/$id/preview',
+          ),
           statusCode: 401,
           data: {
             'code': 'PLANNING_JOURNEY_EXPIRED',
@@ -225,7 +229,7 @@ class FakePlanningApiClient implements PlanningApiClient {
       status: 'PREVIEW_READY',
       summary: PlanningPreviewSummaryDto(
         destinations: [
-          {'name': 'Roma'}
+          {'name': 'Roma'},
         ],
         totalDays: 4,
       ),
@@ -265,6 +269,32 @@ class FakePlanningApiClient implements PlanningApiClient {
         currency: 'BRL',
         available: true,
       ),
+    );
+  }
+
+  @override
+  Future<ClaimGuestJourneyResponseDto> claimJourney(
+    String id, {
+    required String guestToken,
+  }) async {
+    if (guestToken == 'expired-token') {
+      throw DioException(
+        requestOptions: RequestOptions(path: '/planning-sessions/$id/claim'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/planning-sessions/$id/claim'),
+          statusCode: 401,
+          data: {
+            'code': 'PLANNING_JOURNEY_EXPIRED',
+            'message': 'Sessão expirada',
+          },
+        ),
+      );
+    }
+    return ClaimGuestJourneyResponseDto(
+      journeyId: id,
+      tripId: 'trip-materialized-123',
+      status: 'CLAIMED',
+      nextAction: 'CHECKOUT',
     );
   }
 }
@@ -379,10 +409,7 @@ void main() {
         );
         final expiredRes = await repository.getPreview('expired-journey');
         expect(expiredRes.isFailure, true);
-        expect(
-          expiredRes.exceptionOrNull(),
-          isA<GuestJourneyExpiredFailure>(),
-        );
+        expect(expiredRes.exceptionOrNull(), isA<GuestJourneyExpiredFailure>());
       },
     );
   });

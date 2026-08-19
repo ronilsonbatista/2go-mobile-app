@@ -9,10 +9,9 @@ class PlanningPreviewBloc
   final GetPlanningPreviewUseCase _getPreviewUseCase;
   Timer? _autoPaywallTimer;
 
-  PlanningPreviewBloc({
-    required GetPlanningPreviewUseCase getPreviewUseCase,
-  })  : _getPreviewUseCase = getPreviewUseCase,
-        super(const PlanningPreviewInitialState()) {
+  PlanningPreviewBloc({required GetPlanningPreviewUseCase getPreviewUseCase})
+    : _getPreviewUseCase = getPreviewUseCase,
+      super(const PlanningPreviewInitialState()) {
     on<FetchPlanningPreviewEvent>(_onFetchPreview);
     on<SelectPreviewDayEvent>(_onSelectDay);
     on<OpenPaywallEvent>(_onOpenPaywall);
@@ -95,8 +94,9 @@ class PlanningPreviewBloc
       current.copyWith(
         isPaywallOpen: true,
         paywallSource: event.source,
-        hasAutoOpenedPaywall:
-            event.source == 'AUTO' ? true : current.hasAutoOpenedPaywall,
+        hasAutoOpenedPaywall: event.source == 'AUTO'
+            ? true
+            : current.hasAutoOpenedPaywall,
       ),
     );
   }

@@ -24,12 +24,12 @@ class PlanningPreviewSummaryDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'destinations': destinations,
-        'startDate': startDate,
-        'endDate': endDate,
-        'totalDays': totalDays,
-        'coverImageUrl': coverImageUrl,
-      };
+    'destinations': destinations,
+    'startDate': startDate,
+    'endDate': endDate,
+    'totalDays': totalDays,
+    'coverImageUrl': coverImageUrl,
+  };
 }
 
 class PlanningPreviewPolicyDto {
@@ -49,9 +49,9 @@ class PlanningPreviewPolicyDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'visibleDayCount': visibleDayCount,
-        'autoPaywallDelaySeconds': autoPaywallDelaySeconds,
-      };
+    'visibleDayCount': visibleDayCount,
+    'autoPaywallDelaySeconds': autoPaywallDelaySeconds,
+  };
 }
 
 class PlanningVisibleActivityDto {
@@ -110,22 +110,22 @@ class PlanningVisibleActivityDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'description': description,
-        'category': category,
-        'period': period,
-        'cost': cost,
-        'order': order,
-        'location': location,
-        'latitude': latitude,
-        'longitude': longitude,
-        'providerPlaceId': providerPlaceId,
-        'imageUrl': imageUrl,
-        'reservationUrl': reservationUrl,
-        'ticketUrl': ticketUrl,
-        'sourceType': sourceType,
-        'sourceId': sourceId,
-      };
+    'title': title,
+    'description': description,
+    'category': category,
+    'period': period,
+    'cost': cost,
+    'order': order,
+    'location': location,
+    'latitude': latitude,
+    'longitude': longitude,
+    'providerPlaceId': providerPlaceId,
+    'imageUrl': imageUrl,
+    'reservationUrl': reservationUrl,
+    'ticketUrl': ticketUrl,
+    'sourceType': sourceType,
+    'sourceId': sourceId,
+  };
 }
 
 class PlanningVisibleDayDto {
@@ -154,19 +154,22 @@ class PlanningVisibleDayDto {
       title: json['title'] as String? ?? 'Dia 1',
       description: json['description'] as String?,
       activities: rawActivities
-          .map((a) => PlanningVisibleActivityDto.fromJson(a as Map<String, dynamic>))
+          .map(
+            (a) =>
+                PlanningVisibleActivityDto.fromJson(a as Map<String, dynamic>),
+          )
           .toList(),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'dayNumber': dayNumber,
-        'date': date,
-        'destination': destination,
-        'title': title,
-        'description': description,
-        'activities': activities.map((a) => a.toJson()).toList(),
-      };
+    'dayNumber': dayNumber,
+    'date': date,
+    'destination': destination,
+    'title': title,
+    'description': description,
+    'activities': activities.map((a) => a.toJson()).toList(),
+  };
 }
 
 class PlanningLockedDayDto {
@@ -195,12 +198,12 @@ class PlanningLockedDayDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'dayNumber': dayNumber,
-        'date': date,
-        'destination': destination,
-        'title': title,
-        'locked': locked,
-      };
+    'dayNumber': dayNumber,
+    'date': date,
+    'destination': destination,
+    'title': title,
+    'locked': locked,
+  };
 }
 
 class PlanningUnlockOfferDto {
@@ -232,13 +235,13 @@ class PlanningUnlockOfferDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'productId': productId,
-        'code': code,
-        'name': name,
-        'price': price,
-        'currency': currency,
-        'available': available,
-      };
+    'productId': productId,
+    'code': code,
+    'name': name,
+    'price': price,
+    'currency': currency,
+    'available': available,
+  };
 }
 
 class PlanningPreviewResponseDto {
@@ -283,12 +286,12 @@ class PlanningPreviewResponseDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'status': status,
-        'summary': summary.toJson(),
-        'previewPolicy': previewPolicy.toJson(),
-        'visibleDays': visibleDays.map((d) => d.toJson()).toList(),
-        'lockedDays': lockedDays.map((d) => d.toJson()).toList(),
-        'unlockOffer': unlockOffer.toJson(),
-      };
+    'id': id,
+    'status': status,
+    'summary': summary.toJson(),
+    'previewPolicy': previewPolicy.toJson(),
+    'visibleDays': visibleDays.map((d) => d.toJson()).toList(),
+    'lockedDays': lockedDays.map((d) => d.toJson()).toList(),
+    'unlockOffer': unlockOffer.toJson(),
+  };
 }

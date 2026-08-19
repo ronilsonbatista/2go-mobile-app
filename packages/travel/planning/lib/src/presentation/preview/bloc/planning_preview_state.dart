@@ -50,12 +50,12 @@ class PlanningPreviewLoadedState extends PlanningPreviewState {
 
   @override
   List<Object?> get props => [
-        preview,
-        selectedDayNumber,
-        isPaywallOpen,
-        paywallSource,
-        hasAutoOpenedPaywall,
-      ];
+    preview,
+    selectedDayNumber,
+    isPaywallOpen,
+    paywallSource,
+    hasAutoOpenedPaywall,
+  ];
 }
 
 class PlanningPreviewErrorState extends PlanningPreviewState {
@@ -84,10 +84,10 @@ class PlanningPreviewUnlockRequestedState extends PlanningPreviewState {
 
   @override
   List<Object?> get props => [
-        journeyId,
-        productId,
-        productCode,
-        price,
-        currency,
-      ];
+    journeyId,
+    productId,
+    productCode,
+    price,
+    currency,
+  ];
 }

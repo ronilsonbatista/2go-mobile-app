@@ -18,12 +18,12 @@ class PlanningPreviewSummary extends Equatable {
 
   @override
   List<Object?> get props => [
-        destinations,
-        startDate,
-        endDate,
-        totalDays,
-        coverImageUrl,
-      ];
+    destinations,
+    startDate,
+    endDate,
+    totalDays,
+    coverImageUrl,
+  ];
 }
 
 class PlanningPreviewPolicy extends Equatable {
@@ -81,22 +81,22 @@ class PlanningVisibleActivity extends Equatable {
 
   @override
   List<Object?> get props => [
-        title,
-        description,
-        category,
-        period,
-        cost,
-        order,
-        location,
-        latitude,
-        longitude,
-        providerPlaceId,
-        imageUrl,
-        reservationUrl,
-        ticketUrl,
-        sourceType,
-        sourceId,
-      ];
+    title,
+    description,
+    category,
+    period,
+    cost,
+    order,
+    location,
+    latitude,
+    longitude,
+    providerPlaceId,
+    imageUrl,
+    reservationUrl,
+    ticketUrl,
+    sourceType,
+    sourceId,
+  ];
 }
 
 class PlanningVisibleDay extends Equatable {
@@ -118,13 +118,13 @@ class PlanningVisibleDay extends Equatable {
 
   @override
   List<Object?> get props => [
-        dayNumber,
-        date,
-        destination,
-        title,
-        description,
-        activities,
-      ];
+    dayNumber,
+    date,
+    destination,
+    title,
+    description,
+    activities,
+  ];
 }
 
 class PlanningLockedDay extends Equatable {
@@ -165,13 +165,13 @@ class PlanningUnlockOffer extends Equatable {
 
   @override
   List<Object?> get props => [
-        productId,
-        code,
-        name,
-        price,
-        currency,
-        available,
-      ];
+    productId,
+    code,
+    name,
+    price,
+    currency,
+    available,
+  ];
 }
 
 class PlanningPreview extends Equatable {
@@ -195,12 +195,12 @@ class PlanningPreview extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        status,
-        summary,
-        policy,
-        visibleDays,
-        lockedDays,
-        unlockOffer,
-      ];
+    id,
+    status,
+    summary,
+    policy,
+    visibleDays,
+    lockedDays,
+    unlockOffer,
+  ];
 }

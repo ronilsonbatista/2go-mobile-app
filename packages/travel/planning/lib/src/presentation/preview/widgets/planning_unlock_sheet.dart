@@ -83,11 +83,20 @@ class PlanningUnlockSheet extends StatelessWidget {
             const SizedBox(height: TwoGoSpacing.lg),
 
             // Benefits
-            _buildBenefitRow(Icons.calendar_month_rounded, 'Acesso ilimitado a todos os dias do roteiro'),
+            _buildBenefitRow(
+              Icons.calendar_month_rounded,
+              'Acesso ilimitado a todos os dias do roteiro',
+            ),
             const SizedBox(height: TwoGoSpacing.sm),
-            _buildBenefitRow(Icons.restaurant_menu_rounded, 'Seleção exclusiva de restaurantes e experiências'),
+            _buildBenefitRow(
+              Icons.restaurant_menu_rounded,
+              'Seleção exclusiva de restaurantes e experiências',
+            ),
             const SizedBox(height: TwoGoSpacing.sm),
-            _buildBenefitRow(Icons.edit_road_rounded, 'Personalização total do itinerário'),
+            _buildBenefitRow(
+              Icons.edit_road_rounded,
+              'Personalização total do itinerário',
+            ),
             const SizedBox(height: TwoGoSpacing.xl),
 
             // CTA Button

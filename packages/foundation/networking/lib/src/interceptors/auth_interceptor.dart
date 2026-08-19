@@ -52,7 +52,7 @@ class AuthInterceptor extends Interceptor {
     final requestOptions = err.requestOptions;
 
     if (response?.statusCode == 401 &&
-        !_shouldSkipJwtRefresh(requestOptions) &&
+        !_shouldSkipJwtRefresh(err) &&
         _refreshCoordinator != null) {
       try {
         final newTokens = await _refreshCoordinator.handleRefresh();
@@ -60,17 +60,19 @@ class AuthInterceptor extends Interceptor {
         requestOptions.headers['Authorization'] =
             'Bearer ${newTokens.accessToken}';
 
-        final client = Dio(BaseOptions(baseUrl: requestOptions.baseUrl));
-        final clonedResponse = await client.request<dynamic>(
-          requestOptions.path,
+        final fetcher = requestOptions.extra['dioFetch'] as Future<Response<dynamic>> Function(RequestOptions)? ??
+            (opts) => Dio(BaseOptions(baseUrl: opts.baseUrl)).fetch<dynamic>(opts);
+
+        final retryOptions = RequestOptions(
+          path: requestOptions.path,
+          method: requestOptions.method,
           data: requestOptions.data,
           queryParameters: requestOptions.queryParameters,
-          options: Options(
-            method: requestOptions.method,
-            headers: requestOptions.headers,
-          ),
+          headers: Map<String, dynamic>.from(requestOptions.headers),
+          extra: Map<String, dynamic>.from(requestOptions.extra),
         );
 
+        final clonedResponse = await fetcher(retryOptions);
         return handler.resolve(clonedResponse);
       } catch (refreshError) {
         return handler.next(err);
@@ -86,11 +88,32 @@ class AuthInterceptor extends Interceptor {
 
   bool _isGuestPath(RequestOptions options) {
     if (options.extra['isGuestRequest'] == true) return true;
+    if (options.extra['isDualAuthRequest'] == true ||
+        options.path.contains('/claim')) {
+      return false;
+    }
     return _guestPaths.any((p) => options.path.contains(p));
   }
 
-  bool _shouldSkipJwtRefresh(RequestOptions options) {
+  bool _shouldSkipJwtRefresh(DioException err) {
+    final options = err.requestOptions;
     if (options.extra['skipAuthRefresh'] == true) return true;
-    return _isUnprotectedPath(options.path) || _isGuestPath(options);
+    if (_isUnprotectedPath(options.path)) return true;
+
+    final data = err.response?.data;
+    if (data is Map<String, dynamic>) {
+      final code = data['code'] as String?;
+      if (code == 'PLANNING_JOURNEY_INVALID_TOKEN' ||
+          code == 'PLANNING_JOURNEY_EXPIRED') {
+        return true;
+      }
+    }
+
+    if (options.path.contains('/claim') ||
+        options.extra['isDualAuthRequest'] == true) {
+      return false;
+    }
+
+    return _isGuestPath(options);
   }
 }

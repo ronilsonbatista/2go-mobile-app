@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:twogo_core/twogo_core.dart';
 import 'package:twogo_security/twogo_security.dart';
 import '../../domain/failures/planning_failures.dart';
+import '../../domain/models/claim_journey_result.dart';
 import '../../domain/models/guest_journey.dart';
 import '../../domain/models/planning_activity_window.dart';
 import '../../domain/models/planning_destination.dart';
@@ -179,6 +180,24 @@ class PlanningRepositoryImpl implements PlanningRepository {
     }
   }
 
+  @override
+  Future<Result<ClaimJourneyResult>> claimJourney(String journeyId) async {
+    final token = await _credentialStorage.readGuestToken(journeyId);
+    if (token == null || token.isEmpty) {
+      return Result.failure(const MissingGuestJourneyCredentialFailure());
+    }
+
+    try {
+      final response = await _apiClient.claimJourney(
+        journeyId,
+        guestToken: token,
+      );
+      return Result.success(PlanningMapper.toClaimJourneyDomain(response));
+    } catch (e) {
+      return Result.failure(_mapError(e));
+    }
+  }
+
   AppFailure _mapError(Object error) {
     if (error is DioException) {
       final data = error.response?.data;
@@ -194,6 +213,8 @@ class PlanningRepositoryImpl implements PlanningRepository {
             return const GuestJourneyExpiredFailure();
           case 'PLANNING_JOURNEY_LOCKED':
             return const GuestJourneyLockedFailure();
+          case 'PLANNING_JOURNEY_ALREADY_CLAIMED':
+          case 'PLANNING_JOURNEY_NOT_CLAIMABLE':
           case 'PLANNING_INCOMPLETE':
             return PlanningIncompleteFailure(message);
           case 'PLANNING_INVALID_DESTINATIONS':

@@ -80,7 +80,10 @@ class _PlanningGenerationPageState extends State<PlanningGenerationPage>
     );
   }
 
-  Widget _buildLoadingView(BuildContext context, PlanningGenerationState state) {
+  Widget _buildLoadingView(
+    BuildContext context,
+    PlanningGenerationState state,
+  ) {
     final theme = Theme.of(context);
     final isNetworkWarning =
         state.status == PlanningGenerationPageStatus.temporaryNetworkFailure;
@@ -92,11 +95,7 @@ class _PlanningGenerationPageState extends State<PlanningGenerationPage>
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Spacer(),
-          const Center(
-            child: TwoGoLoadingIndicator(
-              size: 56,
-            ),
-          ),
+          const Center(child: TwoGoLoadingIndicator(size: 56)),
           const SizedBox(height: 32),
           Text(
             'Gerando seu roteiro...',
@@ -148,7 +147,10 @@ class _PlanningGenerationPageState extends State<PlanningGenerationPage>
     );
   }
 
-  Widget _buildFailureView(BuildContext context, PlanningGenerationState state) {
+  Widget _buildFailureView(
+    BuildContext context,
+    PlanningGenerationState state,
+  ) {
     final theme = Theme.of(context);
 
     return Padding(
@@ -187,8 +189,8 @@ class _PlanningGenerationPageState extends State<PlanningGenerationPage>
             variant: TwoGoButtonVariant.primary,
             onPressed: () {
               context.read<PlanningGenerationBloc>().add(
-                    const RetryGenerationEvent(),
-                  );
+                const RetryGenerationEvent(),
+              );
             },
           ),
         ],

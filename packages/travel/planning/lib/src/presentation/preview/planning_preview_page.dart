@@ -144,10 +144,11 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                   orElse: () => null,
                 );
 
-            final destinationName = summary.destinations.isNotEmpty &&
+            final destinationName =
+                summary.destinations.isNotEmpty &&
                     summary.destinations[0] is Map
                 ? (summary.destinations[0] as Map)['name']?.toString() ??
-                    'Sua Viagem'
+                      'Sua Viagem'
                 : 'Sua Viagem';
 
             return Scaffold(
@@ -197,9 +198,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(TwoGoSpacing.md),
-      decoration: const BoxDecoration(
-        color: TwoGoColors.neutral900,
-      ),
+      decoration: const BoxDecoration(color: TwoGoColors.neutral900),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -317,11 +316,11 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
         ],
         const SizedBox(height: TwoGoSpacing.md),
         ...day.activities.asMap().entries.map(
-              (entry) => PlanningTimelineItem(
-                activity: entry.value,
-                isLast: entry.key == day.activities.length - 1,
-              ),
-            ),
+          (entry) => PlanningTimelineItem(
+            activity: entry.value,
+            isLast: entry.key == day.activities.length - 1,
+          ),
+        ),
       ],
     );
   }
@@ -387,9 +386,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
       padding: const EdgeInsets.all(TwoGoSpacing.md),
       decoration: const BoxDecoration(
         color: TwoGoColors.neutral0,
-        border: Border(
-          top: BorderSide(color: TwoGoColors.neutral200),
-        ),
+        border: Border(top: BorderSide(color: TwoGoColors.neutral200)),
       ),
       child: Row(
         children: [

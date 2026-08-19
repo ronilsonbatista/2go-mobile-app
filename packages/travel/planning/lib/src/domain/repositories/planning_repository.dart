@@ -1,4 +1,5 @@
 import 'package:twogo_core/twogo_core.dart';
+import '../models/claim_journey_result.dart';
 import '../models/guest_journey.dart';
 import '../models/planning_activity_window.dart';
 import '../models/planning_destination.dart';
@@ -35,4 +36,6 @@ abstract interface class PlanningRepository {
   );
 
   Future<Result<PlanningPreview>> getPreview(String journeyId);
+
+  Future<Result<ClaimJourneyResult>> claimJourney(String journeyId);
 }

@@ -1,4 +1,5 @@
 import 'package:app_roteiros_api/app_roteiros_api.dart';
+import '../domain/models/claim_journey_result.dart';
 import '../domain/models/guest_journey.dart';
 import '../domain/models/guest_journey_status.dart';
 import '../domain/models/planning_activity_window.dart';
@@ -114,6 +115,17 @@ class PlanningMapper {
         currency: dto.unlockOffer.currency,
         available: dto.unlockOffer.available,
       ),
+    );
+  }
+
+  static ClaimJourneyResult toClaimJourneyDomain(
+    ClaimGuestJourneyResponseDto dto,
+  ) {
+    return ClaimJourneyResult(
+      journeyId: dto.journeyId,
+      tripId: dto.tripId,
+      status: dto.status,
+      nextAction: dto.nextAction,
     );
   }
 

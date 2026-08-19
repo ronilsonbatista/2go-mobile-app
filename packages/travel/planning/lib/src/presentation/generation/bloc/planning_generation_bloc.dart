@@ -19,9 +19,9 @@ class PlanningGenerationBloc
     required StartPlanningGenerationUseCase startGenerationUseCase,
     required GetPlanningGenerationStatusUseCase getStatusUseCase,
     PlanningGenerationState initialState = const PlanningGenerationState(),
-  })  : _startGenerationUseCase = startGenerationUseCase,
-        _getStatusUseCase = getStatusUseCase,
-        super(initialState) {
+  }) : _startGenerationUseCase = startGenerationUseCase,
+       _getStatusUseCase = getStatusUseCase,
+       super(initialState) {
     on<StartGenerationEvent>(_onStartGeneration);
     on<CheckGenerationStatusEvent>(_onCheckStatus);
     on<RetryGenerationEvent>(_onRetry);
@@ -82,7 +82,8 @@ class PlanningGenerationBloc
             generationStatus: genStatus,
             status: pageStatus,
             errorMessage: genStatus.isFailed
-                ? (genStatus.generationErrorCode ?? 'Ocorreu um erro ao gerar seu roteiro.')
+                ? (genStatus.generationErrorCode ??
+                      'Ocorreu um erro ao gerar seu roteiro.')
                 : null,
           ),
         );

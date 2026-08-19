@@ -5,6 +5,7 @@ export 'src/api/places_api_client.dart';
 export 'src/api/planning_api_client.dart';
 export 'src/models/api_error_response_dto.dart';
 export 'src/models/auth_tokens_response_dto.dart';
+export 'src/models/claim_guest_journey_response_dto.dart';
 export 'src/models/create_planning_session_dto.dart';
 export 'src/models/forgot_password_dto.dart';
 export 'src/models/generation_status_response_dto.dart';

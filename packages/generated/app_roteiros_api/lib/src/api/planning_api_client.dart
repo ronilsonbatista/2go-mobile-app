@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../models/claim_guest_journey_response_dto.dart';
 import '../models/create_planning_session_dto.dart';
 import '../models/generation_status_response_dto.dart';
 import '../models/planning_preview_response_dto.dart';
@@ -86,5 +87,16 @@ class PlanningApiClient {
       options: Options(headers: {'X-Guest-Token': guestToken}),
     );
     return PlanningPreviewResponseDto.fromJson(response.data ?? {});
+  }
+
+  Future<ClaimGuestJourneyResponseDto> claimJourney(
+    String id, {
+    required String guestToken,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/planning-sessions/$id/claim',
+      options: Options(headers: {'X-Guest-Token': guestToken}),
+    );
+    return ClaimGuestJourneyResponseDto.fromJson(response.data ?? {});
   }
 }

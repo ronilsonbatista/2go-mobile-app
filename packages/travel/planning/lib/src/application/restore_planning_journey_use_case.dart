@@ -28,26 +28,29 @@ class RestorePlanningJourneyUseCase {
 
     final result = await _repository.getJourney(journeyId);
 
-    return result.fold((journey) async {
-      await _draftStorage.saveDraft(
-        PlanningDraft(
-          activeJourneyId: journey.id,
-          currentStep: journey.currentStep,
-          answersVersion: journey.answersVersion,
-          budgetLevel: journey.budgetLevel,
-          travelStyle: journey.travelStyle,
-          lastSyncedAt: DateTime.now(),
-          isDirty: false,
-        ),
-      );
-      return Result.success(journey);
-    }, (failure) async {
-      if (failure is GuestJourneyExpiredFailure ||
-          failure is GuestJourneyNotFoundFailure) {
-        await _draftStorage.clearDraft();
-        await _credentialStorage.clearGuestToken(journeyId);
-      }
-      return Result.failure(failure);
-    });
+    return result.fold(
+      (journey) async {
+        await _draftStorage.saveDraft(
+          PlanningDraft(
+            activeJourneyId: journey.id,
+            currentStep: journey.currentStep,
+            answersVersion: journey.answersVersion,
+            budgetLevel: journey.budgetLevel,
+            travelStyle: journey.travelStyle,
+            lastSyncedAt: DateTime.now(),
+            isDirty: false,
+          ),
+        );
+        return Result.success(journey);
+      },
+      (failure) async {
+        if (failure is GuestJourneyExpiredFailure ||
+            failure is GuestJourneyNotFoundFailure) {
+          await _draftStorage.clearDraft();
+          await _credentialStorage.clearGuestToken(journeyId);
+        }
+        return Result.failure(failure);
+      },
+    );
   }
 }

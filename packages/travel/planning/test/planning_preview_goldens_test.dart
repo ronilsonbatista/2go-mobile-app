@@ -12,7 +12,7 @@ class FakePlanningRepository implements PlanningRepository {
         status: GuestJourneyStatus.previewReady,
         summary: PlanningPreviewSummary(
           destinations: [
-            {'name': 'Roma', 'arrivalDate': '2026-07-25'}
+            {'name': 'Roma', 'arrivalDate': '2026-07-25'},
           ],
           startDate: '2026-07-25',
           endDate: '2026-07-28',
@@ -70,9 +70,10 @@ class FakePlanningRepository implements PlanningRepository {
   }
 
   @override
-  Future<Result<CreatedGuestJourneyResult>> createJourney(
-          {int? answersVersion, int? initialStep}) async =>
-      throw UnimplementedError();
+  Future<Result<CreatedGuestJourneyResult>> createJourney({
+    int? answersVersion,
+    int? initialStep,
+  }) async => throw UnimplementedError();
 
   @override
   Future<Result<GuestJourney>> finalizeJourney(String journeyId) async =>
@@ -80,8 +81,8 @@ class FakePlanningRepository implements PlanningRepository {
 
   @override
   Future<Result<PlanningGenerationStatus>> getGenerationStatus(
-          String journeyId) async =>
-      throw UnimplementedError();
+    String journeyId,
+  ) async => throw UnimplementedError();
 
   @override
   Future<Result<GuestJourney>> getJourney(String journeyId) async =>
@@ -89,19 +90,23 @@ class FakePlanningRepository implements PlanningRepository {
 
   @override
   Future<Result<PlanningGenerationStatus>> startGeneration(
-          String journeyId) async =>
-      throw UnimplementedError();
+    String journeyId,
+  ) async => throw UnimplementedError();
 
   @override
-  Future<Result<GuestJourney>> updateJourney(
-          {required String journeyId,
-          int? currentStep,
-          List<PlanningDestination>? destinations,
-          PlanningTravelers? travelers,
-          List<PlanningInterest>? interests,
-          PlanningActivityWindow? activityWindow,
-          String? budgetLevel,
-          String? travelStyle}) async =>
+  Future<Result<GuestJourney>> updateJourney({
+    required String journeyId,
+    int? currentStep,
+    List<PlanningDestination>? destinations,
+    PlanningTravelers? travelers,
+    List<PlanningInterest>? interests,
+    PlanningActivityWindow? activityWindow,
+    String? budgetLevel,
+    String? travelStyle,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<Result<ClaimJourneyResult>> claimJourney(String journeyId) async =>
       throw UnimplementedError();
 }
 

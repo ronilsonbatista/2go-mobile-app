@@ -18,7 +18,7 @@ class FakePlanningRepository implements PlanningRepository {
             status: GuestJourneyStatus.previewReady,
             summary: PlanningPreviewSummary(
               destinations: [
-                {'name': 'Roma', 'arrivalDate': '2026-07-25'}
+                {'name': 'Roma', 'arrivalDate': '2026-07-25'},
               ],
               startDate: '2026-07-25',
               endDate: '2026-07-28',
@@ -66,9 +66,10 @@ class FakePlanningRepository implements PlanningRepository {
   }
 
   @override
-  Future<Result<CreatedGuestJourneyResult>> createJourney(
-      {int? answersVersion, int? initialStep}) async =>
-      throw UnimplementedError();
+  Future<Result<CreatedGuestJourneyResult>> createJourney({
+    int? answersVersion,
+    int? initialStep,
+  }) async => throw UnimplementedError();
 
   @override
   Future<Result<GuestJourney>> finalizeJourney(String journeyId) async =>
@@ -76,8 +77,8 @@ class FakePlanningRepository implements PlanningRepository {
 
   @override
   Future<Result<PlanningGenerationStatus>> getGenerationStatus(
-          String journeyId) async =>
-      throw UnimplementedError();
+    String journeyId,
+  ) async => throw UnimplementedError();
 
   @override
   Future<Result<GuestJourney>> getJourney(String journeyId) async =>
@@ -85,19 +86,23 @@ class FakePlanningRepository implements PlanningRepository {
 
   @override
   Future<Result<PlanningGenerationStatus>> startGeneration(
-          String journeyId) async =>
-      throw UnimplementedError();
+    String journeyId,
+  ) async => throw UnimplementedError();
 
   @override
-  Future<Result<GuestJourney>> updateJourney(
-          {required String journeyId,
-          int? currentStep,
-          List<PlanningDestination>? destinations,
-          PlanningTravelers? travelers,
-          List<PlanningInterest>? interests,
-          PlanningActivityWindow? activityWindow,
-          String? budgetLevel,
-          String? travelStyle}) async =>
+  Future<Result<GuestJourney>> updateJourney({
+    required String journeyId,
+    int? currentStep,
+    List<PlanningDestination>? destinations,
+    PlanningTravelers? travelers,
+    List<PlanningInterest>? interests,
+    PlanningActivityWindow? activityWindow,
+    String? budgetLevel,
+    String? travelStyle,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<Result<ClaimJourneyResult>> claimJourney(String journeyId) async =>
       throw UnimplementedError();
 }
 
@@ -135,41 +140,44 @@ void main() {
     });
 
     test(
-        'SelectPreviewDayEvent on locked day emits OpenPaywallEvent with LOCKED_DAY source',
-        () async {
-      bloc.add(const FetchPlanningPreviewEvent(journeyId: 'journey-123'));
-      await bloc.stream.firstWhere((s) => s is PlanningPreviewLoadedState);
+      'SelectPreviewDayEvent on locked day emits OpenPaywallEvent with LOCKED_DAY source',
+      () async {
+        bloc.add(const FetchPlanningPreviewEvent(journeyId: 'journey-123'));
+        await bloc.stream.firstWhere((s) => s is PlanningPreviewLoadedState);
 
-      final expectation = expectLater(
-        bloc.stream,
-        emits(
-          isA<PlanningPreviewLoadedState>()
-              .having((s) => s.isPaywallOpen, 'paywall open', true)
-              .having((s) => s.paywallSource, 'source', 'LOCKED_DAY'),
-        ),
-      );
+        final expectation = expectLater(
+          bloc.stream,
+          emits(
+            isA<PlanningPreviewLoadedState>()
+                .having((s) => s.isPaywallOpen, 'paywall open', true)
+                .having((s) => s.paywallSource, 'source', 'LOCKED_DAY'),
+          ),
+        );
 
-      bloc.add(const SelectPreviewDayEvent(dayNumber: 2));
-      await expectation;
-    });
+        bloc.add(const SelectPreviewDayEvent(dayNumber: 2));
+        await expectation;
+      },
+    );
 
-    test('RequestUnlockEvent emits PlanningPreviewUnlockRequestedState',
-        () async {
-      bloc.add(const FetchPlanningPreviewEvent(journeyId: 'journey-123'));
-      await bloc.stream.firstWhere((s) => s is PlanningPreviewLoadedState);
+    test(
+      'RequestUnlockEvent emits PlanningPreviewUnlockRequestedState',
+      () async {
+        bloc.add(const FetchPlanningPreviewEvent(journeyId: 'journey-123'));
+        await bloc.stream.firstWhere((s) => s is PlanningPreviewLoadedState);
 
-      final expectation = expectLater(
-        bloc.stream,
-        emits(
-          isA<PlanningPreviewUnlockRequestedState>()
-              .having((s) => s.journeyId, 'journey id', 'journey-123')
-              .having((s) => s.productId, 'product id', 'prod-full-access')
-              .having((s) => s.price, 'price', 19.99),
-        ),
-      );
+        final expectation = expectLater(
+          bloc.stream,
+          emits(
+            isA<PlanningPreviewUnlockRequestedState>()
+                .having((s) => s.journeyId, 'journey id', 'journey-123')
+                .having((s) => s.productId, 'product id', 'prod-full-access')
+                .having((s) => s.price, 'price', 19.99),
+          ),
+        );
 
-      bloc.add(const RequestUnlockEvent());
-      await expectation;
-    });
+        bloc.add(const RequestUnlockEvent());
+        await expectation;
+      },
+    );
   });
 }
