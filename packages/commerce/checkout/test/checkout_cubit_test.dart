@@ -183,13 +183,13 @@ void main() {
     test('requestPayment emits CheckoutPaymentRequestedState without money',
         () async {
       await cubit.loadCheckout('trip_123');
-      cubit.selectPaymentMethod('CARD');
-      cubit.requestPayment();
+      cubit.selectPaymentMethod('PIX');
+      await cubit.requestPayment();
 
       expect(cubit.state, isA<CheckoutPaymentRequestedState>());
       final requested = cubit.state as CheckoutPaymentRequestedState;
       expect(requested.tripId, 'trip_123');
-      expect(requested.paymentMethod, 'CARD');
+      expect(requested.paymentMethod, 'PIX');
       expect(requested.couponCode, null);
     });
 

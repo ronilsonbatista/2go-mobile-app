@@ -110,7 +110,11 @@ class AppRouter {
               paymentsRepository: effectivePaymentsRepo,
               intentStorage: effectiveIntentStorage,
               onPaymentRequested: (tId, method, coupon) {
-                // Handed off in L1 to payment requested handler (L2 will perform POST purchases/checkout)
+                // Handed off in L1 to payment requested handler (L2B will perform POST purchases/checkout)
+                context.go('/app/home');
+              },
+              onCardReadyForPayment: (cardState) {
+                // Handed off in L2A (L2B will perform POST purchases/checkout)
                 context.go('/app/home');
               },
               onCancelled: () {

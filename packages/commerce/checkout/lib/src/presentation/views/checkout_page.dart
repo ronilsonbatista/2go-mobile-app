@@ -14,11 +14,14 @@ class CheckoutPage extends StatelessWidget {
   final String tripId;
   final PaymentsRepository paymentsRepository;
   final PostAuthIntentStorage intentStorage;
+  final CardTokenizer? cardTokenizer;
+  final String publicKey;
   final void Function(
     String tripId,
     String paymentMethod,
     String? couponCode,
   )? onPaymentRequested;
+  final void Function(CardReadyForPaymentState state)? onCardReadyForPayment;
   final VoidCallback? onCancelled;
   final VoidCallback? onAlreadyEntitledCompleted;
 
@@ -27,7 +30,10 @@ class CheckoutPage extends StatelessWidget {
     required this.tripId,
     required this.paymentsRepository,
     required this.intentStorage,
+    this.cardTokenizer,
+    this.publicKey = 'APP_USR-TEST-DEVELOPMENT-PUBLIC-KEY',
     this.onPaymentRequested,
+    this.onCardReadyForPayment,
     this.onCancelled,
     this.onAlreadyEntitledCompleted,
   });
@@ -38,10 +44,13 @@ class CheckoutPage extends StatelessWidget {
       create: (context) => CheckoutCubit(
         paymentsRepository: paymentsRepository,
         intentStorage: intentStorage,
+        cardTokenizer: cardTokenizer,
       )..loadCheckout(tripId),
       child: CheckoutView(
         tripId: tripId,
+        publicKey: publicKey,
         onPaymentRequested: onPaymentRequested,
+        onCardReadyForPayment: onCardReadyForPayment,
         onCancelled: onCancelled,
         onAlreadyEntitledCompleted: onAlreadyEntitledCompleted,
       ),
@@ -51,18 +60,22 @@ class CheckoutPage extends StatelessWidget {
 
 class CheckoutView extends StatelessWidget {
   final String tripId;
+  final String publicKey;
   final void Function(
     String tripId,
     String paymentMethod,
     String? couponCode,
   )? onPaymentRequested;
+  final void Function(CardReadyForPaymentState state)? onCardReadyForPayment;
   final VoidCallback? onCancelled;
   final VoidCallback? onAlreadyEntitledCompleted;
 
   const CheckoutView({
     super.key,
     required this.tripId,
+    required this.publicKey,
     this.onPaymentRequested,
+    this.onCardReadyForPayment,
     this.onCancelled,
     this.onAlreadyEntitledCompleted,
   });
@@ -73,7 +86,9 @@ class CheckoutView extends StatelessWidget {
 
     return BlocConsumer<CheckoutCubit, CheckoutState>(
       listener: (context, state) {
-        if (state is CheckoutPaymentRequestedState) {
+        if (state is CardReadyForPaymentState) {
+          onCardReadyForPayment?.call(state);
+        } else if (state is CheckoutPaymentRequestedState) {
           onPaymentRequested?.call(
             state.tripId,
             state.paymentMethod,
@@ -224,6 +239,13 @@ class CheckoutView extends StatelessWidget {
                             ),
                           );
                         }),
+                        if (state.cardTokenError != null) ...[
+                          const SizedBox(height: TwoGoSpacing.sm),
+                          TwoGoInlineFeedback(
+                            message: state.cardTokenError!,
+                            variant: TwoGoInlineFeedbackVariant.error,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -250,7 +272,10 @@ class CheckoutView extends StatelessWidget {
                 child: TwoGoButton(
                   text:
                       'Continuar com ${_getMethodTitle(state.selectedPaymentMethod)}',
-                  onPressed: () => cubit.requestPayment(),
+                  loading: state.isTokenizing,
+                  onPressed: state.isTokenizing
+                      ? null
+                      : () => cubit.requestPayment(publicKey: publicKey),
                 ),
               ),
             ),

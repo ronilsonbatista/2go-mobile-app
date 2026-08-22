@@ -40,4 +40,24 @@ class ApiConfig {
         return 'http://localhost:3000/api';
     }
   }
+
+  String get mercadoPagoPublicKey {
+    switch (environment) {
+      case Environment.development:
+        return const String.fromEnvironment(
+          'MERCADO_PAGO_PUBLIC_KEY',
+          defaultValue: 'APP_USR-TEST-DEVELOPMENT-PUBLIC-KEY',
+        );
+      case Environment.staging:
+        return const String.fromEnvironment(
+          'MERCADO_PAGO_PUBLIC_KEY',
+          defaultValue: 'APP_USR-TEST-STAGING-PUBLIC-KEY',
+        );
+      case Environment.production:
+        return const String.fromEnvironment(
+          'MERCADO_PAGO_PUBLIC_KEY',
+          defaultValue: '',
+        );
+    }
+  }
 }

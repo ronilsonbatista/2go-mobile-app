@@ -20,28 +20,43 @@ class CheckoutReadyState extends CheckoutState {
   final CheckoutSummary summary;
   final String selectedPaymentMethod;
   final bool isQuoting;
+  final bool isTokenizing;
   final String? quoteError;
+  final String? cardTokenError;
+  final String? cardToken;
 
   const CheckoutReadyState({
     required this.summary,
     required this.selectedPaymentMethod,
     this.isQuoting = false,
+    this.isTokenizing = false,
     this.quoteError,
+    this.cardTokenError,
+    this.cardToken,
   });
 
   CheckoutReadyState copyWith({
     CheckoutSummary? summary,
     String? selectedPaymentMethod,
     bool? isQuoting,
+    bool? isTokenizing,
     String? quoteError,
+    String? cardTokenError,
+    String? cardToken,
     bool clearQuoteError = false,
+    bool clearCardTokenError = false,
+    bool clearCardToken = false,
   }) {
     return CheckoutReadyState(
       summary: summary ?? this.summary,
       selectedPaymentMethod:
           selectedPaymentMethod ?? this.selectedPaymentMethod,
       isQuoting: isQuoting ?? this.isQuoting,
+      isTokenizing: isTokenizing ?? this.isTokenizing,
       quoteError: clearQuoteError ? null : (quoteError ?? this.quoteError),
+      cardTokenError:
+          clearCardTokenError ? null : (cardTokenError ?? this.cardTokenError),
+      cardToken: clearCardToken ? null : (cardToken ?? this.cardToken),
     );
   }
 
@@ -50,7 +65,10 @@ class CheckoutReadyState extends CheckoutState {
         summary,
         selectedPaymentMethod,
         isQuoting,
+        isTokenizing,
         quoteError,
+        cardTokenError,
+        cardToken,
       ];
 }
 
@@ -85,6 +103,34 @@ class CheckoutPaymentRequestedState extends CheckoutState {
 
   @override
   List<Object?> get props => [tripId, paymentMethod, couponCode];
+}
+
+class CardReadyForPaymentState extends CheckoutState {
+  final String tripId;
+  final String cardToken;
+  final String? paymentMethodId;
+  final String? issuerId;
+  final int installments;
+  final String? couponCode;
+
+  const CardReadyForPaymentState({
+    required this.tripId,
+    required this.cardToken,
+    this.paymentMethodId,
+    this.issuerId,
+    this.installments = 1,
+    this.couponCode,
+  });
+
+  @override
+  List<Object?> get props => [
+        tripId,
+        cardToken,
+        paymentMethodId,
+        issuerId,
+        installments,
+        couponCode,
+      ];
 }
 
 class CheckoutCancelledState extends CheckoutState {

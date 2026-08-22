@@ -12,6 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   app_roteiros_api: any
+  dio: ^5.8.0+1
   twogo_core: any
   twogo_design_system: any
 
