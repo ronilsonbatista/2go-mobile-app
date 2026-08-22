@@ -132,6 +132,7 @@ void main() {
                 tripId: 'trip_123',
                 paymentsRepository: MockPaymentsRepoForUX(defaultSummary),
                 intentStorage: intentStorage,
+                cardTokenizer: FakeCardTokenizer(),
               ),
               size: size,
             ),
@@ -155,6 +156,7 @@ void main() {
                 tripId: 'trip_123',
                 paymentsRepository: MockPaymentsRepoForUX(defaultSummary),
                 intentStorage: intentStorage,
+                cardTokenizer: FakeCardTokenizer(),
               ),
               size: const Size(390, 844),
               textScaleFactor: scale,
@@ -192,6 +194,7 @@ void main() {
               tripId: 'trip_123',
               paymentsRepository: MockPaymentsRepoForUX(unknownSummary),
               intentStorage: intentStorage,
+              cardTokenizer: FakeCardTokenizer(),
             ),
           ),
         );
@@ -216,6 +219,7 @@ void main() {
               tripId: 'trip_123',
               paymentsRepository: repo,
               intentStorage: intentStorage,
+              cardTokenizer: FakeCardTokenizer(),
               onPaymentRequested: (tripId, method, coupon) {
                 requestedState = CheckoutPaymentRequestedState(
                   tripId: tripId,
@@ -250,6 +254,7 @@ void main() {
               tripId: 'trip_123',
               paymentsRepository: repo,
               intentStorage: intentStorage,
+              cardTokenizer: FakeCardTokenizer(),
             ),
           ),
         );

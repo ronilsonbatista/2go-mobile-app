@@ -20,16 +20,11 @@ import UIKit
           result(FlutterError(code: "MISSING_PUBLIC_KEY", message: "Public Key Mercado Pago não configurada", details: nil))
           return
         }
-        let installments = (args["installments"] as? Int) ?? 1
 
-        let response: [String: Any] = [
-          "token": "mp_tok_ios_native_\(Int(Date().timeIntervalSince1990))",
-          "paymentMethodId": "visa",
-          "issuerId": "310",
-          "installments": installments,
-          "last4": "4242"
-        ]
-        result(response)
+        // Official Mercado Pago Swift SDK integration point
+        // MercadoPagoSDK.shared.initialize(publicKey: publicKey)
+        // CoreMethods.generateCardToken(...) returns real token from Mercado Pago API
+        result(FlutterError(code: "IOS_RUNTIME_NOT_VALIDATED", message: "Ambiente iOS sem Xcode completo para validação nativa de runtime.", details: nil))
       } else {
         result(FlutterMethodNotImplemented)
       }

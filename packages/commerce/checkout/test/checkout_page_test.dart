@@ -84,6 +84,7 @@ void main() {
             tripId: 'trip_123',
             paymentsRepository: MockPaymentsRepoForUI(summary),
             intentStorage: intentStorage,
+            cardTokenizer: FakeCardTokenizer(),
           ),
         ),
       );
@@ -117,6 +118,7 @@ void main() {
             tripId: 'trip_123',
             paymentsRepository: MockPaymentsRepoForUI(summary),
             intentStorage: intentStorage,
+            cardTokenizer: FakeCardTokenizer(),
           ),
         ),
       );
@@ -149,6 +151,7 @@ void main() {
             tripId: 'trip_123',
             paymentsRepository: MockPaymentsRepoForUI(summary),
             intentStorage: intentStorage,
+            cardTokenizer: FakeCardTokenizer(),
           ),
         ),
       );

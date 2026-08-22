@@ -15,7 +15,7 @@ class CheckoutCubit extends Cubit<CheckoutState> {
     CardTokenizer? cardTokenizer,
   })  : _paymentsRepository = paymentsRepository,
         _intentStorage = intentStorage,
-        _cardTokenizer = cardTokenizer ?? FakeCardTokenizer(),
+        _cardTokenizer = cardTokenizer ?? NativeCardTokenizer(),
         super(const CheckoutInitialState());
 
   Future<void> loadCheckout(String tripId) async {
