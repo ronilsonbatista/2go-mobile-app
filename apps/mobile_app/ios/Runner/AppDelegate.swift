@@ -1,6 +1,8 @@
 import Flutter
 import UIKit
+#if canImport(CoreMethods)
 import CoreMethods
+#endif
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
