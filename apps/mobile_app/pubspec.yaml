@@ -29,6 +29,7 @@ dependencies:
   twogo_session: any
   twogo_trips: any
   twogo_payments: any
+  twogo_checkout: any
   twogo_planning: any
 
 dev_dependencies:

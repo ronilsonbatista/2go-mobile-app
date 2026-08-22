@@ -9,10 +9,14 @@ environment:
   flutter: '>=3.32.0'
 
 dependencies:
+  equatable: any
   flutter:
     sdk: flutter
+  flutter_bloc: ^8.1.6
   twogo_core: any
   twogo_design_system: any
+  twogo_payments: any
+  twogo_planning: any
 
 dev_dependencies:
   flutter_test:

@@ -1,3 +1,4 @@
+import 'package:app_roteiros_api/app_roteiros_api.dart';
 import '../models/product_dto.dart';
 import '../models/purchase_dto.dart';
 import 'payments_remote_datasource.dart';
@@ -48,6 +49,66 @@ class MockPaymentsDataSource implements PaymentsRemoteDataSource {
   Future<List<PurchaseDto>> getMyPurchases() async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
     return List.from(_purchases);
+  }
+
+  @override
+  Future<CheckoutSummaryResponseDto> getCheckoutSummary(String tripId) async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    return CheckoutSummaryResponseDto(
+      tripId: tripId,
+      alreadyUnlocked: false,
+      product: const CheckoutProductDto(
+        id: 'prod_full_access_01',
+        type: 'ITINERARY_FULL_ACCESS',
+        name: 'Acesso Completo ao Roteiro 2GO',
+        description: 'Desbloqueio definitivo do roteiro premium',
+      ),
+      pricing: const CheckoutPricingDto(
+        originalAmount: 19.99,
+        discountAmount: 0.0,
+        finalAmount: 19.99,
+        currency: 'BRL',
+      ),
+      supportedPaymentMethods: const ['PIX', 'CARD'],
+    );
+  }
+
+  @override
+  Future<CheckoutQuoteResponseDto> getCheckoutQuote(
+    String tripId, {
+    String? couponCode,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    final hasCoupon = couponCode != null && couponCode.trim().isNotEmpty;
+    final discount = hasCoupon ? 2.00 : 0.0;
+    final finalPrice = 19.99 - discount;
+
+    return CheckoutQuoteResponseDto(
+      tripId: tripId,
+      alreadyUnlocked: false,
+      product: const CheckoutProductDto(
+        id: 'prod_full_access_01',
+        type: 'ITINERARY_FULL_ACCESS',
+        name: 'Acesso Completo ao Roteiro 2GO',
+        description: 'Desbloqueio definitivo do roteiro premium',
+      ),
+      pricing: CheckoutPricingDto(
+        originalAmount: 19.99,
+        discountAmount: discount,
+        finalAmount: finalPrice,
+        currency: 'BRL',
+      ),
+      coupon: hasCoupon
+          ? CheckoutCouponDto(
+              code: couponCode.trim().toUpperCase(),
+              applied: true,
+              discountType: 'FIXED',
+              discountValue: 2.00,
+              description: 'Cupom de R\$ 2,00 aplicado',
+            )
+          : null,
+      supportedPaymentMethods: const ['PIX', 'CARD'],
+    );
   }
 
   @override

@@ -1,0 +1,276 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:twogo_design_system/design_system.dart';
+import 'package:twogo_payments/twogo_payments.dart';
+import 'package:twogo_planning/twogo_planning.dart';
+
+import '../cubit/checkout_cubit.dart';
+import '../cubit/checkout_state.dart';
+import '../widgets/checkout_coupon_section.dart';
+import '../widgets/checkout_payment_method_tile.dart';
+import '../widgets/checkout_price_summary.dart';
+
+class CheckoutPage extends StatelessWidget {
+  final String tripId;
+  final PaymentsRepository paymentsRepository;
+  final PostAuthIntentStorage intentStorage;
+  final void Function(
+    String tripId,
+    String paymentMethod,
+    String? couponCode,
+  )? onPaymentRequested;
+  final VoidCallback? onCancelled;
+  final VoidCallback? onAlreadyEntitledCompleted;
+
+  const CheckoutPage({
+    super.key,
+    required this.tripId,
+    required this.paymentsRepository,
+    required this.intentStorage,
+    this.onPaymentRequested,
+    this.onCancelled,
+    this.onAlreadyEntitledCompleted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<CheckoutCubit>(
+      create: (context) => CheckoutCubit(
+        paymentsRepository: paymentsRepository,
+        intentStorage: intentStorage,
+      )..loadCheckout(tripId),
+      child: CheckoutView(
+        tripId: tripId,
+        onPaymentRequested: onPaymentRequested,
+        onCancelled: onCancelled,
+        onAlreadyEntitledCompleted: onAlreadyEntitledCompleted,
+      ),
+    );
+  }
+}
+
+class CheckoutView extends StatelessWidget {
+  final String tripId;
+  final void Function(
+    String tripId,
+    String paymentMethod,
+    String? couponCode,
+  )? onPaymentRequested;
+  final VoidCallback? onCancelled;
+  final VoidCallback? onAlreadyEntitledCompleted;
+
+  const CheckoutView({
+    super.key,
+    required this.tripId,
+    this.onPaymentRequested,
+    this.onCancelled,
+    this.onAlreadyEntitledCompleted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<CheckoutCubit>();
+
+    return BlocConsumer<CheckoutCubit, CheckoutState>(
+      listener: (context, state) {
+        if (state is CheckoutPaymentRequestedState) {
+          onPaymentRequested?.call(
+            state.tripId,
+            state.paymentMethod,
+            state.couponCode,
+          );
+        } else if (state is CheckoutCancelledState) {
+          onCancelled?.call();
+        }
+      },
+      builder: (context, state) {
+        return Scaffold(
+          backgroundColor: TwoGoColors.background,
+          appBar: TwoGoAppBar(
+            title: 'Checkout Premium',
+            leading: TwoGoIconButton(
+              icon: Icons.close_rounded,
+              onPressed: () => cubit.cancelCheckout(),
+            ),
+          ),
+          body: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(TwoGoSpacing.sm),
+                child: TwoGoProgressBar(
+                  progress: 0.5,
+                ),
+              ),
+              Expanded(
+                child: _buildBody(context, state, cubit),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    CheckoutState state,
+    CheckoutCubit cubit,
+  ) {
+    if (state is CheckoutLoadingState || state is CheckoutInitialState) {
+      return const Center(
+        child: TwoGoLoadingIndicator(
+          size: 32,
+        ),
+      );
+    }
+
+    if (state is CheckoutAlreadyEntitledState) {
+      return Padding(
+        padding: const EdgeInsets.all(TwoGoSpacing.lg),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.verified_rounded,
+              color: TwoGoColors.success,
+              size: 64,
+            ),
+            const SizedBox(height: TwoGoSpacing.md),
+            Text(
+              'Roteiro Já Desbloqueado!',
+              style: TwoGoTypography.headlineMedium.copyWith(
+                color: TwoGoColors.contentPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: TwoGoSpacing.xs),
+            Text(
+              'Você já possui acesso premium completo a este roteiro.',
+              style: TwoGoTypography.bodyMedium.copyWith(
+                color: TwoGoColors.neutral600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: TwoGoSpacing.xl),
+            SizedBox(
+              width: double.infinity,
+              child: TwoGoButton(
+                text: 'Acessar Roteiro',
+                onPressed: () {
+                  cubit.cancelCheckout();
+                  onAlreadyEntitledCompleted?.call();
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state is CheckoutErrorState) {
+      return Center(
+        child: TwoGoStatusMessage(
+          title: 'Erro ao carregar checkout',
+          description: state.message,
+          actionText: 'Tentar Novamente',
+          onActionPressed: () => cubit.loadCheckout(tripId),
+        ),
+      );
+    }
+
+    if (state is CheckoutReadyState) {
+      final summary = state.summary;
+      final supportedMethods = summary.supportedPaymentMethods;
+
+      return Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(TwoGoSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CheckoutPriceSummary(summary: summary),
+                  const SizedBox(height: TwoGoSpacing.md),
+                  CheckoutCouponSection(
+                    coupon: summary.coupon,
+                    isQuoting: state.isQuoting,
+                    quoteError: state.quoteError,
+                    onApplyCoupon: (code) => cubit.applyCoupon(tripId, code),
+                    onRemoveCoupon: () => cubit.removeCoupon(tripId),
+                  ),
+                  const SizedBox(height: TwoGoSpacing.md),
+                  TwoGoCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Forma de Pagamento',
+                          style: TwoGoTypography.headlineSmall.copyWith(
+                            color: TwoGoColors.contentPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: TwoGoSpacing.sm),
+                        ...supportedMethods.map((method) {
+                          return Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: TwoGoSpacing.xs),
+                            child: CheckoutPaymentMethodTile(
+                              methodKey: method,
+                              isSelected: state.selectedPaymentMethod == method,
+                              onTap: () => cubit.selectPaymentMethod(method),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(TwoGoSpacing.md),
+            decoration: BoxDecoration(
+              color: TwoGoColors.neutral0,
+              boxShadow: [
+                BoxShadow(
+                  color: TwoGoColors.contentPrimary.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: SizedBox(
+                width: double.infinity,
+                child: TwoGoButton(
+                  text:
+                      'Continuar com ${_getMethodTitle(state.selectedPaymentMethod)}',
+                  onPressed: () => cubit.requestPayment(),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  String _getMethodTitle(String methodKey) {
+    switch (methodKey.toUpperCase()) {
+      case 'PIX':
+        return 'PIX';
+      case 'CARD':
+      case 'CREDIT_CARD':
+        return 'Cartão de Crédito';
+      default:
+        return methodKey;
+    }
+  }
+}

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:twogo_authentication/twogo_authentication.dart';
+import 'package:twogo_checkout/twogo_checkout.dart';
+import 'package:twogo_payments/twogo_payments.dart';
 import 'package:twogo_session/twogo_session.dart';
+import 'package:twogo_planning/twogo_planning.dart';
 
 import '../pages/home_page.dart';
 import '../pages/launch_page.dart';
@@ -15,11 +18,20 @@ class AppRouter {
   static GoRouter createRouter({
     required SessionCubit sessionCubit,
     required AuthRepository authRepository,
+    PostAuthIntentStorage? intentStorage,
+    PaymentsRepository? paymentsRepository,
   }) {
+    final effectiveIntentStorage =
+        intentStorage ?? PersistentPostAuthIntentStorage();
+    final effectivePaymentsRepo = paymentsRepository ??
+        PaymentsRepositoryImpl(
+          remoteDataSource: MockPaymentsDataSource(),
+        );
+
     return GoRouter(
       initialLocation: _getInitialLocation(sessionCubit.state.status),
       refreshListenable: _GoRouterRefreshStream(sessionCubit.stream),
-      redirect: (context, state) {
+      redirect: (context, state) async {
         final sessionStatus = sessionCubit.state.status;
         final location = state.matchedLocation;
 
@@ -38,9 +50,21 @@ class AppRouter {
           return '/auth';
         }
 
-        if (isAuthenticated &&
-            (isAuthRoute || location == '/launch' || location == '/')) {
-          return '/app/home';
+        if (isAuthenticated) {
+          final intent = await effectiveIntentStorage.readIntent();
+          if (intent != null &&
+              intent.type == PostAuthIntentType.resumeCheckout &&
+              intent.tripId != null &&
+              intent.tripId!.isNotEmpty) {
+            if (location != '/checkout') {
+              return '/checkout?tripId=${intent.tripId}';
+            }
+            return null;
+          }
+
+          if (isAuthRoute || location == '/launch' || location == '/') {
+            return '/app/home';
+          }
         }
 
         return null;
@@ -74,6 +98,27 @@ class AppRouter {
                 },
                 child: const AuthenticationPage(),
               ),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/checkout',
+          builder: (context, state) {
+            final tripId = state.uri.queryParameters['tripId'] ?? '';
+            return CheckoutPage(
+              tripId: tripId,
+              paymentsRepository: effectivePaymentsRepo,
+              intentStorage: effectiveIntentStorage,
+              onPaymentRequested: (tId, method, coupon) {
+                // Handed off in L1 to payment requested handler (L2 will perform POST purchases/checkout)
+                context.go('/app/home');
+              },
+              onCancelled: () {
+                context.go('/app/home');
+              },
+              onAlreadyEntitledCompleted: () {
+                context.go('/app/home');
+              },
             );
           },
         ),

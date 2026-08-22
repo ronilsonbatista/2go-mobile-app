@@ -11,6 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  app_roteiros_api: any
   twogo_core: any
   twogo_design_system: any
 
