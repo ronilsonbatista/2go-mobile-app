@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import CoreMethods
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -14,16 +15,21 @@ import UIKit
     )
 
     cardChannel.setMethodCallHandler({ (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
-      if call.method == "tokenizeCard" {
+      if call.method == "tokenizeCard" || call.method == "openCardEntryAndTokenize" {
         guard let args = call.arguments as? [String: Any],
               let publicKey = args["publicKey"] as? String, !publicKey.isEmpty else {
           result(FlutterError(code: "MISSING_PUBLIC_KEY", message: "Public Key Mercado Pago não configurada", details: nil))
           return
         }
 
-        // Official Mercado Pago Swift SDK integration point
-        // MercadoPagoSDK.shared.initialize(publicKey: publicKey)
-        // CoreMethods.generateCardToken(...) returns real token from Mercado Pago API
+        // Official Mercado Pago Swift Native SDK initialization
+        // let configuration = MercadoPagoSDK.Configuration(publicKey: publicKey, country: .brazil)
+        // MercadoPagoSDK.shared.initialize(configuration)
+
+        // Official Mercado Pago Swift CoreMethods invocation
+        // let coreMethods = CoreMethods()
+        // coreMethods.createToken(...)
+
         result(FlutterError(code: "IOS_RUNTIME_NOT_VALIDATED", message: "Ambiente iOS sem Xcode completo para validação nativa de runtime.", details: nil))
       } else {
         result(FlutterMethodNotImplemented)
