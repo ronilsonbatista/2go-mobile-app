@@ -7,6 +7,7 @@ import 'package:twogo_payments/twogo_payments.dart';
 import 'package:twogo_session/twogo_session.dart';
 import 'package:twogo_planning/twogo_planning.dart';
 import 'package:twogo_storage/twogo_storage.dart';
+import 'package:twogo_trips/trips.dart';
 
 import '../pages/home_page.dart';
 import '../pages/launch_page.dart';
@@ -21,12 +22,17 @@ class AppRouter {
     required AuthRepository authRepository,
     PostAuthIntentStorage? intentStorage,
     PaymentsRepository? paymentsRepository,
+    TripsRepository? tripsRepository,
   }) {
     final effectiveIntentStorage =
         intentStorage ?? PersistentPostAuthIntentStorage();
     final effectivePaymentsRepo = paymentsRepository ??
         PaymentsRepositoryImpl(
           remoteDataSource: MockPaymentsDataSource(),
+        );
+    final effectiveTripsRepo = tripsRepository ??
+        TripsRepositoryImpl(
+          remoteDataSource: MockTripsDataSource(),
         );
 
     return GoRouter(
@@ -52,6 +58,18 @@ class AppRouter {
         }
 
         if (isAuthenticated) {
+          // 1. PAYMENT_CONFIRMED intent check (takes top priority over resumeCheckout)
+          final storage = TwoGoStorage();
+          final handoffTripId = await storage.getString('active_paid_handoff_trip_id');
+          final handoffPurchaseId = await storage.getString('active_paid_handoff_purchase_id');
+          if (handoffTripId != null && handoffTripId.isNotEmpty) {
+            if (location != '/paid-handoff') {
+              return '/paid-handoff?tripId=$handoffTripId&purchaseId=${handoffPurchaseId ?? ''}';
+            }
+            return null;
+          }
+
+          // 2. Resume checkout intent check
           final intent = await effectiveIntentStorage.readIntent();
           if (intent != null &&
               intent.type == PostAuthIntentType.resumeCheckout &&
@@ -112,12 +130,32 @@ class AppRouter {
               intentStorage: effectiveIntentStorage,
               storage: TwoGoStorage(),
               onPaymentConfirmed: (purchaseId, tripId) {
-                // Payment confirmed by Core server-side (Handoff prepared for Phase M)
+                context.go('/paid-handoff?tripId=$tripId&purchaseId=$purchaseId');
               },
               onCancelled: () {
                 context.go('/app/home');
               },
               onAlreadyEntitledCompleted: () {
+                context.go('/app/home');
+              },
+            );
+          },
+        ),
+        GoRoute(
+          path: '/paid-handoff',
+          builder: (context, state) {
+            final tripId = state.uri.queryParameters['tripId'] ?? '';
+            final purchaseId = state.uri.queryParameters['purchaseId'] ?? '';
+            return PaidTripHandoffPage(
+              tripId: tripId,
+              purchaseId: purchaseId,
+              paymentsRepository: effectivePaymentsRepo,
+              tripsRepository: effectiveTripsRepo,
+              storage: TwoGoStorage(),
+              onHandoffSuccess: (trip) {
+                context.go('/app/trips');
+              },
+              onCancelled: () {
                 context.go('/app/home');
               },
             );

@@ -151,6 +151,8 @@ class CheckoutPaymentCubit extends Cubit<CheckoutPaymentState> {
       if (status == 'PAID') {
         _stopTimers();
         await _storage.setString('intent_hand_off_$tripId', 'PAYMENT_CONFIRMED');
+        await _storage.setString('active_paid_handoff_trip_id', tripId);
+        await _storage.setString('active_paid_handoff_purchase_id', purchaseId);
         await _storage.remove('checkout_idempotency_op_$tripId');
 
         emit(PaymentConfirmedByCoreState(
