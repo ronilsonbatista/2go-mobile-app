@@ -21,9 +21,9 @@ class CheckoutProductDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'name': name,
-        'description': description,
-      };
+    'id': id,
+    'type': type,
+    'name': name,
+    'description': description,
+  };
 }

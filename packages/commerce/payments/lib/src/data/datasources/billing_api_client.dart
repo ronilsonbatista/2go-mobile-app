@@ -1,7 +1,5 @@
 import 'package:dio/dio.dart';
-import '../models/checkout_quote_dto.dart';
-import '../models/checkout_quote_response_dto.dart';
-import '../models/checkout_summary_response_dto.dart';
+import 'package:app_roteiros_api/app_roteiros_api.dart';
 
 class BillingApiClient {
   final Dio _dio;

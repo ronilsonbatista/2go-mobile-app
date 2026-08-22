@@ -1,5 +1,6 @@
 library;
 
+export 'src/data/datasources/billing_api_client.dart';
 export 'src/data/datasources/mock_payments_datasource.dart';
 export 'src/data/datasources/payments_remote_datasource.dart';
 export 'src/data/datasources/payments_remote_datasource_impl.dart';

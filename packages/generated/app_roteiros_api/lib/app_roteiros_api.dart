@@ -1,7 +1,6 @@
 library;
 
 export 'src/api/auth_api_client.dart';
-export 'src/api/billing_api_client.dart';
 export 'src/api/places_api_client.dart';
 export 'src/api/planning_api_client.dart';
 export 'src/models/api_error_response_dto.dart';

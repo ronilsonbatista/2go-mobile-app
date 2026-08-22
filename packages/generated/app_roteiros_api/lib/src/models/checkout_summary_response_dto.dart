@@ -38,9 +38,9 @@ class CheckoutSummaryResponseDto {
           : null,
       supportedPaymentMethods:
           (json['supportedPaymentMethods'] as List<dynamic>?)
-                  ?.map((e) => e as String)
-                  .toList() ??
-              ['PIX', 'CARD'],
+              ?.map((e) => e as String)
+              .toList() ??
+          ['PIX', 'CARD'],
       existingPurchaseId: json['existingPurchaseId'] as String?,
       existingPurchaseStatus: json['existingPurchaseStatus'] as String?,
     );

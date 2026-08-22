@@ -21,9 +21,9 @@ class CheckoutPricingDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'originalAmount': originalAmount,
-        'discountAmount': discountAmount,
-        'finalAmount': finalAmount,
-        'currency': currency,
-      };
+    'originalAmount': originalAmount,
+    'discountAmount': discountAmount,
+    'finalAmount': finalAmount,
+    'currency': currency,
+  };
 }

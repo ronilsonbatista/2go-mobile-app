@@ -24,10 +24,10 @@ class CheckoutCouponDto {
   }
 
   Map<String, dynamic> toJson() => {
-        'code': code,
-        'applied': applied,
-        'discountType': discountType,
-        'discountValue': discountValue,
-        'description': description,
-      };
+    'code': code,
+    'applied': applied,
+    'discountType': discountType,
+    'discountValue': discountValue,
+    'description': description,
+  };
 }

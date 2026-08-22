@@ -4,6 +4,6 @@ class CheckoutQuoteDto {
   const CheckoutQuoteDto({this.couponCode});
 
   Map<String, dynamic> toJson() => {
-        if (couponCode != null) 'couponCode': couponCode,
-      };
+    if (couponCode != null) 'couponCode': couponCode,
+  };
 }
