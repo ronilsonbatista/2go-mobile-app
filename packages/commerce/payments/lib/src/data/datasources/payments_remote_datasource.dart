@@ -10,6 +10,15 @@ abstract class PaymentsRemoteDataSource {
     String tripId, {
     String? couponCode,
   });
+  Future<CheckoutResponseDto> processCheckout({
+    required String tripId,
+    required String paymentMethod,
+    String? couponCode,
+    String? cardToken,
+    int? installments,
+    String? idempotencyKey,
+  });
+  Future<Map<String, dynamic>> getPurchaseStatus(String purchaseId);
   Future<PurchaseDto> createMockPurchase(String productId, String? tripId);
   Future<PurchaseDto> confirmMockPayment(String purchaseId);
 }

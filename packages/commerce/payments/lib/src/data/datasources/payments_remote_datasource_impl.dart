@@ -13,7 +13,6 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
 
   @override
   Future<List<ProductDto>> getActiveProducts() async {
-    // Will be backed by products client when needed
     return [];
   }
 
@@ -36,6 +35,39 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
       tripId,
       CheckoutQuoteDto(couponCode: couponCode),
     );
+  }
+
+  @override
+  Future<CheckoutResponseDto> processCheckout({
+    required String tripId,
+    required String paymentMethod,
+    String? couponCode,
+    String? cardToken,
+    int? installments,
+    String? idempotencyKey,
+  }) async {
+    final methodEnum = paymentMethod.toUpperCase() == 'CARD' ||
+            paymentMethod.toUpperCase() == 'CREDIT_CARD'
+        ? PaymentMethodType.CARD
+        : PaymentMethodType.PIX;
+
+    final dto = CheckoutPurchaseDto(
+      tripId: tripId,
+      paymentMethod: methodEnum,
+      couponCode: couponCode,
+      cardToken: cardToken,
+      installments: installments ?? 1,
+    );
+
+    return await _billingApiClient.processCheckout(
+      dto,
+      idempotencyKey: idempotencyKey,
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>> getPurchaseStatus(String purchaseId) async {
+    return await _billingApiClient.getPurchaseStatus(purchaseId);
   }
 
   @override

@@ -64,6 +64,30 @@ class FakePaymentsRepository implements PaymentsRepository {
   }
 
   @override
+  Future<CheckoutPaymentResult> processCheckoutPayment({
+    required String tripId,
+    required String paymentMethod,
+    String? couponCode,
+    String? cardToken,
+    int? installments,
+    String? idempotencyKey,
+  }) async {
+    return CheckoutPaymentResult(
+      purchaseId: 'pur_cubit_123',
+      status: 'PENDING',
+      paymentMethod: paymentMethod,
+    );
+  }
+
+  @override
+  Future<PurchaseStatusResult> getPurchaseStatus(String purchaseId) async {
+    return PurchaseStatusResult(
+      purchaseId: purchaseId,
+      status: 'PAID',
+    );
+  }
+
+  @override
   Future<List<ProductEntity>> getActiveProducts() async => [];
 
   @override

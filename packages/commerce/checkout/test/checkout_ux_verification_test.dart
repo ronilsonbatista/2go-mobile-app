@@ -4,6 +4,7 @@ import 'package:twogo_checkout/twogo_checkout.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_payments/twogo_payments.dart';
 import 'package:twogo_planning/twogo_planning.dart';
+import 'package:twogo_storage/twogo_storage.dart';
 
 class MockPaymentsRepoForUX implements PaymentsRepository {
   final CheckoutSummary summary;
@@ -58,6 +59,31 @@ class MockPaymentsRepoForUX implements PaymentsRepository {
   }
 
   @override
+  Future<CheckoutPaymentResult> processCheckoutPayment({
+    required String tripId,
+    required String paymentMethod,
+    String? couponCode,
+    String? cardToken,
+    int? installments,
+    String? idempotencyKey,
+  }) async {
+    processCheckoutCallCount++;
+    return CheckoutPaymentResult(
+      purchaseId: 'pur_ux_123',
+      status: 'PENDING',
+      paymentMethod: paymentMethod,
+    );
+  }
+
+  @override
+  Future<PurchaseStatusResult> getPurchaseStatus(String purchaseId) async {
+    return PurchaseStatusResult(
+      purchaseId: purchaseId,
+      status: 'PAID',
+    );
+  }
+
+  @override
   Future<List<ProductEntity>> getActiveProducts() async => [];
 
   @override
@@ -68,7 +94,6 @@ class MockPaymentsRepoForUX implements PaymentsRepository {
     required String productId,
     String? tripId,
   }) async {
-    processCheckoutCallCount++;
     throw UnimplementedError();
   }
 
@@ -132,6 +157,7 @@ void main() {
                 tripId: 'trip_123',
                 paymentsRepository: MockPaymentsRepoForUX(defaultSummary),
                 intentStorage: intentStorage,
+                storage: TwoGoStorage(),
                 cardTokenizer: FakeCardTokenizer(),
               ),
               size: size,
@@ -156,6 +182,7 @@ void main() {
                 tripId: 'trip_123',
                 paymentsRepository: MockPaymentsRepoForUX(defaultSummary),
                 intentStorage: intentStorage,
+                storage: TwoGoStorage(),
                 cardTokenizer: FakeCardTokenizer(),
               ),
               size: const Size(390, 844),
@@ -194,6 +221,7 @@ void main() {
               tripId: 'trip_123',
               paymentsRepository: MockPaymentsRepoForUX(unknownSummary),
               intentStorage: intentStorage,
+              storage: TwoGoStorage(),
               cardTokenizer: FakeCardTokenizer(),
             ),
           ),
@@ -219,6 +247,7 @@ void main() {
               tripId: 'trip_123',
               paymentsRepository: repo,
               intentStorage: intentStorage,
+              storage: TwoGoStorage(),
               cardTokenizer: FakeCardTokenizer(),
               onPaymentRequested: (tripId, method, coupon) {
                 requestedState = CheckoutPaymentRequestedState(
@@ -254,6 +283,7 @@ void main() {
               tripId: 'trip_123',
               paymentsRepository: repo,
               intentStorage: intentStorage,
+              storage: TwoGoStorage(),
               cardTokenizer: FakeCardTokenizer(),
             ),
           ),

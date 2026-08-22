@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:twogo_storage/twogo_storage.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_payments/twogo_payments.dart';
 import 'package:twogo_planning/twogo_planning.dart';
 
 import '../cubit/checkout_cubit.dart';
+import '../cubit/checkout_payment_cubit.dart';
+import '../cubit/checkout_payment_state.dart';
 import '../cubit/checkout_state.dart';
 import '../widgets/checkout_coupon_section.dart';
 import '../widgets/checkout_payment_method_tile.dart';
 import '../widgets/checkout_price_summary.dart';
+import 'pix_payment_view.dart';
 
 class CheckoutPage extends StatelessWidget {
   final String tripId;
   final PaymentsRepository paymentsRepository;
   final PostAuthIntentStorage intentStorage;
+  final TwoGoStorage storage;
   final CardTokenizer? cardTokenizer;
   final String publicKey;
   final void Function(
@@ -22,6 +27,7 @@ class CheckoutPage extends StatelessWidget {
     String? couponCode,
   )? onPaymentRequested;
   final void Function(CardReadyForPaymentState state)? onCardReadyForPayment;
+  final void Function(String purchaseId, String tripId)? onPaymentConfirmed;
   final VoidCallback? onCancelled;
   final VoidCallback? onAlreadyEntitledCompleted;
 
@@ -30,27 +36,40 @@ class CheckoutPage extends StatelessWidget {
     required this.tripId,
     required this.paymentsRepository,
     required this.intentStorage,
+    required this.storage,
     this.cardTokenizer,
     this.publicKey = 'APP_USR-TEST-DEVELOPMENT-PUBLIC-KEY',
     this.onPaymentRequested,
     this.onCardReadyForPayment,
+    this.onPaymentConfirmed,
     this.onCancelled,
     this.onAlreadyEntitledCompleted,
   });
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<CheckoutCubit>(
-      create: (context) => CheckoutCubit(
-        paymentsRepository: paymentsRepository,
-        intentStorage: intentStorage,
-        cardTokenizer: cardTokenizer,
-      )..loadCheckout(tripId),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<CheckoutCubit>(
+          create: (context) => CheckoutCubit(
+            paymentsRepository: paymentsRepository,
+            intentStorage: intentStorage,
+            cardTokenizer: cardTokenizer,
+          )..loadCheckout(tripId),
+        ),
+        BlocProvider<CheckoutPaymentCubit>(
+          create: (context) => CheckoutPaymentCubit(
+            paymentsRepository: paymentsRepository,
+            storage: storage,
+          )..resumePendingPayment(tripId),
+        ),
+      ],
       child: CheckoutView(
         tripId: tripId,
         publicKey: publicKey,
         onPaymentRequested: onPaymentRequested,
         onCardReadyForPayment: onCardReadyForPayment,
+        onPaymentConfirmed: onPaymentConfirmed,
         onCancelled: onCancelled,
         onAlreadyEntitledCompleted: onAlreadyEntitledCompleted,
       ),
@@ -67,6 +86,7 @@ class CheckoutView extends StatelessWidget {
     String? couponCode,
   )? onPaymentRequested;
   final void Function(CardReadyForPaymentState state)? onCardReadyForPayment;
+  final void Function(String purchaseId, String tripId)? onPaymentConfirmed;
   final VoidCallback? onCancelled;
   final VoidCallback? onAlreadyEntitledCompleted;
 
@@ -76,51 +96,156 @@ class CheckoutView extends StatelessWidget {
     required this.publicKey,
     this.onPaymentRequested,
     this.onCardReadyForPayment,
+    this.onPaymentConfirmed,
     this.onCancelled,
     this.onAlreadyEntitledCompleted,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<CheckoutCubit>();
+    final checkoutCubit = context.read<CheckoutCubit>();
+    final paymentCubit = context.read<CheckoutPaymentCubit>();
 
-    return BlocConsumer<CheckoutCubit, CheckoutState>(
-      listener: (context, state) {
-        if (state is CardReadyForPaymentState) {
-          onCardReadyForPayment?.call(state);
-        } else if (state is CheckoutPaymentRequestedState) {
-          onPaymentRequested?.call(
-            state.tripId,
-            state.paymentMethod,
-            state.couponCode,
-          );
-        } else if (state is CheckoutCancelledState) {
-          onCancelled?.call();
+    return BlocConsumer<CheckoutPaymentCubit, CheckoutPaymentState>(
+      listener: (context, paymentState) {
+        if (paymentState is PaymentConfirmedByCoreState) {
+          onPaymentConfirmed?.call(paymentState.purchaseId, paymentState.tripId);
         }
       },
-      builder: (context, state) {
-        return Scaffold(
-          backgroundColor: TwoGoColors.background,
-          appBar: TwoGoAppBar(
-            title: 'Checkout Premium',
-            leading: TwoGoIconButton(
-              icon: Icons.close_rounded,
-              onPressed: () => cubit.cancelCheckout(),
+      builder: (context, paymentState) {
+        if (paymentState is CheckoutPixPendingState) {
+          return Scaffold(
+            backgroundColor: TwoGoColors.background,
+            appBar: TwoGoAppBar(
+              title: 'Pagamento PIX',
+              leading: TwoGoIconButton(
+                icon: Icons.close_rounded,
+                onPressed: () => checkoutCubit.cancelCheckout(),
+              ),
             ),
-          ),
-          body: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(TwoGoSpacing.sm),
-                child: TwoGoProgressBar(
-                  progress: 0.5,
+            body: PixPaymentView(
+              purchaseId: paymentState.purchaseId,
+              copyPaste: paymentState.copyPaste,
+              qrCodeBase64: paymentState.qrCodeBase64,
+              remainingSeconds: paymentState.remainingSeconds,
+            ),
+          );
+        }
+
+        if (paymentState is CheckoutCardAwaitingConfirmationState ||
+            paymentState is CheckoutPaymentProcessingState) {
+          return Scaffold(
+            backgroundColor: TwoGoColors.background,
+            appBar: const TwoGoAppBar(
+              title: 'Processando Pagamento',
+            ),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const TwoGoLoadingIndicator(size: 40),
+                  const SizedBox(height: TwoGoSpacing.md),
+                  Text(
+                    'Aguardando confirmação do pagamento pelo servidor...',
+                    style: TwoGoTypography.bodyMedium.copyWith(
+                      color: TwoGoColors.neutral600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (paymentState is PaymentConfirmedByCoreState) {
+          return Scaffold(
+            backgroundColor: TwoGoColors.background,
+            appBar: const TwoGoAppBar(title: 'Pagamento Confirmado'),
+            body: Padding(
+              padding: const EdgeInsets.all(TwoGoSpacing.lg),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: TwoGoColors.success,
+                    size: 72,
+                  ),
+                  const SizedBox(height: TwoGoSpacing.md),
+                  Text(
+                    'Pagamento Confirmado!',
+                    style: TwoGoTypography.headlineMedium.copyWith(
+                      color: TwoGoColors.contentPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: TwoGoSpacing.xs),
+                  Text(
+                    'O servidor confirmou o recebimento. Seu acesso premium está liberado.',
+                    style: TwoGoTypography.bodyMedium.copyWith(
+                      color: TwoGoColors.neutral600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return BlocConsumer<CheckoutCubit, CheckoutState>(
+          listener: (context, state) {
+            if (state is CardReadyForPaymentState) {
+              onCardReadyForPayment?.call(state);
+              paymentCubit.executePayment(
+                tripId: tripId,
+                paymentMethod: 'CARD',
+                cardToken: state.cardToken,
+                couponCode: state.couponCode,
+                installments: state.installments,
+              );
+            } else if (state is CheckoutPaymentRequestedState) {
+              onPaymentRequested?.call(
+                state.tripId,
+                state.paymentMethod,
+                state.couponCode,
+              );
+              if (state.paymentMethod.toUpperCase() == 'PIX') {
+                paymentCubit.executePayment(
+                  tripId: tripId,
+                  paymentMethod: 'PIX',
+                  couponCode: state.couponCode,
+                );
+              }
+            } else if (state is CheckoutCancelledState) {
+              onCancelled?.call();
+            }
+          },
+          builder: (context, state) {
+            return Scaffold(
+              backgroundColor: TwoGoColors.background,
+              appBar: TwoGoAppBar(
+                title: 'Checkout Premium',
+                leading: TwoGoIconButton(
+                  icon: Icons.close_rounded,
+                  onPressed: () => checkoutCubit.cancelCheckout(),
                 ),
               ),
-              Expanded(
-                child: _buildBody(context, state, cubit),
+              body: Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(TwoGoSpacing.sm),
+                    child: TwoGoProgressBar(progress: 0.5),
+                  ),
+                  Expanded(
+                    child: _buildBody(context, state, checkoutCubit),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -133,9 +258,7 @@ class CheckoutView extends StatelessWidget {
   ) {
     if (state is CheckoutLoadingState || state is CheckoutInitialState) {
       return const Center(
-        child: TwoGoLoadingIndicator(
-          size: 32,
-        ),
+        child: TwoGoLoadingIndicator(size: 32),
       );
     }
 
@@ -230,8 +353,7 @@ class CheckoutView extends StatelessWidget {
                         const SizedBox(height: TwoGoSpacing.sm),
                         ...supportedMethods.map((method) {
                           return Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: TwoGoSpacing.xs),
+                            padding: const EdgeInsets.only(bottom: TwoGoSpacing.xs),
                             child: CheckoutPaymentMethodTile(
                               methodKey: method,
                               isSelected: state.selectedPaymentMethod == method,
@@ -270,8 +392,7 @@ class CheckoutView extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: TwoGoButton(
-                  text:
-                      'Continuar com ${_getMethodTitle(state.selectedPaymentMethod)}',
+                  text: 'Continuar com ${_getMethodTitle(state.selectedPaymentMethod)}',
                   loading: state.isTokenizing,
                   onPressed: state.isTokenizing
                       ? null

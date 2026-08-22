@@ -17,6 +17,7 @@ dependencies:
   twogo_design_system: any
   twogo_payments: any
   twogo_planning: any
+  twogo_storage: any
 
 dev_dependencies:
   flutter_test:

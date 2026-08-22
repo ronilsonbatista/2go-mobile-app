@@ -4,6 +4,7 @@ import 'package:twogo_checkout/twogo_checkout.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_payments/twogo_payments.dart';
 import 'package:twogo_planning/twogo_planning.dart';
+import 'package:twogo_storage/twogo_storage.dart';
 
 class MockPaymentsRepoForUI implements PaymentsRepository {
   final CheckoutSummary summary;
@@ -26,6 +27,30 @@ class MockPaymentsRepoForUI implements PaymentsRepository {
 
   @override
   Future<List<PurchaseEntity>> getMyPurchases() async => [];
+
+  @override
+  Future<CheckoutPaymentResult> processCheckoutPayment({
+    required String tripId,
+    required String paymentMethod,
+    String? couponCode,
+    String? cardToken,
+    int? installments,
+    String? idempotencyKey,
+  }) async {
+    return CheckoutPaymentResult(
+      purchaseId: 'pur_test_123',
+      status: 'PENDING',
+      paymentMethod: paymentMethod,
+    );
+  }
+
+  @override
+  Future<PurchaseStatusResult> getPurchaseStatus(String purchaseId) async {
+    return PurchaseStatusResult(
+      purchaseId: purchaseId,
+      status: 'PAID',
+    );
+  }
 
   @override
   Future<PurchaseEntity> createMockPurchase({
@@ -84,6 +109,7 @@ void main() {
             tripId: 'trip_123',
             paymentsRepository: MockPaymentsRepoForUI(summary),
             intentStorage: intentStorage,
+            storage: TwoGoStorage(),
             cardTokenizer: FakeCardTokenizer(),
           ),
         ),
@@ -118,6 +144,7 @@ void main() {
             tripId: 'trip_123',
             paymentsRepository: MockPaymentsRepoForUI(summary),
             intentStorage: intentStorage,
+            storage: TwoGoStorage(),
             cardTokenizer: FakeCardTokenizer(),
           ),
         ),
@@ -151,6 +178,7 @@ void main() {
             tripId: 'trip_123',
             paymentsRepository: MockPaymentsRepoForUI(summary),
             intentStorage: intentStorage,
+            storage: TwoGoStorage(),
             cardTokenizer: FakeCardTokenizer(),
           ),
         ),

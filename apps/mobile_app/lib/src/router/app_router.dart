@@ -6,6 +6,7 @@ import 'package:twogo_checkout/twogo_checkout.dart';
 import 'package:twogo_payments/twogo_payments.dart';
 import 'package:twogo_session/twogo_session.dart';
 import 'package:twogo_planning/twogo_planning.dart';
+import 'package:twogo_storage/twogo_storage.dart';
 
 import '../pages/home_page.dart';
 import '../pages/launch_page.dart';
@@ -109,13 +110,9 @@ class AppRouter {
               tripId: tripId,
               paymentsRepository: effectivePaymentsRepo,
               intentStorage: effectiveIntentStorage,
-              onPaymentRequested: (tId, method, coupon) {
-                // Handed off in L1 to payment requested handler (L2B will perform POST purchases/checkout)
-                context.go('/app/home');
-              },
-              onCardReadyForPayment: (cardState) {
-                // Handed off in L2A (L2B will perform POST purchases/checkout)
-                context.go('/app/home');
+              storage: TwoGoStorage(),
+              onPaymentConfirmed: (purchaseId, tripId) {
+                // Payment confirmed by Core server-side (Handoff prepared for Phase M)
               },
               onCancelled: () {
                 context.go('/app/home');

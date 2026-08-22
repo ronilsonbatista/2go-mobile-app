@@ -112,6 +112,58 @@ class MockPaymentsDataSource implements PaymentsRemoteDataSource {
   }
 
   @override
+  Future<CheckoutResponseDto> processCheckout({
+    required String tripId,
+    required String paymentMethod,
+    String? couponCode,
+    String? cardToken,
+    int? installments,
+    String? idempotencyKey,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    final methodEnum = paymentMethod.toUpperCase() == 'CARD' ||
+            paymentMethod.toUpperCase() == 'CREDIT_CARD'
+        ? PaymentMethodType.CARD
+        : PaymentMethodType.PIX;
+
+    final purchaseId = 'pur_${DateTime.now().millisecondsSinceEpoch}';
+
+    return CheckoutResponseDto(
+      purchaseId: purchaseId,
+      status: CheckoutResponseDtoStatusEnum.PENDING,
+      amount: 19.99,
+      currency: 'BRL',
+      paymentMethod: methodEnum,
+      pixDetails: methodEnum == PaymentMethodType.PIX
+          ? CheckoutPixDetailsDto(
+              copyPaste:
+                  '00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540519.995802BR59132GO TURISMO6008SAO PAULO62070503***6304E2CA',
+              qrCodeBase64:
+                  'iVBORw0KGgoAAAANSU5EUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+              expiresAt: DateTime.now().add(const Duration(minutes: 15)),
+            )
+          : null,
+      pricing: const CheckoutPricingDto(
+        originalAmount: 19.99,
+        discountAmount: 0.0,
+        finalAmount: 19.99,
+        currency: 'BRL',
+      ),
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>> getPurchaseStatus(String purchaseId) async {
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    return {
+      'purchaseId': purchaseId,
+      'status': 'PAID',
+      'paidAt': DateTime.now().toIso8601String(),
+      'premiumUnlocked': true,
+    };
+  }
+
+  @override
   Future<PurchaseDto> createMockPurchase(
     String productId,
     String? tripId,
