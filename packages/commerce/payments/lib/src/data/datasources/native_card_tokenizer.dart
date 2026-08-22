@@ -9,6 +9,7 @@ class NativeCardTokenizer implements CardTokenizer {
   @override
   Future<CardTokenizationResult> tokenizeCard({
     required String publicKey,
+    String? cpf,
     int installments = 1,
   }) async {
     if (publicKey.isEmpty) {
@@ -21,6 +22,7 @@ class NativeCardTokenizer implements CardTokenizer {
         'tokenizeCard',
         {
           'publicKey': publicKey,
+          'cpf': cpf ?? '',
           'installments': installments,
         },
       );
@@ -42,6 +44,8 @@ class NativeCardTokenizer implements CardTokenizer {
         throw Exception('Dados do cartão inválidos ou incompletos.');
       } else if (errorCode == 'PROVIDER_UNAVAILABLE') {
         throw Exception('Serviço de pagamento temporariamente indisponível.');
+      } else if (errorCode == 'IOS_RUNTIME_NOT_VALIDATED') {
+        throw Exception('Módulo nativo iOS requer ambiente com Xcode completo.');
       } else if (errorCode == 'CANCELLED') {
         throw Exception('Tokenização cancelada pelo usuário.');
       }

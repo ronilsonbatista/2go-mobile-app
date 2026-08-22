@@ -13,6 +13,7 @@ class FakeCardTokenizer implements CardTokenizer {
   @override
   Future<CardTokenizationResult> tokenizeCard({
     required String publicKey,
+    String? cpf,
     int installments = 1,
   }) async {
     if (publicKey.isEmpty) {

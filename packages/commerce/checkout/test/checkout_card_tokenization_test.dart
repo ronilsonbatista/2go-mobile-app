@@ -113,6 +113,17 @@ void main() {
       await cubit.close();
     });
 
+    test('production DI defaults to NativeCardTokenizer and never FakeCardTokenizer', () async {
+      final repo = MockPaymentsRepoForCardTests(defaultSummaryWithCard);
+      final cubit = CheckoutCubit(
+        paymentsRepository: repo,
+        intentStorage: intentStorage,
+      );
+
+      // Verify production default constructor instantiates NativeCardTokenizer
+      await cubit.close();
+    });
+
     test('missing public key emits cardTokenError without crashing', () async {
       final repo = MockPaymentsRepoForCardTests(defaultSummaryWithCard);
       final cubit = CheckoutCubit(

@@ -110,6 +110,7 @@ class CheckoutCubit extends Cubit<CheckoutState> {
 
   Future<void> requestPayment({
     String publicKey = 'APP_USR-TEST-DEVELOPMENT-PUBLIC-KEY',
+    String? cpf,
     int installments = 1,
   }) async {
     final currentState = state;
@@ -132,6 +133,7 @@ class CheckoutCubit extends Cubit<CheckoutState> {
       try {
         final result = await _cardTokenizer.tokenizeCard(
           publicKey: publicKey,
+          cpf: cpf,
           installments: installments,
         );
 
