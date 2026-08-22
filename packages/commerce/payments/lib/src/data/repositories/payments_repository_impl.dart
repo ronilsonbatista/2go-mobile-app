@@ -78,11 +78,19 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
   @override
   Future<PurchaseStatusResult> getPurchaseStatus(String purchaseId) async {
     final map = await _remoteDataSource.getPurchaseStatus(purchaseId);
+    final pixData = map['pixDetails'] as Map<String, dynamic>?;
     return PurchaseStatusResult(
       purchaseId: map['purchaseId'] as String? ?? purchaseId,
       status: map['status'] as String? ?? 'PENDING',
       paidAt: map['paidAt'] as String?,
       premiumUnlocked: map['premiumUnlocked'] as bool? ?? false,
+      pixDetails: pixData != null
+          ? PixDetails(
+              copyPaste: pixData['copyPaste'] as String?,
+              qrCodeBase64: pixData['qrCodeBase64'] as String?,
+              expiresAt: pixData['expiresAt'] as String?,
+            )
+          : null,
     );
   }
 

@@ -44,7 +44,9 @@ class CheckoutResponseDto {
         orElse: () => PaymentMethodType.PIX,
       ),
       pixDetails: json['pixDetails'] != null
-          ? CheckoutPixDetailsDto.fromJson(json['pixDetails'] as Map<String, dynamic>)
+          ? CheckoutPixDetailsDto.fromJson(
+              json['pixDetails'] as Map<String, dynamic>,
+            )
           : null,
       pricing: json['pricing'] != null
           ? CheckoutPricingDto.fromJson(json['pricing'] as Map<String, dynamic>)

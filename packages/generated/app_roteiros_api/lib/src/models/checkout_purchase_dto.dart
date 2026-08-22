@@ -19,7 +19,8 @@ class CheckoutPurchaseDto {
     return {
       'tripId': tripId,
       'paymentMethod': paymentMethod.name,
-      if (couponCode != null && couponCode!.isNotEmpty) 'couponCode': couponCode,
+      if (couponCode != null && couponCode!.isNotEmpty)
+        'couponCode': couponCode,
       if (cardToken != null && cardToken!.isNotEmpty) 'cardToken': cardToken,
       if (installments != null) 'installments': installments,
     };
