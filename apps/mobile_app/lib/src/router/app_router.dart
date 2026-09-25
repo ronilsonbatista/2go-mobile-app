@@ -3,12 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:twogo_authentication/twogo_authentication.dart';
 import 'package:twogo_checkout/twogo_checkout.dart';
-import 'package:twogo_payments/twogo_payments.dart';
-import 'package:twogo_session/twogo_session.dart';
 import 'package:twogo_planning/twogo_planning.dart';
+import 'package:twogo_session/twogo_session.dart';
 import 'package:twogo_storage/twogo_storage.dart';
-import 'package:twogo_trips/trips.dart';
 
+import '../di/app_dependencies.dart';
 import '../pages/home_page.dart';
 import '../pages/launch_page.dart';
 import '../pages/notifications_page.dart';
@@ -17,23 +16,16 @@ import '../pages/trips_page.dart';
 import '../shell/app_shell.dart';
 
 class AppRouter {
-  static GoRouter createRouter({
-    required SessionCubit sessionCubit,
-    required AuthRepository authRepository,
-    PostAuthIntentStorage? intentStorage,
-    PaymentsRepository? paymentsRepository,
-    TripsRepository? tripsRepository,
-  }) {
-    final effectiveIntentStorage =
-        intentStorage ?? PersistentPostAuthIntentStorage();
-    final effectivePaymentsRepo = paymentsRepository ??
-        PaymentsRepositoryImpl(
-          remoteDataSource: MockPaymentsDataSource(),
-        );
-    final effectiveTripsRepo = tripsRepository ??
-        TripsRepositoryImpl(
-          remoteDataSource: MockTripsDataSource(),
-        );
+  static const _guestAllowedPrefixes = <String>[
+    '/launch',
+    '/auth',
+    '/app',
+    '/planning',
+  ];
+
+  static GoRouter createRouter({required AppDependencies dependencies}) {
+    final sessionCubit = dependencies.sessionCubit;
+    final intentStorage = dependencies.intentStorage;
 
     return GoRouter(
       initialLocation: _getInitialLocation(sessionCubit.state.status),
@@ -51,17 +43,23 @@ class AppRouter {
         }
 
         final isAuthenticated = sessionStatus == SessionStatus.authenticated;
-        final isAuthRoute = location.startsWith('/auth');
+        final isGuestAllowed = _guestAllowedPrefixes.any(
+          (prefix) => location == prefix || location.startsWith('$prefix/'),
+        );
 
-        if (!isAuthenticated && !isAuthRoute) {
-          return '/auth';
+        // Guest-first: unauthenticated users may access home + planning + auth.
+        if (!isAuthenticated && !isGuestAllowed) {
+          return '/app/home';
         }
 
         if (isAuthenticated) {
-          // 1. PAYMENT_CONFIRMED intent check (takes top priority over resumeCheckout)
           final storage = TwoGoStorage();
-          final handoffTripId = await storage.getString('active_paid_handoff_trip_id');
-          final handoffPurchaseId = await storage.getString('active_paid_handoff_purchase_id');
+          final handoffTripId = await storage.getString(
+            'active_paid_handoff_trip_id',
+          );
+          final handoffPurchaseId = await storage.getString(
+            'active_paid_handoff_purchase_id',
+          );
           if (handoffTripId != null && handoffTripId.isNotEmpty) {
             if (location != '/paid-handoff') {
               return '/paid-handoff?tripId=$handoffTripId&purchaseId=${handoffPurchaseId ?? ''}';
@@ -69,19 +67,30 @@ class AppRouter {
             return null;
           }
 
-          // 2. Resume checkout intent check
-          final intent = await effectiveIntentStorage.readIntent();
-          if (intent != null &&
-              intent.type == PostAuthIntentType.resumeCheckout &&
-              intent.tripId != null &&
-              intent.tripId!.isNotEmpty) {
-            if (location != '/checkout') {
-              return '/checkout?tripId=${intent.tripId}';
+          final intent = await intentStorage.readIntent();
+          if (intent != null) {
+            if (intent.type == PostAuthIntentType.claimGuestJourney &&
+                intent.journeyId != null &&
+                intent.journeyId!.isNotEmpty) {
+              final claimPath = '/planning/claim';
+              if (!location.startsWith(claimPath)) {
+                final product = intent.productId ?? '';
+                return '$claimPath?journeyId=${intent.journeyId}&productId=$product';
+              }
+              return null;
             }
-            return null;
+
+            if (intent.type == PostAuthIntentType.resumeCheckout &&
+                intent.tripId != null &&
+                intent.tripId!.isNotEmpty) {
+              if (location != '/checkout') {
+                return '/checkout?tripId=${intent.tripId}';
+              }
+              return null;
+            }
           }
 
-          if (isAuthRoute || location == '/launch' || location == '/') {
+          if (location == '/auth' || location == '/launch' || location == '/') {
             return '/app/home';
           }
         }
@@ -98,8 +107,12 @@ class AppRouter {
           builder: (context, state) {
             return BlocProvider<AuthenticationBloc>(
               create: (context) => AuthenticationBloc(
-                requestOtpUseCase: RequestOtpUseCase(authRepository),
-                verifyOtpUseCase: VerifyOtpUseCase(authRepository),
+                requestOtpUseCase: RequestOtpUseCase(
+                  dependencies.authRepository,
+                ),
+                verifyOtpUseCase: VerifyOtpUseCase(
+                  dependencies.authRepository,
+                ),
               ),
               child: BlocListener<AuthenticationBloc, AuthenticationState>(
                 listenWhen: (previous, current) =>
@@ -121,16 +134,84 @@ class AppRouter {
           },
         ),
         GoRoute(
+          path: '/planning/wizard',
+          builder: (context, state) {
+            return PlanningWizardPage(
+              bloc: dependencies.createPlanningWizardBloc(),
+              searchPlacesUseCase: dependencies.searchPlacesUseCase,
+              onExit: () => context.go('/app/home'),
+              onReadyToGenerate: (journeyId) {
+                context.go('/planning/generation/$journeyId');
+              },
+            );
+          },
+        ),
+        GoRoute(
+          path: '/planning/generation/:journeyId',
+          builder: (context, state) {
+            final journeyId = state.pathParameters['journeyId']!;
+            return PlanningGenerationPage(
+              journeyId: journeyId,
+              bloc: dependencies.createPlanningGenerationBloc(),
+              onPreviewReady: (id) {
+                context.go('/planning/preview/$id');
+              },
+            );
+          },
+        ),
+        GoRoute(
+          path: '/planning/preview/:journeyId',
+          builder: (context, state) {
+            final journeyId = state.pathParameters['journeyId']!;
+            return PlanningPreviewPage(
+              journeyId: journeyId,
+              bloc: dependencies.createPlanningPreviewBloc(),
+              onUnlockRequested: (id, productId) async {
+                await dependencies.intentStorage.saveIntent(
+                  PostAuthIntent(
+                    type: PostAuthIntentType.claimGuestJourney,
+                    journeyId: id,
+                    productId: productId,
+                    createdAt: DateTime.now(),
+                  ),
+                );
+                if (context.mounted) {
+                  context.go('/auth');
+                }
+              },
+            );
+          },
+        ),
+        GoRoute(
+          path: '/planning/claim',
+          builder: (context, state) {
+            final journeyId = state.uri.queryParameters['journeyId'] ?? '';
+            final productId = state.uri.queryParameters['productId'];
+            return PlanningClaimPage(
+              journeyId: journeyId,
+              productId: productId?.isEmpty == true ? null : productId,
+              bloc: dependencies.createPlanningClaimBloc(),
+              onClaimed: (tripId, nextAction) {
+                context.go('/checkout?tripId=$tripId');
+              },
+            );
+          },
+        ),
+        GoRoute(
           path: '/checkout',
           builder: (context, state) {
             final tripId = state.uri.queryParameters['tripId'] ?? '';
             return CheckoutPage(
               tripId: tripId,
-              paymentsRepository: effectivePaymentsRepo,
-              intentStorage: effectiveIntentStorage,
+              paymentsRepository: dependencies.paymentsRepository,
+              intentStorage: intentStorage,
               storage: TwoGoStorage(),
+              cardTokenizer: dependencies.cardTokenizer,
+              publicKey: dependencies.apiConfig.mercadoPagoPublicKey,
               onPaymentConfirmed: (purchaseId, tripId) {
-                context.go('/paid-handoff?tripId=$tripId&purchaseId=$purchaseId');
+                context.go(
+                  '/paid-handoff?tripId=$tripId&purchaseId=$purchaseId',
+                );
               },
               onCancelled: () {
                 context.go('/app/home');
@@ -149,8 +230,8 @@ class AppRouter {
             return PaidTripHandoffPage(
               tripId: tripId,
               purchaseId: purchaseId,
-              paymentsRepository: effectivePaymentsRepo,
-              tripsRepository: effectiveTripsRepo,
+              paymentsRepository: dependencies.paymentsRepository,
+              tripsRepository: dependencies.tripsRepository,
               storage: TwoGoStorage(),
               onHandoffSuccess: (trip) {
                 context.go('/app/trips');
@@ -213,7 +294,7 @@ class AppRouter {
         return '/app/home';
       case SessionStatus.unauthenticated:
       case SessionStatus.expired:
-        return '/auth';
+        return '/app/home';
     }
   }
 }

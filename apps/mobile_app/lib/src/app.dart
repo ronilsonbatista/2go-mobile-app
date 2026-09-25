@@ -5,18 +5,21 @@ import 'package:twogo_authentication/twogo_authentication.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_session/twogo_session.dart';
 
+import 'di/app_dependencies.dart';
 import 'router/app_router.dart';
 
 class TwoGoApp extends StatefulWidget {
   final String environment;
   final SessionCubit sessionCubit;
   final AuthRepository authRepository;
+  final AppDependencies dependencies;
 
   const TwoGoApp({
     super.key,
     required this.environment,
     required this.sessionCubit,
     required this.authRepository,
+    required this.dependencies,
   });
 
   @override
@@ -29,10 +32,7 @@ class _TwoGoAppState extends State<TwoGoApp> {
   @override
   void initState() {
     super.initState();
-    _router = AppRouter.createRouter(
-      sessionCubit: widget.sessionCubit,
-      authRepository: widget.authRepository,
-    );
+    _router = AppRouter.createRouter(dependencies: widget.dependencies);
   }
 
   @override

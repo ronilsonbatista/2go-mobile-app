@@ -31,6 +31,9 @@ dependencies:
   twogo_payments: any
   twogo_checkout: any
   twogo_planning: any
+  twogo_places: any
+  app_roteiros_api: any
+  dio: ^5.7.0
 
 dev_dependencies:
   flutter_test:
