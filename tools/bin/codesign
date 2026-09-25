@@ -1,7 +1,17 @@
 #!/bin/bash
-# Strip macOS provenance (and all xattrs) before ad-hoc codesign.
-# On macOS 15+/26, xattr -cr on the binary alone is insufficient; clear the
-# containing framework directory first.
+# LOCAL SIMULATOR HELPER ONLY — never use for device, archive, or App Store.
+#
+# Intercepts `codesign` when PATH is prepended by tools/scripts/flutter_ios_sim.sh
+# (opt-in via TWIGO_ALLOW_IOS_SIM_CODESIGN_WORKAROUND=1).
+#
+# Strips macOS provenance / Finder xattrs that break Flutter's ad-hoc Simulator
+# codesign on macOS 15+/26, then execs the real /usr/bin/codesign.
+#
+# Safety invariants:
+# - This file is NEVER on the global PATH.
+# - project.pbxproj must NOT prepend tools/bin (device/archive must use /usr/bin/codesign).
+# - Does not change signing identity, entitlements, or provisioning.
+set -euo pipefail
 echo "[2go-codesign-shim] $*" >> /tmp/2go-codesign-shim.log
 for arg in "$@"; do
   if [[ -e "$arg" ]]; then

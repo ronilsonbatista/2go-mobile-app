@@ -28,7 +28,10 @@ ios/Flutter/Flutter.podspec
 ios/Flutter/Generated.xcconfig
 ios/Flutter/app.fltdefinition
 ios/Runner.xcworkspace/
-ios/Runner.xcodeproj/project.xcworkspace/
+ios/Runner.xcodeproj/project.xcworkspace/*
+!ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/
+!ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+!ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 ios/Runner.xcodeproj/xcuserdata/
 
 # Environments / Secrets

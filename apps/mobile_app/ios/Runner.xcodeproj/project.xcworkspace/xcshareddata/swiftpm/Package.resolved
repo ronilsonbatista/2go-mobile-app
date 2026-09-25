@@ -1,0 +1,15 @@
+{
+  "originHash" : "641607dbe876118e047c5038e0dbd0224bf4a570064019d6556a9ff7cc1b5ab7",
+  "pins" : [
+    {
+      "identity" : "sdk-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mercadopago/sdk-ios.git",
+      "state" : {
+        "revision" : "6163e2c1baed3ea9e909699633681f775ec63f9a",
+        "version" : "1.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}
