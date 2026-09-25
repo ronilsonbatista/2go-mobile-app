@@ -26,16 +26,16 @@ scripts:
     description: Run static analysis across all packages in the workspace.
 
   format:
-    run: melos exec -- dart format --set-exit-if-changed .
+    run: dart run melos exec -- dart format --set-exit-if-changed .
     description: Verify code formatting across all packages.
 
   format:fix:
-    run: melos exec -- dart format .
+    run: dart run melos exec -- dart format .
     description: Apply code formatting across all packages.
 
   test:
-    run: melos exec --dir-exists="test" -- flutter test --no-pub
-    description: Run unit tests across all packages.
+    run: dart run melos exec --dir-exists="test" -- flutter test --no-pub
+    description: Run unit tests across all packages (via dart run melos).
 
   lint:arch:
     run: dart run tools/lint_rules/architecture_lint_test.dart

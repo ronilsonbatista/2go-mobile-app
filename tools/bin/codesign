@@ -1,0 +1,14 @@
+#!/bin/bash
+# Strip macOS provenance (and all xattrs) before ad-hoc codesign.
+# On macOS 15+/26, xattr -cr on the binary alone is insufficient; clear the
+# containing framework directory first.
+echo "[2go-codesign-shim] $*" >> /tmp/2go-codesign-shim.log
+for arg in "$@"; do
+  if [[ -e "$arg" ]]; then
+    parent=$(dirname "$arg")
+    /usr/bin/xattr -cr "$parent" 2>/dev/null || true
+    /usr/bin/xattr -c "$arg" 2>/dev/null || true
+    /usr/bin/xattr -d com.apple.provenance "$arg" 2>/dev/null || true
+  fi
+done
+exec /usr/bin/codesign "$@"
