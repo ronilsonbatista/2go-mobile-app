@@ -10,11 +10,25 @@ allowed".
 | Surface | Affected? |
 |---------|-----------|
 | Explicit `TWIGO_ALLOW_IOS_SIM_CODESIGN_WORKAROUND=1 tools/scripts/flutter_ios_sim.sh …` | Yes (intentional) |
-| Xcode Run Script when `PLATFORM_NAME=iphonesimulator` | Yes (shim PATH only for Simulator) |
-| Plain `flutter build ios` without shim on PATH (device SDK) | No |
-| Physical device (`iphoneos`) | No |
+| `Debug.xcconfig` `CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]=NO` | Yes (Simulator Debug only) |
+| Xcode Run Script when `PLATFORM_NAME=iphonesimulator` (PATH shim) | Yes |
+| Plain `flutter build ios` / device SDK (`iphoneos`) | No |
+| Physical device build | No |
 | Archive / App Store / TestFlight | No |
 | Global shell PATH | No |
+
+## Why PATH shim alone is insufficient
+Xcode's native CodeSign build phase often invokes **`/usr/bin/codesign` by absolute path**,
+so a PATH-based shim never intercepts it. Simulator Debug therefore:
+
+1. Sets `CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]=NO` in `Flutter/Debug.xcconfig` and Podfile
+2. Signs Flutter frameworks during assemble via PATH shim (`tools/bin/codesign` + ditto clean copy)
+3. Deep-signs `Runner.app` with `ios_sim_resign.sh` after build
+
+Device/Archive (iphoneos) keep normal Xcode signing and entitlements.
+
+`SecureTokenStorageImpl` also tolerates missing keychain entitlements on Simulator
+unsigned builds so bootstrap never dies on PlatformException -34018.
 
 ## Components
 - `tools/bin/codesign` — local shim that strips xattrs then calls `/usr/bin/codesign`

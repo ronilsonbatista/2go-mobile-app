@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +19,7 @@ import '../shell/app_shell.dart';
 class AppRouter {
   static const _guestAllowedPrefixes = <String>[
     '/launch',
+    '/debug',
     '/auth',
     '/app',
     '/planning',
@@ -102,6 +104,12 @@ class AppRouter {
           path: '/launch',
           builder: (context, state) => const LaunchPage(),
         ),
+        // Debug-only: hold Splash for visual certification without delaying prod cold-start.
+        if (kDebugMode)
+          GoRoute(
+            path: '/debug/splash',
+            builder: (context, state) => const LaunchPage(),
+          ),
         GoRoute(
           path: '/auth',
           builder: (context, state) {

@@ -6,9 +6,11 @@
 #
 # Safety:
 # - Does NOT modify PATH globally.
-# - Does NOT alter Xcode project build phases for device/archive.
 # - Shim is only prepended for this process tree when THIS script is invoked.
-# - CODE_SIGNING_ALLOWED/REQUIRED=NO applies only to this invoked flutter process.
+# - CODE_SIGNING_ALLOWED/REQUIRED=NO applies only to this invoked flutter process
+#   so Xcode skips native CodeSign of Runner.app (Simulator). frameworks are
+#   signed via the shim during Flutter assemble; use ios_sim_resign.sh after.
+# - project.pbxproj also gates tools/bin to PLATFORM_NAME=iphonesimulator only.
 #
 # Forbidden uses: physical device, Archive, Release→App Store, TestFlight.
 set -euo pipefail
@@ -21,11 +23,10 @@ if [[ "${TWIGO_ALLOW_IOS_SIM_CODESIGN_WORKAROUND:-}" != "1" ]]; then
   exit 2
 fi
 
-# Explicit opt-in: shim only for this invocation.
 export PATH="$ROOT/tools/bin:/opt/homebrew/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 cd "$ROOT/apps/mobile_app"
 
-# Simulator-only: skip Xcode app re-sign; frameworks still signed via shim during assemble.
+# Simulator-only: skip Xcode native app CodeSign (provenance xattrs); resign after.
 export CODE_SIGNING_ALLOWED=NO
 export CODE_SIGNING_REQUIRED=NO
 

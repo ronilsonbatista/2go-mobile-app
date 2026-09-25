@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../contracts/token_storage.dart';
 import '../models/auth_tokens.dart';
@@ -20,27 +21,39 @@ class SecureTokenStorageImpl implements TokenStorage {
 
   @override
   Future<void> saveTokens(AuthTokens tokens) async {
-    await _storage.write(key: _accessTokenKey, value: tokens.accessToken);
-    await _storage.write(key: _refreshTokenKey, value: tokens.refreshToken);
+    try {
+      await _storage.write(key: _accessTokenKey, value: tokens.accessToken);
+      await _storage.write(key: _refreshTokenKey, value: tokens.refreshToken);
+    } on PlatformException {
+      // Simulator builds may lack keychain entitlements during local codesign workarounds.
+    }
   }
 
   @override
   Future<AuthTokens?> readTokens() async {
-    final access = await _storage.read(key: _accessTokenKey);
-    final refresh = await _storage.read(key: _refreshTokenKey);
+    try {
+      final access = await _storage.read(key: _accessTokenKey);
+      final refresh = await _storage.read(key: _refreshTokenKey);
 
-    if (access == null ||
-        access.isEmpty ||
-        refresh == null ||
-        refresh.isEmpty) {
+      if (access == null ||
+          access.isEmpty ||
+          refresh == null ||
+          refresh.isEmpty) {
+        return null;
+      }
+      return AuthTokens(accessToken: access, refreshToken: refresh);
+    } on PlatformException {
       return null;
     }
-    return AuthTokens(accessToken: access, refreshToken: refresh);
   }
 
   @override
   Future<void> clearTokens() async {
-    await _storage.delete(key: _accessTokenKey);
-    await _storage.delete(key: _refreshTokenKey);
+    try {
+      await _storage.delete(key: _accessTokenKey);
+      await _storage.delete(key: _refreshTokenKey);
+    } on PlatformException {
+      // Best-effort clear — never block bootstrap/logout on keychain entitlement gaps.
+    }
   }
 }

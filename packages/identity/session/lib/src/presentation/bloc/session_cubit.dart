@@ -19,7 +19,11 @@ class SessionCubit extends Cubit<SessionState> {
         emit(SessionState.unauthenticated());
       }
     } catch (e) {
-      await _tokenStorage.clearTokens();
+      try {
+        await _tokenStorage.clearTokens();
+      } catch (_) {
+        // ignore secondary storage failures
+      }
       emit(SessionState.unauthenticated());
     }
   }

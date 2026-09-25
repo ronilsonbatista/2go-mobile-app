@@ -4,21 +4,63 @@
 # Intercepts `codesign` when PATH is prepended by tools/scripts/flutter_ios_sim.sh
 # (opt-in via TWIGO_ALLOW_IOS_SIM_CODESIGN_WORKAROUND=1).
 #
-# Strips macOS provenance / Finder xattrs that break Flutter's ad-hoc Simulator
-# codesign on macOS 15+/26, then execs the real /usr/bin/codesign.
-#
-# Safety invariants:
-# - This file is NEVER on the global PATH.
-# - project.pbxproj must NOT prepend tools/bin (device/archive must use /usr/bin/codesign).
-# - Does not change signing identity, entitlements, or provisioning.
+# On macOS 15+/26, com.apple.provenance survives xattr -cr on APFS in some cases.
+# Strategy: copy the target to a clean temp path with ditto --norsrc --noextattr,
+# sign there, then atomically replace the original.
 set -euo pipefail
+
 echo "[2go-codesign-shim] $*" >> /tmp/2go-codesign-shim.log
+
+REAL_CODESIGN=/usr/bin/codesign
+
+# Find the last existing path argument (codesign target).
+TARGET=""
 for arg in "$@"; do
   if [[ -e "$arg" ]]; then
-    parent=$(dirname "$arg")
-    /usr/bin/xattr -cr "$parent" 2>/dev/null || true
-    /usr/bin/xattr -c "$arg" 2>/dev/null || true
-    /usr/bin/xattr -d com.apple.provenance "$arg" 2>/dev/null || true
+    TARGET="$arg"
   fi
 done
-exec /usr/bin/codesign "$@"
+
+if [[ -n "$TARGET" ]]; then
+  parent=$(dirname "$TARGET")
+  /usr/bin/xattr -cr "$parent" 2>/dev/null || true
+  /usr/bin/xattr -cr "$TARGET" 2>/dev/null || true
+
+  TMPDIR_CLEAN=$(/usr/bin/mktemp -d /tmp/2go-codesign.XXXXXX)
+  cleanup() { rm -rf "$TMPDIR_CLEAN"; }
+  trap cleanup EXIT
+
+  base=$(basename "$TARGET")
+  CLEAN="$TMPDIR_CLEAN/$base"
+
+  if [[ -d "$TARGET" ]]; then
+    /usr/bin/ditto --norsrc --noextattr "$TARGET" "$CLEAN"
+  else
+    /usr/bin/ditto --norsrc --noextattr "$TARGET" "$CLEAN"
+  fi
+
+  # Rebuild argv replacing TARGET with CLEAN.
+  NEW_ARGS=()
+  for arg in "$@"; do
+    if [[ "$arg" == "$TARGET" ]]; then
+      NEW_ARGS+=("$CLEAN")
+    else
+      NEW_ARGS+=("$arg")
+    fi
+  done
+
+  if "$REAL_CODESIGN" "${NEW_ARGS[@]}"; then
+    # Copy signed artifact back over the original (preserve name).
+    if [[ -d "$CLEAN" ]]; then
+      /usr/bin/ditto --norsrc --noextattr "$CLEAN" "$TARGET"
+    else
+      /usr/bin/ditto --norsrc --noextattr "$CLEAN" "$TARGET"
+    fi
+    exit 0
+  fi
+
+  # Fallback: try signing original in place after another xattr strip.
+  /usr/bin/xattr -cr "$parent" 2>/dev/null || true
+fi
+
+exec "$REAL_CODESIGN" "$@"
