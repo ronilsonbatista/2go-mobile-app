@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:twogo_config/twogo_config.dart';
 import 'package:twogo_security/twogo_security.dart';
+import '../interceptors/api_envelope_interceptor.dart';
 import '../interceptors/auth_interceptor.dart';
 import '../interceptors/correlation_interceptor.dart';
 import '../interceptors/refresh_coordinator.dart';
@@ -25,6 +26,7 @@ class DioClientFactory {
     );
 
     dio.interceptors.add(CorrelationInterceptor());
+    dio.interceptors.add(ApiEnvelopeInterceptor());
     dio.interceptors.add(
       AuthInterceptor(
         tokenStorage: tokenStorage,

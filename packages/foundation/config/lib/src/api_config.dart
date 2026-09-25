@@ -25,19 +25,20 @@ class ApiConfig {
 
     switch (environment) {
       case Environment.staging:
-        return 'https://staging-api.2go.app/api';
+        // Staging Core (no /api global prefix — Nest routes are root-mounted).
+        return 'https://core-api-production-50ce.up.railway.app';
       case Environment.production:
-        return 'https://api.2go.app/api';
+        return 'https://api.2go.app';
       case Environment.development:
         if (kIsWeb) {
-          return 'http://localhost:3000/api';
+          return 'http://localhost:3000';
         }
         if (Platform.isAndroid) {
           // Android Emulator loopback to host Mac
-          return 'http://10.0.2.2:3000/api';
+          return 'http://10.0.2.2:3000';
         }
         // iOS Simulator / macOS desktop
-        return 'http://localhost:3000/api';
+        return 'http://localhost:3000';
     }
   }
 
