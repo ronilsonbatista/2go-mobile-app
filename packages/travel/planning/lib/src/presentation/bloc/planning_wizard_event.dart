@@ -33,10 +33,6 @@ class FinalizeWizardEvent extends PlanningWizardEvent {
   const FinalizeWizardEvent();
 }
 
-class RetrySyncEvent extends PlanningWizardEvent {
-  const RetrySyncEvent();
-}
-
 // Step 1 Events
 class AddDestinationEvent extends PlanningWizardEvent {
   const AddDestinationEvent();

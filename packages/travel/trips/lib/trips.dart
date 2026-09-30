@@ -1,5 +1,6 @@
 library;
 
+export 'src/data/datasources/api_trips_datasource.dart';
 export 'src/data/datasources/mock_trips_datasource.dart';
 export 'src/data/datasources/trips_remote_datasource.dart';
 export 'src/data/models/itinerary_item_dto.dart';
@@ -11,4 +12,6 @@ export 'src/domain/entities/trip_day_entity.dart';
 export 'src/domain/entities/trip_entity.dart';
 export 'src/domain/repositories/trips_repository.dart';
 export 'src/presentation/bloc/trips_cubit.dart';
+export 'src/presentation/widgets/handoff_trips_view.dart';
+export 'src/presentation/widgets/trip_itinerary_view.dart';
 export 'src/trips_module.dart';

@@ -114,7 +114,7 @@ void main() {
         expect(res.isSuccess, true);
         final draft = await draftStorage.readDraft();
         expect(draft?.interests, ['GEEK_CULTURE', 'LOCAL_HISTORY']);
-        expect(draft?.interests!.map(PlanningInterest.fromRaw).toList(), [
+        expect(PlanningInterest.parseList(draft!.interests!), [
           PlanningInterest.geekCulture,
           PlanningInterest.localHistory,
         ]);
@@ -256,6 +256,67 @@ void main() {
         expect(filledDraft?.activityWindow?['startTime'], '11:00');
       },
     );
+
+    test(
+      'SavePlanningProgressUseCase keeps travelStyle when only the budget changes',
+      () async {
+        await createUseCase();
+        final current = apiClient.sessions['journey-123']!;
+        apiClient.sessions['journey-123'] = PlanningSessionResponseDto(
+          id: current.id,
+          status: current.status,
+          answersVersion: current.answersVersion,
+          currentStep: current.currentStep,
+          travelStyle: 'COMFORT',
+          expiresAt: current.expiresAt,
+          createdAt: current.createdAt,
+          updatedAt: current.updatedAt,
+        );
+
+        final res = await saveUseCase(
+          journeyId: 'journey-123',
+          currentStep: 5,
+          budgetLevel: 'HIGH',
+        );
+
+        expect(res.isSuccess, true);
+        expect(res.getOrNull()!.budgetLevel, 'HIGH');
+        expect(res.getOrNull()!.travelStyle, 'COMFORT');
+        final draft = await draftStorage.readDraft();
+        expect(draft?.budgetLevel, 'HIGH');
+        expect(draft?.travelStyle, 'COMFORT');
+      },
+    );
+
+    test('unknown interest is dropped and does not become nature', () async {
+      expect(PlanningInterest.fromRaw('COOKING'), isNull);
+      expect(PlanningInterest.fromRaw('NATURE'), PlanningInterest.nature);
+
+      await createUseCase();
+      final current = apiClient.sessions['journey-123']!;
+      await draftStorage.saveDraft(
+        PlanningDraft(
+          activeJourneyId: 'journey-123',
+          currentStep: current.currentStep,
+        ),
+      );
+      apiClient.sessions['journey-123'] = PlanningSessionResponseDto(
+        id: current.id,
+        status: current.status,
+        answersVersion: current.answersVersion,
+        currentStep: current.currentStep,
+        interests: const ['COOKING', 'GEEK_CULTURE'],
+        expiresAt: current.expiresAt,
+        createdAt: current.createdAt,
+        updatedAt: current.updatedAt,
+      );
+
+      final restored = await restoreUseCase('journey-123');
+      expect(restored.isSuccess, true);
+      expect(restored.getOrNull()!.interests, [PlanningInterest.geekCulture]);
+      final draft = await draftStorage.readDraft();
+      expect(draft?.interests, ['GEEK_CULTURE']);
+    });
 
     test(
       'FinalizePlanningJourneyUseCase finalizes journey and locks local draft state',

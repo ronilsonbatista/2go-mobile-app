@@ -10,6 +10,7 @@ export 'src/application/save_planning_progress_use_case.dart';
 export 'src/application/start_planning_generation_use_case.dart';
 export 'src/domain/failures/planning_failures.dart';
 export 'src/domain/models/claim_journey_result.dart';
+export 'src/domain/models/claim_next_action.dart';
 export 'src/domain/models/guest_journey.dart';
 export 'src/domain/models/guest_journey_status.dart';
 export 'src/domain/models/planning_activity_window.dart';

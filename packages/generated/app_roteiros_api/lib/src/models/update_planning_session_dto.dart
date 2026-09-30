@@ -27,7 +27,7 @@ class UpdatePlanningSessionDto {
       'destinations': destinations!.map((e) => e.toJson()).toList(),
     if (travelers != null) 'travelers': travelers!.toJson(),
     if (interests != null) 'interests': interests,
-    if (activityWindow != null) 'activityWindow': activityWindow!.toJson(),
+    if (activityWindow != null) 'activityHours': activityWindow!.toJson(),
     if (travelStyle != null) 'travelStyle': travelStyle,
     if (budgetLevel != null) 'budgetLevel': budgetLevel,
   };
@@ -46,13 +46,20 @@ class UpdatePlanningSessionDto {
             )
           : null,
       interests: (json['interests'] as List<dynamic>?)?.cast<String>(),
-      activityWindow: json['activityWindow'] != null
-          ? PlanningActivityWindowDto.fromJson(
-              json['activityWindow'] as Map<String, dynamic>,
-            )
-          : null,
+      activityWindow: _readActivityHours(json),
       travelStyle: json['travelStyle'] as String?,
       budgetLevel: json['budgetLevel'] as String?,
     );
   }
+}
+
+PlanningActivityWindowDto? _readActivityHours(Map<String, dynamic> json) {
+  final raw = json['activityHours'] ?? json['activityWindow'];
+  if (raw is Map<String, dynamic>) {
+    return PlanningActivityWindowDto.fromJson(raw);
+  }
+  if (raw is Map) {
+    return PlanningActivityWindowDto.fromJson(Map<String, dynamic>.from(raw));
+  }
+  return null;
 }

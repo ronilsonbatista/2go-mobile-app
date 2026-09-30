@@ -39,7 +39,6 @@ class PlanningWizardBloc
     on<PreviousStepEvent>(_onPreviousStep);
     on<GoToStepEvent>(_onGoToStep);
     on<FinalizeWizardEvent>(_onFinalize);
-    on<RetrySyncEvent>(_onRetrySync);
     on<AddDestinationEvent>(_onAddDestination);
     on<RemoveDestinationEvent>(_onRemoveDestination);
     on<UpdateDestinationAtEvent>(_onUpdateDestinationAt);
@@ -135,7 +134,7 @@ class PlanningWizardBloc
 
     final interests =
         localDraft != null && matchesJourney && localDraft.interests != null
-        ? localDraft.interests!.map(PlanningInterest.fromRaw).toList()
+        ? PlanningInterest.parseList(localDraft.interests!)
         : (journey?.interests ?? state.interests);
 
     final activityWindow =
@@ -402,42 +401,6 @@ class PlanningWizardBloc
       state.copyWith(
         status: PlanningWizardStatus.editing,
         currentStep: targetStep,
-      ),
-    );
-  }
-
-  Future<void> _onRetrySync(
-    RetrySyncEvent event,
-    Emitter<PlanningWizardState> emit,
-  ) async {
-    final journeyId = state.journey?.id ?? state.draft?.activeJourneyId;
-    if (journeyId == null || journeyId.isEmpty) return;
-
-    emit(state.copyWith(status: PlanningWizardStatus.syncing));
-
-    final result = await _saveUseCase(
-      journeyId: journeyId,
-      currentStep: state.currentStep,
-      destinations: state.currentStep == 1 ? state.destinations : null,
-      travelers: state.currentStep == 2 ? state.travelers : null,
-      interests: state.currentStep == 3 ? state.interests : null,
-      activityWindow: state.currentStep == 4 ? state.activityWindow : null,
-      budgetLevel: state.currentStep == 5 ? state.budgetLevel : null,
-    );
-
-    result.fold(
-      (updated) => emit(
-        state.copyWith(
-          status: PlanningWizardStatus.editing,
-          journey: updated,
-          isDirty: false,
-        ),
-      ),
-      (failure) => emit(
-        state.copyWith(
-          status: PlanningWizardStatus.failure,
-          errorMessage: failure.message,
-        ),
       ),
     );
   }

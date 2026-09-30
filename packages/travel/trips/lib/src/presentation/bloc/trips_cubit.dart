@@ -42,6 +42,23 @@ class TripsCubit extends ValueNotifier<TripsState> {
     : _tripsRepository = tripsRepository,
       super(TripsState.initial());
 
+  /// Viagem do handoff. Sem id a aba fica vazia e não consulta lista.
+  Future<void> loadTrip(String? tripId) async {
+    final id = tripId?.trim() ?? '';
+    if (id.isEmpty) {
+      value = TripsState.loaded(const []);
+      return;
+    }
+
+    value = TripsState.loading();
+    try {
+      final trip = await _tripsRepository.getTripById(id);
+      value = TripsState.loaded([trip]);
+    } catch (e) {
+      value = TripsState.error(e.toString());
+    }
+  }
+
   Future<void> loadMyTrips() async {
     value = TripsState.loading();
     try {
