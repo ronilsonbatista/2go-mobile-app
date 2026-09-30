@@ -37,6 +37,10 @@ class ItineraryItemEntity {
   final String? placeProvider;
   final bool isEditable;
   final bool isUserModified;
+  final int? transitDistanceMeters;
+  final int? transitDurationMinutes;
+  final String? transitMode;
+  final String? ticketStatus;
 
   const ItineraryItemEntity({
     required this.id,
@@ -60,6 +64,10 @@ class ItineraryItemEntity {
     this.placeProvider,
     this.isEditable = true,
     this.isUserModified = false,
+    this.transitDistanceMeters,
+    this.transitDurationMinutes,
+    this.transitMode,
+    this.ticketStatus,
   });
 
   ItineraryItemEntity copyWith({
@@ -82,6 +90,10 @@ class ItineraryItemEntity {
     String? placeProvider,
     bool? isEditable,
     bool? isUserModified,
+    int? transitDistanceMeters,
+    int? transitDurationMinutes,
+    String? transitMode,
+    String? ticketStatus,
   }) {
     return ItineraryItemEntity(
       id: id,
@@ -105,6 +117,12 @@ class ItineraryItemEntity {
       placeProvider: placeProvider ?? this.placeProvider,
       isEditable: isEditable ?? this.isEditable,
       isUserModified: isUserModified ?? this.isUserModified,
+      transitDistanceMeters:
+          transitDistanceMeters ?? this.transitDistanceMeters,
+      transitDurationMinutes:
+          transitDurationMinutes ?? this.transitDurationMinutes,
+      transitMode: transitMode ?? this.transitMode,
+      ticketStatus: ticketStatus ?? this.ticketStatus,
     );
   }
 }

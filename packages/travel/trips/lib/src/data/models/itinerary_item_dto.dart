@@ -22,6 +22,10 @@ class ItineraryItemDto {
   final String? placeProvider;
   final bool isEditable;
   final bool isUserModified;
+  final int? transitDistanceMeters;
+  final int? transitDurationMinutes;
+  final String? transitMode;
+  final String? ticketStatus;
 
   const ItineraryItemDto({
     required this.id,
@@ -45,6 +49,10 @@ class ItineraryItemDto {
     this.placeProvider,
     this.isEditable = true,
     this.isUserModified = false,
+    this.transitDistanceMeters,
+    this.transitDurationMinutes,
+    this.transitMode,
+    this.ticketStatus,
   });
 
   factory ItineraryItemDto.fromJson(Map<String, dynamic> json) {
@@ -70,6 +78,10 @@ class ItineraryItemDto {
       placeProvider: json['placeProvider'] as String?,
       isEditable: json['isEditable'] as bool? ?? true,
       isUserModified: json['isUserModified'] as bool? ?? false,
+      transitDistanceMeters: _readInt(json['transitDistanceMeters']),
+      transitDurationMinutes: _readInt(json['transitDurationMinutes']),
+      transitMode: _readText(json['transitMode']),
+      ticketStatus: _readText(json['ticketStatus']),
     );
   }
 
@@ -96,6 +108,10 @@ class ItineraryItemDto {
       'placeProvider': placeProvider,
       'isEditable': isEditable,
       'isUserModified': isUserModified,
+      'transitDistanceMeters': transitDistanceMeters,
+      'transitDurationMinutes': transitDurationMinutes,
+      'transitMode': transitMode,
+      'ticketStatus': ticketStatus,
     };
   }
 
@@ -122,6 +138,10 @@ class ItineraryItemDto {
       placeProvider: placeProvider,
       isEditable: isEditable,
       isUserModified: isUserModified,
+      transitDistanceMeters: transitDistanceMeters,
+      transitDurationMinutes: transitDurationMinutes,
+      transitMode: transitMode,
+      ticketStatus: ticketStatus,
     );
   }
 
@@ -158,4 +178,16 @@ class ItineraryItemDto {
         return ItineraryCategory.touristAttraction;
     }
   }
+}
+
+int? _readInt(dynamic raw) {
+  if (raw is int) return raw;
+  if (raw is num) return raw.toInt();
+  return null;
+}
+
+String? _readText(dynamic raw) {
+  if (raw is! String) return null;
+  final value = raw.trim();
+  return value.isEmpty ? null : value;
 }

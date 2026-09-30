@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:twogo_planning/twogo_planning.dart';
 
 void main() {
-  test('PATCH sends activityWindow and does not invent travelStyle', () {
+  test('PATCH sends activityHours and does not invent travelStyle', () {
     final json = const UpdatePlanningSessionDto(
       activityWindow: PlanningActivityWindowDto(
         startTime: '09:00',
@@ -12,8 +12,8 @@ void main() {
       budgetLevel: 'HIGH',
     ).toJson();
 
-    expect(json['activityWindow'], {'startTime': '09:00', 'endTime': '18:00'});
-    expect(json.containsKey('activityHours'), isFalse);
+    expect(json['activityHours'], {'startTime': '09:00', 'endTime': '18:00'});
+    expect(json.containsKey('activityWindow'), isFalse);
     expect(json.containsKey('travelStyle'), isFalse);
   });
 
