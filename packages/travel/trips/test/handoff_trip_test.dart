@@ -275,4 +275,43 @@ class _RecordingTripsRepository implements TripsRepository {
   @override
   Future<ItineraryItemEntity> updateItineraryItem(ItineraryItemEntity item) =>
       throw UnimplementedError();
+
+  @override
+  Future<AccommodationDraft?> getAccommodation(String tripId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<AccommodationDraft> saveAccommodation(
+    String tripId,
+    AccommodationDraft stay,
+  ) => throw UnimplementedError();
+
+  @override
+  Future<void> deleteAccommodation(String tripId) => throw UnimplementedError();
+
+  @override
+  Future<AlternativesResult> getItemAlternatives(String itemId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<SwapQuota> substituteItem(String itemId, Map<String, dynamic> body) =>
+      throw UnimplementedError();
+
+  @override
+  Future<MealRecommendationsResult> getMealRecommendations(
+    String dayId, {
+    String? period,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<void> pinMeal(String itemId, Map<String, dynamic> body) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> updateItemDuration(String itemId, int duration) =>
+      throw UnimplementedError();
+
+  @override
+  Future<VerifiedPlaceDetails?> getVerifiedDetails(String itemId) =>
+      throw UnimplementedError();
 }
