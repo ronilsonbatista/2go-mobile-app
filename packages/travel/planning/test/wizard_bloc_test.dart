@@ -130,6 +130,92 @@ void main() {
       expect(bloc.state.status, PlanningWizardStatus.exit);
     });
 
+    test(
+      'NextStepEvent stays on the step when the patch fails and keeps a local copy',
+      () async {
+        bloc.add(const InitializeWizardEvent());
+        await bloc.stream.firstWhere(
+          (s) => s.status == PlanningWizardStatus.editing,
+        );
+
+        bloc.add(
+          const UpdateDestinationAtEvent(
+            0,
+            PlanningDestination(
+              providerPlaceId: 'place_lisboa_001',
+              name: 'Lisboa',
+              arrivalDate: '2026-10-01',
+              arrivalTime: '09:00',
+              departureDate: '2026-10-05',
+              departureTime: '18:00',
+              order: 0,
+            ),
+          ),
+        );
+        await bloc.stream.firstWhere(
+          (s) => s.destinations.first.name == 'Lisboa',
+        );
+
+        apiClient.failUpdate = true;
+        bloc.add(const NextStepEvent());
+        await bloc.stream.firstWhere(
+          (s) => s.status == PlanningWizardStatus.failure,
+        );
+
+        expect(bloc.state.currentStep, 1);
+        final draft = await draftStorage.readDraft();
+        expect(draft?.isDirty, true);
+        expect(draft?.currentStep, 1);
+        expect(draft?.destinations?.single['name'], 'Lisboa');
+      },
+    );
+
+    test(
+      'InitializeWizardEvent fills destination, travelers, interests and window from GET',
+      () async {
+        await createUseCase();
+        await repository.updateJourney(
+          journeyId: 'journey-123',
+          currentStep: 4,
+          destinations: const [
+            PlanningDestination(
+              providerPlaceId: 'place-lisboa',
+              name: 'Lisboa',
+              arrivalDate: '2026-10-01',
+              arrivalTime: '09:00',
+              departureDate: '2026-10-05',
+              departureTime: '18:00',
+            ),
+          ],
+          travelers: const PlanningTravelers(adults: 2, children: 1, elders: 0),
+          interests: const [
+            PlanningInterest.geekCulture,
+            PlanningInterest.localHistory,
+          ],
+          activityWindow: const PlanningActivityWindow(
+            start: '10:00',
+            end: '19:00',
+          ),
+        );
+
+        bloc.add(const InitializeWizardEvent());
+        await bloc.stream.firstWhere(
+          (s) => s.status == PlanningWizardStatus.editing,
+        );
+
+        expect(bloc.state.currentStep, 4);
+        expect(bloc.state.destinations.single.name, 'Lisboa');
+        expect(bloc.state.travelers.adults, 2);
+        expect(bloc.state.travelers.children, 1);
+        expect(bloc.state.interests, const [
+          PlanningInterest.geekCulture,
+          PlanningInterest.localHistory,
+        ]);
+        expect(bloc.state.activityWindow.start, '10:00');
+        expect(bloc.state.activityWindow.end, '19:00');
+      },
+    );
+
     test('GoToStepEvent jumps to target step', () async {
       bloc.add(const InitializeWizardEvent());
       await bloc.stream.firstWhere(

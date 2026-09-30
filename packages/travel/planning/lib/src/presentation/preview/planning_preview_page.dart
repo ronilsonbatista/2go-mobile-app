@@ -13,12 +13,14 @@ class PlanningPreviewPage extends StatefulWidget {
   final String journeyId;
   final PlanningPreviewBloc? bloc;
   final void Function(String journeyId, String? productId)? onUnlockRequested;
+  final ValueChanged<Uri>? onOpenUrl;
 
   const PlanningPreviewPage({
     super.key,
     required this.journeyId,
     this.bloc,
     this.onUnlockRequested,
+    this.onOpenUrl,
   });
 
   @override
@@ -295,6 +297,9 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
   }
 
   Widget _buildTimelineList(PlanningVisibleDay day) {
+    final activities = [...day.activities]
+      ..sort((a, b) => a.order.compareTo(b.order));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -305,6 +310,15 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
             color: TwoGoColors.neutral900,
           ),
         ),
+        if (day.date != null && day.date!.trim().isNotEmpty) ...[
+          const SizedBox(height: TwoGoSpacing.xs),
+          Text(
+            day.date!,
+            style: TwoGoTypography.bodySmall.copyWith(
+              color: TwoGoColors.neutral600,
+            ),
+          ),
+        ],
         if (day.description != null && day.description!.isNotEmpty) ...[
           const SizedBox(height: TwoGoSpacing.xs),
           Text(
@@ -315,10 +329,11 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
           ),
         ],
         const SizedBox(height: TwoGoSpacing.md),
-        ...day.activities.asMap().entries.map(
+        ...activities.asMap().entries.map(
           (entry) => PlanningTimelineItem(
             activity: entry.value,
-            isLast: entry.key == day.activities.length - 1,
+            isLast: entry.key == activities.length - 1,
+            onOpenUrl: widget.onOpenUrl,
           ),
         ),
       ],
@@ -355,6 +370,16 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                   color: TwoGoColors.neutral900,
                 ),
               ),
+              if (lockedDay?.date != null &&
+                  lockedDay!.date!.trim().isNotEmpty) ...[
+                const SizedBox(height: TwoGoSpacing.xs),
+                Text(
+                  lockedDay.date!,
+                  style: TwoGoTypography.bodySmall.copyWith(
+                    color: TwoGoColors.neutral600,
+                  ),
+                ),
+              ],
               const SizedBox(height: TwoGoSpacing.xs),
               Text(
                 'Desbloqueie o acesso completo para visualizar as atividades deste dia.',

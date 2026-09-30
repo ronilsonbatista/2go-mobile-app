@@ -30,13 +30,41 @@ class RestorePlanningJourneyUseCase {
 
     return result.fold(
       (journey) async {
+        final existing = await _draftStorage.readDraft();
+        final keepLocal =
+            existing != null && existing.activeJourneyId == journey.id;
+
         await _draftStorage.saveDraft(
           PlanningDraft(
             activeJourneyId: journey.id,
             currentStep: journey.currentStep,
+            destinations: _preferLocal(
+              keepLocal,
+              existing?.destinations,
+              journey.destinations?.map((d) => d.toJson()).toList(),
+            ),
+            travelers: _preferLocal(
+              keepLocal,
+              existing?.travelers,
+              journey.travelers?.toJson(),
+            ),
+            interests: _preferLocal(
+              keepLocal,
+              existing?.interests,
+              journey.interests?.map((interest) => interest.toRaw()).toList(),
+            ),
+            activityWindow: _preferLocal(
+              keepLocal,
+              existing?.activityWindow,
+              journey.activityWindow?.toJson(),
+            ),
             answersVersion: journey.answersVersion,
-            budgetLevel: journey.budgetLevel,
-            travelStyle: journey.travelStyle,
+            budgetLevel:
+                journey.budgetLevel ??
+                (keepLocal ? existing.budgetLevel : null),
+            travelStyle:
+                journey.travelStyle ??
+                (keepLocal ? existing.travelStyle : null),
             lastSyncedAt: DateTime.now(),
             isDirty: false,
           ),
@@ -52,5 +80,10 @@ class RestorePlanningJourneyUseCase {
         return Result.failure(failure);
       },
     );
+  }
+
+  T? _preferLocal<T>(bool keepLocal, T? local, T? remote) {
+    if (keepLocal && local != null) return local;
+    return remote;
   }
 }

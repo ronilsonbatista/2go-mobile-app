@@ -1,3 +1,4 @@
+import 'package:app_roteiros_api/app_roteiros_api.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:twogo_planning/twogo_planning.dart';
 import 'planning_repository_test.dart';
@@ -95,6 +96,227 @@ void main() {
         expect(draft?.budgetLevel, 'HIGH');
       },
     );
+
+    test(
+      'SavePlanningProgressUseCase stores interests with API codes',
+      () async {
+        await createUseCase();
+
+        final res = await saveUseCase(
+          journeyId: 'journey-123',
+          currentStep: 3,
+          interests: const [
+            PlanningInterest.geekCulture,
+            PlanningInterest.localHistory,
+          ],
+        );
+
+        expect(res.isSuccess, true);
+        final draft = await draftStorage.readDraft();
+        expect(draft?.interests, ['GEEK_CULTURE', 'LOCAL_HISTORY']);
+        expect(PlanningInterest.parseList(draft!.interests!), [
+          PlanningInterest.geekCulture,
+          PlanningInterest.localHistory,
+        ]);
+      },
+    );
+
+    test(
+      'SavePlanningProgressUseCase keeps a local copy when the patch fails',
+      () async {
+        await createUseCase();
+        apiClient.failUpdate = true;
+
+        final res = await saveUseCase(
+          journeyId: 'journey-123',
+          currentStep: 2,
+          destinations: const [
+            PlanningDestination(
+              providerPlaceId: 'place-lisboa',
+              name: 'Lisboa',
+              arrivalDate: '2026-10-01',
+              arrivalTime: '09:00',
+              departureDate: '2026-10-05',
+              departureTime: '18:00',
+            ),
+          ],
+          interests: const [
+            PlanningInterest.geekCulture,
+            PlanningInterest.localHistory,
+          ],
+        );
+
+        expect(res.isFailure, true);
+        final draft = await draftStorage.readDraft();
+        expect(draft?.isDirty, true);
+        expect(draft?.currentStep, 1);
+        expect(draft?.destinations?.single['name'], 'Lisboa');
+        expect(draft?.interests, ['GEEK_CULTURE', 'LOCAL_HISTORY']);
+      },
+    );
+
+    test(
+      'RestorePlanningJourneyUseCase keeps local blocks and fills gaps from GET',
+      () async {
+        await createUseCase();
+        await saveUseCase(
+          journeyId: 'journey-123',
+          currentStep: 4,
+          destinations: const [
+            PlanningDestination(
+              providerPlaceId: 'place-lisboa',
+              name: 'Lisboa',
+              arrivalDate: '2026-10-01',
+              arrivalTime: '09:00',
+              departureDate: '2026-10-05',
+              departureTime: '18:00',
+            ),
+          ],
+          travelers: const PlanningTravelers(adults: 2, children: 1, elders: 0),
+          interests: const [
+            PlanningInterest.geekCulture,
+            PlanningInterest.localHistory,
+          ],
+          activityWindow: const PlanningActivityWindow(
+            start: '10:00',
+            end: '19:00',
+          ),
+        );
+
+        final current = apiClient.sessions['journey-123']!;
+        apiClient.sessions['journey-123'] = PlanningSessionResponseDto(
+          id: current.id,
+          status: current.status,
+          answersVersion: current.answersVersion,
+          currentStep: current.currentStep,
+          destinations: null,
+          travelers: null,
+          interests: const ['NATURE'],
+          activityHours: null,
+          travelStyle: current.travelStyle,
+          budgetLevel: current.budgetLevel,
+          expiresAt: current.expiresAt,
+          createdAt: current.createdAt,
+          updatedAt: current.updatedAt,
+        );
+
+        final kept = await restoreUseCase('journey-123');
+        expect(kept.isSuccess, true);
+        final keptDraft = await draftStorage.readDraft();
+        expect(keptDraft?.destinations?.single['name'], 'Lisboa');
+        expect(keptDraft?.travelers?['adults'], 2);
+        expect(keptDraft?.interests, ['GEEK_CULTURE', 'LOCAL_HISTORY']);
+        expect(keptDraft?.activityWindow?['startTime'], '10:00');
+        expect(keptDraft?.activityWindow?['endTime'], '19:00');
+
+        await draftStorage.saveDraft(
+          PlanningDraft(
+            activeJourneyId: 'journey-123',
+            currentStep: current.currentStep,
+          ),
+        );
+        apiClient.sessions['journey-123'] = PlanningSessionResponseDto(
+          id: current.id,
+          status: current.status,
+          answersVersion: current.answersVersion,
+          currentStep: 4,
+          destinations: const [
+            PlanningDestinationDto(
+              providerPlaceId: 'place-porto',
+              name: 'Porto',
+              arrivalDate: '2026-11-01',
+              arrivalTime: '08:00',
+              departureDate: '2026-11-04',
+              departureTime: '20:00',
+              order: 0,
+            ),
+          ],
+          travelers: const PlanningTravelersDto(
+            adults: 3,
+            children: 0,
+            elders: 1,
+          ),
+          interests: const ['GEEK_CULTURE', 'LOCAL_HISTORY'],
+          activityHours: const PlanningActivityWindowDto(
+            startTime: '11:00',
+            endTime: '21:00',
+          ),
+          expiresAt: current.expiresAt,
+          createdAt: current.createdAt,
+          updatedAt: current.updatedAt,
+        );
+
+        final filled = await restoreUseCase('journey-123');
+        expect(filled.isSuccess, true);
+        final filledDraft = await draftStorage.readDraft();
+        expect(filledDraft?.destinations?.single['name'], 'Porto');
+        expect(filledDraft?.travelers?['adults'], 3);
+        expect(filledDraft?.travelers?['elders'], 1);
+        expect(filledDraft?.interests, ['GEEK_CULTURE', 'LOCAL_HISTORY']);
+        expect(filledDraft?.activityWindow?['startTime'], '11:00');
+      },
+    );
+
+    test(
+      'SavePlanningProgressUseCase keeps travelStyle when only the budget changes',
+      () async {
+        await createUseCase();
+        final current = apiClient.sessions['journey-123']!;
+        apiClient.sessions['journey-123'] = PlanningSessionResponseDto(
+          id: current.id,
+          status: current.status,
+          answersVersion: current.answersVersion,
+          currentStep: current.currentStep,
+          travelStyle: 'COMFORT',
+          expiresAt: current.expiresAt,
+          createdAt: current.createdAt,
+          updatedAt: current.updatedAt,
+        );
+
+        final res = await saveUseCase(
+          journeyId: 'journey-123',
+          currentStep: 5,
+          budgetLevel: 'HIGH',
+        );
+
+        expect(res.isSuccess, true);
+        expect(res.getOrNull()!.budgetLevel, 'HIGH');
+        expect(res.getOrNull()!.travelStyle, 'COMFORT');
+        final draft = await draftStorage.readDraft();
+        expect(draft?.budgetLevel, 'HIGH');
+        expect(draft?.travelStyle, 'COMFORT');
+      },
+    );
+
+    test('unknown interest is dropped and does not become nature', () async {
+      expect(PlanningInterest.fromRaw('COOKING'), isNull);
+      expect(PlanningInterest.fromRaw('NATURE'), PlanningInterest.nature);
+
+      await createUseCase();
+      final current = apiClient.sessions['journey-123']!;
+      await draftStorage.saveDraft(
+        PlanningDraft(
+          activeJourneyId: 'journey-123',
+          currentStep: current.currentStep,
+        ),
+      );
+      apiClient.sessions['journey-123'] = PlanningSessionResponseDto(
+        id: current.id,
+        status: current.status,
+        answersVersion: current.answersVersion,
+        currentStep: current.currentStep,
+        interests: const ['COOKING', 'GEEK_CULTURE'],
+        expiresAt: current.expiresAt,
+        createdAt: current.createdAt,
+        updatedAt: current.updatedAt,
+      );
+
+      final restored = await restoreUseCase('journey-123');
+      expect(restored.isSuccess, true);
+      expect(restored.getOrNull()!.interests, [PlanningInterest.geekCulture]);
+      final draft = await draftStorage.readDraft();
+      expect(draft?.interests, ['GEEK_CULTURE']);
+    });
 
     test(
       'FinalizePlanningJourneyUseCase finalizes journey and locks local draft state',

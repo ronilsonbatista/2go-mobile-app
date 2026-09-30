@@ -50,11 +50,7 @@ class PlanningSessionResponseDto {
             )
           : null,
       interests: (json['interests'] as List<dynamic>?)?.cast<String>(),
-      activityHours: json['activityHours'] != null
-          ? PlanningActivityWindowDto.fromJson(
-              json['activityHours'] as Map<String, dynamic>,
-            )
-          : null,
+      activityHours: _readSessionActivityHours(json),
       travelStyle: json['travelStyle'] as String?,
       budgetLevel: json['budgetLevel'] as String?,
       expiresAt: json['expiresAt'] as String,
@@ -101,11 +97,7 @@ class CreatePlanningSessionResponseDto extends PlanningSessionResponseDto {
             )
           : null,
       interests: (json['interests'] as List<dynamic>?)?.cast<String>(),
-      activityHours: json['activityHours'] != null
-          ? PlanningActivityWindowDto.fromJson(
-              json['activityHours'] as Map<String, dynamic>,
-            )
-          : null,
+      activityHours: _readSessionActivityHours(json),
       travelStyle: json['travelStyle'] as String?,
       budgetLevel: json['budgetLevel'] as String?,
       expiresAt: json['expiresAt'] as String,
@@ -114,4 +106,17 @@ class CreatePlanningSessionResponseDto extends PlanningSessionResponseDto {
       guestToken: json['guestToken'] as String,
     );
   }
+}
+
+PlanningActivityWindowDto? _readSessionActivityHours(
+  Map<String, dynamic> json,
+) {
+  final raw = json['activityHours'] ?? json['activityWindow'];
+  if (raw is Map<String, dynamic>) {
+    return PlanningActivityWindowDto.fromJson(raw);
+  }
+  if (raw is Map) {
+    return PlanningActivityWindowDto.fromJson(Map<String, dynamic>.from(raw));
+  }
+  return null;
 }

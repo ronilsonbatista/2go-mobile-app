@@ -20,7 +20,9 @@ class PlanningMapper {
       travelers: dto.travelers != null
           ? travelersToDomain(dto.travelers!)
           : null,
-      interests: dto.interests?.map(PlanningInterest.fromRaw).toList(),
+      interests: dto.interests == null
+          ? null
+          : PlanningInterest.parseList(dto.interests!),
       activityWindow: dto.activityHours != null
           ? activityWindowToDomain(dto.activityHours!)
           : null,

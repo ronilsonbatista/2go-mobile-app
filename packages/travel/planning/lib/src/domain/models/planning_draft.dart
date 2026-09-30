@@ -59,7 +59,7 @@ class PlanningDraft {
     if (destinations != null) 'destinations': destinations,
     if (travelers != null) 'travelers': travelers,
     if (interests != null) 'interests': interests,
-    if (activityWindow != null) 'activityWindow': activityWindow,
+    if (activityWindow != null) 'activityHours': activityWindow,
     if (budgetLevel != null) 'budgetLevel': budgetLevel,
     if (travelStyle != null) 'travelStyle': travelStyle,
     'answersVersion': answersVersion,
@@ -78,9 +78,7 @@ class PlanningDraft {
           ? Map<String, dynamic>.from(json['travelers'] as Map)
           : null,
       interests: (json['interests'] as List<dynamic>?)?.cast<String>(),
-      activityWindow: json['activityWindow'] != null
-          ? Map<String, dynamic>.from(json['activityWindow'] as Map)
-          : null,
+      activityWindow: _readActivityHours(json),
       budgetLevel: json['budgetLevel'] as String?,
       travelStyle: json['travelStyle'] as String?,
       answersVersion: json['answersVersion'] as int? ?? 1,
@@ -90,4 +88,10 @@ class PlanningDraft {
       isDirty: json['isDirty'] as bool? ?? false,
     );
   }
+}
+
+Map<String, dynamic>? _readActivityHours(Map<String, dynamic> json) {
+  final raw = json['activityHours'] ?? json['activityWindow'];
+  if (raw is Map) return Map<String, dynamic>.from(raw);
+  return null;
 }

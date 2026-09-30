@@ -118,9 +118,7 @@ class AppRouter {
                 requestOtpUseCase: RequestOtpUseCase(
                   dependencies.authRepository,
                 ),
-                verifyOtpUseCase: VerifyOtpUseCase(
-                  dependencies.authRepository,
-                ),
+                verifyOtpUseCase: VerifyOtpUseCase(dependencies.authRepository),
               ),
               child: BlocListener<AuthenticationBloc, AuthenticationState>(
                 listenWhen: (previous, current) =>
@@ -200,7 +198,9 @@ class AppRouter {
               productId: productId?.isEmpty == true ? null : productId,
               bloc: dependencies.createPlanningClaimBloc(),
               onClaimed: (tripId, nextAction) {
-                context.go('/checkout?tripId=$tripId');
+                context.go(
+                  claimNavigationPath(tripId: tripId, nextAction: nextAction),
+                );
               },
             );
           },
@@ -242,7 +242,9 @@ class AppRouter {
               tripsRepository: dependencies.tripsRepository,
               storage: TwoGoStorage(),
               onHandoffSuccess: (trip) {
-                context.go('/app/trips');
+                context.go(
+                  '/app/trips?tripId=${Uri.encodeQueryComponent(trip.id)}',
+                );
               },
               onCancelled: () {
                 context.go('/app/home');
@@ -267,7 +269,10 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: '/app/trips',
-                  builder: (context, state) => const TripsPage(),
+                  builder: (context, state) => TripsPage(
+                    tripsRepository: dependencies.tripsRepository,
+                    tripId: state.uri.queryParameters['tripId'],
+                  ),
                 ),
               ],
             ),

@@ -32,7 +32,7 @@ enum PlanningInterest {
     }
   }
 
-  static PlanningInterest fromRaw(String raw) {
+  static PlanningInterest? fromRaw(String raw) {
     switch (raw.toUpperCase()) {
       case 'ART':
         return PlanningInterest.art;
@@ -47,13 +47,20 @@ enum PlanningInterest {
       case 'MUSIC':
         return PlanningInterest.music;
       case 'GEEK_CULTURE':
+      case 'GEEKCULTURE':
         return PlanningInterest.geekCulture;
       case 'LOCAL_HISTORY':
+      case 'LOCALHISTORY':
         return PlanningInterest.localHistory;
       case 'NATURE':
-      default:
         return PlanningInterest.nature;
+      default:
+        return null;
     }
+  }
+
+  static List<PlanningInterest> parseList(Iterable<String> values) {
+    return values.map(fromRaw).whereType<PlanningInterest>().toList();
   }
 
   String toRaw() {

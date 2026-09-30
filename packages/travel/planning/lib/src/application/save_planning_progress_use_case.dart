@@ -39,31 +39,84 @@ class SavePlanningProgressUseCase {
       travelStyle: travelStyle,
     );
 
-    return result.fold((updated) async {
-      final currentDraft = await _draftStorage.readDraft();
-      await _draftStorage.saveDraft(
-        (currentDraft ?? const PlanningDraft()).copyWith(
-          activeJourneyId: updated.id,
+    return result.fold(
+      (updated) async {
+        await _writeDraft(
+          journeyId: updated.id,
           currentStep: updated.currentStep,
-          destinations: destinations != null
-              ? destinations.map((d) => d.toJson()).toList()
-              : currentDraft?.destinations,
-          travelers: travelers != null
-              ? travelers.toJson()
-              : currentDraft?.travelers,
-          interests: interests != null
-              ? interests.map((i) => i.name).toList()
-              : currentDraft?.interests,
-          activityWindow: activityWindow != null
-              ? activityWindow.toJson()
-              : currentDraft?.activityWindow,
+          destinations: destinations,
+          travelers: travelers,
+          interests: interests,
+          activityWindow: activityWindow,
           budgetLevel: updated.budgetLevel,
           travelStyle: updated.travelStyle,
-          lastSyncedAt: DateTime.now(),
           isDirty: false,
-        ),
-      );
-      return Result.success(updated);
-    }, (failure) => Result.failure(failure));
+          synced: true,
+        );
+        return Result.success(updated);
+      },
+      (failure) async {
+        try {
+          await _writeDraft(
+            journeyId: journeyId,
+            keepCurrentStep: true,
+            destinations: destinations,
+            travelers: travelers,
+            interests: interests,
+            activityWindow: activityWindow,
+            budgetLevel: budgetLevel,
+            travelStyle: travelStyle,
+            isDirty: true,
+            synced: false,
+          );
+        } catch (_) {
+          // Sem cópia local o passo não pode avançar; o caller trata a falha.
+        }
+        return Result.failure(failure);
+      },
+    );
+  }
+
+  Future<void> _writeDraft({
+    required String journeyId,
+    int? currentStep,
+    bool keepCurrentStep = false,
+    List<PlanningDestination>? destinations,
+    PlanningTravelers? travelers,
+    List<PlanningInterest>? interests,
+    PlanningActivityWindow? activityWindow,
+    String? budgetLevel,
+    String? travelStyle,
+    required bool isDirty,
+    required bool synced,
+  }) async {
+    final currentDraft = await _draftStorage.readDraft();
+    final base = currentDraft ?? const PlanningDraft();
+    final step = keepCurrentStep
+        ? (currentDraft?.currentStep ?? base.currentStep)
+        : (currentStep ?? base.currentStep);
+
+    await _draftStorage.saveDraft(
+      base.copyWith(
+        activeJourneyId: journeyId,
+        currentStep: step,
+        destinations: destinations != null
+            ? destinations.map((d) => d.toJson()).toList()
+            : currentDraft?.destinations,
+        travelers: travelers != null
+            ? travelers.toJson()
+            : currentDraft?.travelers,
+        interests: interests != null
+            ? interests.map((interest) => interest.toRaw()).toList()
+            : currentDraft?.interests,
+        activityWindow: activityWindow != null
+            ? activityWindow.toJson()
+            : currentDraft?.activityWindow,
+        budgetLevel: budgetLevel ?? currentDraft?.budgetLevel,
+        travelStyle: travelStyle ?? currentDraft?.travelStyle,
+        lastSyncedAt: synced ? DateTime.now() : currentDraft?.lastSyncedAt,
+        isDirty: isDirty,
+      ),
+    );
   }
 }

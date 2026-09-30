@@ -8,7 +8,6 @@ import 'package:twogo_places/places.dart';
 import 'package:twogo_planning/twogo_planning.dart';
 import 'package:twogo_security/twogo_security.dart';
 import 'package:twogo_session/twogo_session.dart';
-import 'package:twogo_storage/twogo_storage.dart';
 import 'package:twogo_trips/trips.dart';
 
 /// Composition root — wires Core clients for the selected flavor.
@@ -118,9 +117,8 @@ class AppDependencies {
       ),
     );
 
-    // Trips UI is post-P0; keep mock datasource until trip screens are wired.
     final tripsRepository = TripsRepositoryImpl(
-      remoteDataSource: MockTripsDataSource(),
+      remoteDataSource: ApiTripsDataSource(dio),
     );
 
     return AppDependencies._(
@@ -186,9 +184,7 @@ class AppDependencies {
   }
 
   PlanningPreviewBloc createPlanningPreviewBloc() {
-    return PlanningPreviewBloc(
-      getPreviewUseCase: getPlanningPreviewUseCase,
-    );
+    return PlanningPreviewBloc(getPreviewUseCase: getPlanningPreviewUseCase);
   }
 
   PlanningClaimBloc createPlanningClaimBloc() {
