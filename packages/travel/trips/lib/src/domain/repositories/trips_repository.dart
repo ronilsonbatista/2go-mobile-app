@@ -1,6 +1,7 @@
 import '../entities/itinerary_item_entity.dart';
 import '../entities/trip_day_entity.dart';
 import '../entities/trip_entity.dart';
+import '../paid_trip_controls.dart';
 
 abstract class TripsRepository {
   Future<List<TripEntity>> getMyTrips();
@@ -29,4 +30,20 @@ abstract class TripsRepository {
     String tripId,
     Map<String, dynamic> preferences,
   );
+
+  Future<AccommodationDraft?> getAccommodation(String tripId);
+  Future<AccommodationDraft> saveAccommodation(
+    String tripId,
+    AccommodationDraft stay,
+  );
+  Future<void> deleteAccommodation(String tripId);
+  Future<AlternativesResult> getItemAlternatives(String itemId);
+  Future<SwapQuota> substituteItem(String itemId, Map<String, dynamic> body);
+  Future<MealRecommendationsResult> getMealRecommendations(
+    String dayId, {
+    String? period,
+  });
+  Future<void> pinMeal(String itemId, Map<String, dynamic> body);
+  Future<void> updateItemDuration(String itemId, int duration);
+  Future<VerifiedPlaceDetails?> getVerifiedDetails(String itemId);
 }

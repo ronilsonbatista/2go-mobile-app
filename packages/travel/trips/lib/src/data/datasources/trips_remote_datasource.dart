@@ -1,3 +1,4 @@
+import '../../domain/paid_trip_controls.dart';
 import '../models/itinerary_item_dto.dart';
 import '../models/trip_day_dto.dart';
 import '../models/trip_dto.dart';
@@ -23,4 +24,20 @@ abstract class TripsRemoteDataSource {
     String tripId,
     Map<String, dynamic> preferences,
   );
+
+  Future<AccommodationDraft?> getAccommodation(String tripId);
+  Future<AccommodationDraft> saveAccommodation(
+    String tripId,
+    AccommodationDraft stay,
+  );
+  Future<void> deleteAccommodation(String tripId);
+  Future<AlternativesResult> getItemAlternatives(String itemId);
+  Future<SwapQuota> substituteItem(String itemId, Map<String, dynamic> body);
+  Future<MealRecommendationsResult> getMealRecommendations(
+    String dayId, {
+    String? period,
+  });
+  Future<void> pinMeal(String itemId, Map<String, dynamic> body);
+  Future<void> updateItemDuration(String itemId, int duration);
+  Future<VerifiedPlaceDetails?> getVerifiedDetails(String itemId);
 }

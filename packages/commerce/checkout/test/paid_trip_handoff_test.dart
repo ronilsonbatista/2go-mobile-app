@@ -129,6 +129,51 @@ class MockTripsRepoForPhaseM implements TripsRepository {
   Future<TripEntity> generateAiItinerary(
           String tripId, Map<String, dynamic> preferences) async =>
       throw UnimplementedError();
+
+  @override
+  Future<AccommodationDraft?> getAccommodation(String tripId) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<AccommodationDraft> saveAccommodation(
+    String tripId,
+    AccommodationDraft stay,
+  ) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> deleteAccommodation(String tripId) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<AlternativesResult> getItemAlternatives(String itemId) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<SwapQuota> substituteItem(
+    String itemId,
+    Map<String, dynamic> body,
+  ) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<MealRecommendationsResult> getMealRecommendations(
+    String dayId, {
+    String? period,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> pinMeal(String itemId, Map<String, dynamic> body) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> updateItemDuration(String itemId, int duration) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<VerifiedPlaceDetails?> getVerifiedDetails(String itemId) async =>
+      throw UnimplementedError();
 }
 
 void main() {

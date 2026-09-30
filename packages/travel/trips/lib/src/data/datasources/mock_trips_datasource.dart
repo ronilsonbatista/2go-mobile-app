@@ -1,3 +1,4 @@
+import '../../domain/paid_trip_controls.dart';
 import '../models/itinerary_item_dto.dart';
 import '../models/trip_day_dto.dart';
 import '../models/trip_dto.dart';
@@ -197,4 +198,48 @@ class MockTripsDataSource implements TripsRemoteDataSource {
     final trip = await getTripById(tripId);
     return trip;
   }
+
+  static final UnsupportedError _phase3 = UnsupportedError(
+    'O mock de Paris não atende os controles da viagem paga.',
+  );
+
+  @override
+  Future<AccommodationDraft?> getAccommodation(String tripId) =>
+      Future<AccommodationDraft?>.error(_phase3);
+
+  @override
+  Future<AccommodationDraft> saveAccommodation(
+    String tripId,
+    AccommodationDraft stay,
+  ) => Future<AccommodationDraft>.error(_phase3);
+
+  @override
+  Future<void> deleteAccommodation(String tripId) =>
+      Future<void>.error(_phase3);
+
+  @override
+  Future<AlternativesResult> getItemAlternatives(String itemId) =>
+      Future<AlternativesResult>.error(_phase3);
+
+  @override
+  Future<SwapQuota> substituteItem(String itemId, Map<String, dynamic> body) =>
+      Future<SwapQuota>.error(_phase3);
+
+  @override
+  Future<MealRecommendationsResult> getMealRecommendations(
+    String dayId, {
+    String? period,
+  }) => Future<MealRecommendationsResult>.error(_phase3);
+
+  @override
+  Future<void> pinMeal(String itemId, Map<String, dynamic> body) =>
+      Future<void>.error(_phase3);
+
+  @override
+  Future<void> updateItemDuration(String itemId, int duration) =>
+      Future<void>.error(_phase3);
+
+  @override
+  Future<VerifiedPlaceDetails?> getVerifiedDetails(String itemId) =>
+      Future<VerifiedPlaceDetails?>.error(_phase3);
 }

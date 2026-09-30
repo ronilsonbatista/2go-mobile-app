@@ -5,6 +5,7 @@ import '../../domain/entities/itinerary_item_entity.dart';
 import '../../domain/entities/trip_accommodation.dart';
 import '../../domain/entities/trip_day_entity.dart';
 import '../../domain/entities/trip_entity.dart';
+import 'trip_control_sheets.dart';
 
 /// Roteiro devolvido por `GET /trips/:id`.
 ///
@@ -12,8 +13,14 @@ import '../../domain/entities/trip_entity.dart';
 class TripItineraryView extends StatelessWidget {
   final TripEntity trip;
   final ValueChanged<Uri>? onOpenUrl;
+  final TripControls? controls;
 
-  const TripItineraryView({super.key, required this.trip, this.onOpenUrl});
+  const TripItineraryView({
+    super.key,
+    required this.trip,
+    this.onOpenUrl,
+    this.controls,
+  });
 
   static const paywallMessage =
       'Desbloqueie o acesso completo para visualizar as atividades deste dia.';
@@ -98,14 +105,48 @@ class TripItineraryView extends StatelessWidget {
             const SizedBox(height: TwoGoSpacing.md),
             _buildAccommodation(trip.accommodation!),
           ],
+          if (controls != null) ...[
+            const SizedBox(height: TwoGoSpacing.sm),
+            if (trip.accommodation == null)
+              TextButton(
+                onPressed: () => showAccommodationSheet(
+                  context,
+                  controls: controls!,
+                  tripId: trip.id,
+                ),
+                child: const Text('Cadastrar hospedagem'),
+              )
+            else
+              Wrap(
+                spacing: TwoGoSpacing.xs,
+                children: [
+                  TextButton(
+                    onPressed: () => showAccommodationSheet(
+                      context,
+                      controls: controls!,
+                      tripId: trip.id,
+                    ),
+                    child: const Text('Editar hospedagem'),
+                  ),
+                  TextButton(
+                    onPressed: () => confirmDeleteAccommodation(
+                      context,
+                      controls: controls!,
+                      tripId: trip.id,
+                    ),
+                    child: const Text('Remover hospedagem'),
+                  ),
+                ],
+              ),
+          ],
           const SizedBox(height: TwoGoSpacing.lg),
-          ...days.map(_buildDay),
+          ...days.map((day) => _buildDay(context, day)),
         ],
       ),
     );
   }
 
-  Widget _buildDay(TripDayEntity day) {
+  Widget _buildDay(BuildContext context, TripDayEntity day) {
     final locked = day.dayNumber > 1 && day.items.isEmpty;
     final items = [...day.items]..sort((a, b) => a.order.compareTo(b.order));
     final dateLabel = _dateLabel(day.date);
@@ -133,6 +174,16 @@ class TripItineraryView extends StatelessWidget {
             ),
           ],
           const SizedBox(height: TwoGoSpacing.sm),
+          if (controls != null && !locked && items.isNotEmpty)
+            TextButton(
+              onPressed: () => showMealRecommendationsSheet(
+                context,
+                controls: controls!,
+                dayId: day.id,
+                items: items,
+              ),
+              child: const Text('Sugestões de refeição'),
+            ),
           if (locked)
             TwoGoCard(
               child: Text(
@@ -150,7 +201,7 @@ class TripItineraryView extends StatelessWidget {
               ),
             )
           else
-            ...items.map(_buildItem),
+            ...items.map((item) => _buildItem(context, item)),
         ],
       ),
     );
@@ -199,7 +250,7 @@ class TripItineraryView extends StatelessWidget {
     );
   }
 
-  Widget _buildItem(ItineraryItemEntity item) {
+  Widget _buildItem(BuildContext context, ItineraryItemEntity item) {
     final mapLink = mapUrl(item);
     final transit = transitLabel(
       meters: item.transitDistanceMeters,
@@ -241,6 +292,37 @@ class TripItineraryView extends StatelessWidget {
                   const SizedBox(height: TwoGoSpacing.xs),
                   _mapLink(mapLink),
                 ],
+                if (controls != null)
+                  Wrap(
+                    spacing: TwoGoSpacing.xs,
+                    children: [
+                      TextButton(
+                        onPressed: () => showAlternativesSheet(
+                          context,
+                          controls: controls!,
+                          itemId: item.id,
+                        ),
+                        child: const Text('Substituir'),
+                      ),
+                      TextButton(
+                        onPressed: () => showDurationEditor(
+                          context,
+                          controls: controls!,
+                          itemId: item.id,
+                          currentDuration: item.duration,
+                        ),
+                        child: const Text('Duração'),
+                      ),
+                      TextButton(
+                        onPressed: () => showVerifiedDetails(
+                          context,
+                          controls: controls!,
+                          itemId: item.id,
+                        ),
+                        child: const Text('Detalhes'),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),

@@ -1,6 +1,7 @@
 import '../../domain/entities/itinerary_item_entity.dart';
 import '../../domain/entities/trip_day_entity.dart';
 import '../../domain/entities/trip_entity.dart';
+import '../../domain/paid_trip_controls.dart';
 import '../../domain/repositories/trips_repository.dart';
 import '../datasources/trips_remote_datasource.dart';
 
@@ -122,5 +123,56 @@ class TripsRepositoryImpl implements TripsRepository {
       preferences,
     );
     return dto.toEntity();
+  }
+
+  @override
+  Future<AccommodationDraft?> getAccommodation(String tripId) {
+    return _remoteDataSource.getAccommodation(tripId);
+  }
+
+  @override
+  Future<AccommodationDraft> saveAccommodation(
+    String tripId,
+    AccommodationDraft stay,
+  ) {
+    return _remoteDataSource.saveAccommodation(tripId, stay);
+  }
+
+  @override
+  Future<void> deleteAccommodation(String tripId) {
+    return _remoteDataSource.deleteAccommodation(tripId);
+  }
+
+  @override
+  Future<AlternativesResult> getItemAlternatives(String itemId) {
+    return _remoteDataSource.getItemAlternatives(itemId);
+  }
+
+  @override
+  Future<SwapQuota> substituteItem(String itemId, Map<String, dynamic> body) {
+    return _remoteDataSource.substituteItem(itemId, body);
+  }
+
+  @override
+  Future<MealRecommendationsResult> getMealRecommendations(
+    String dayId, {
+    String? period,
+  }) {
+    return _remoteDataSource.getMealRecommendations(dayId, period: period);
+  }
+
+  @override
+  Future<void> pinMeal(String itemId, Map<String, dynamic> body) {
+    return _remoteDataSource.pinMeal(itemId, body);
+  }
+
+  @override
+  Future<void> updateItemDuration(String itemId, int duration) {
+    return _remoteDataSource.updateItemDuration(itemId, duration);
+  }
+
+  @override
+  Future<VerifiedPlaceDetails?> getVerifiedDetails(String itemId) {
+    return _remoteDataSource.getVerifiedDetails(itemId);
   }
 }

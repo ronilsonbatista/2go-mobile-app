@@ -3,6 +3,7 @@ import 'package:twogo_design_system/design_system.dart';
 
 import '../../domain/repositories/trips_repository.dart';
 import '../bloc/trips_cubit.dart';
+import 'trip_control_sheets.dart';
 import 'trip_itinerary_view.dart';
 
 /// Aba de viagens depois do pagamento.
@@ -73,6 +74,10 @@ class _HandoffTripsViewState extends State<HandoffTripsView> {
             return TripItineraryView(
               trip: state.trips.first,
               onOpenUrl: widget.onOpenUrl,
+              controls: TripControls(
+                repository: widget.tripsRepository,
+                reloadTrip: () => _cubit.loadTrip(widget.tripId),
+              ),
             );
         }
       },
