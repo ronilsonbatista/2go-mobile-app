@@ -1,4 +1,5 @@
 import '../../domain/entities/trip_entity.dart';
+import 'trip_accommodation_dto.dart';
 import 'trip_day_dto.dart';
 
 class TripDto {
@@ -12,6 +13,11 @@ class TripDto {
   final String status;
   final Map<String, dynamic>? preferences;
   final String? premiumUnlockedAt;
+  final String? arrivalDateTime;
+  final String? departureDateTime;
+  final int? usedSwapsCount;
+  final int? allowedSwapsCount;
+  final TripAccommodationDto? accommodation;
   final List<TripDayDto> days;
 
   const TripDto({
@@ -25,6 +31,11 @@ class TripDto {
     this.status = 'DRAFT',
     this.preferences,
     this.premiumUnlockedAt,
+    this.arrivalDateTime,
+    this.departureDateTime,
+    this.usedSwapsCount,
+    this.allowedSwapsCount,
+    this.accommodation,
     this.days = const [],
   });
 
@@ -40,6 +51,15 @@ class TripDto {
       status: json['status'] as String? ?? 'DRAFT',
       preferences: json['preferences'] as Map<String, dynamic>?,
       premiumUnlockedAt: json['premiumUnlockedAt'] as String?,
+      arrivalDateTime: json['arrivalDateTime'] as String?,
+      departureDateTime: json['departureDateTime'] as String?,
+      usedSwapsCount: _readCount(json['usedSwapsCount']),
+      allowedSwapsCount: _readCount(json['allowedSwapsCount']),
+      accommodation: json['accommodation'] is Map
+          ? TripAccommodationDto.fromJson(
+              Map<String, dynamic>.from(json['accommodation'] as Map),
+            )
+          : null,
       days:
           (json['days'] as List<dynamic>?)
               ?.map((e) => TripDayDto.fromJson(e as Map<String, dynamic>))
@@ -60,6 +80,10 @@ class TripDto {
       'status': status,
       'preferences': preferences,
       'premiumUnlockedAt': premiumUnlockedAt,
+      'arrivalDateTime': arrivalDateTime,
+      'departureDateTime': departureDateTime,
+      'usedSwapsCount': usedSwapsCount,
+      'allowedSwapsCount': allowedSwapsCount,
       'days': days.map((e) => e.toJson()).toList(),
     };
   }
@@ -78,6 +102,15 @@ class TripDto {
       premiumUnlockedAt: premiumUnlockedAt != null
           ? DateTime.tryParse(premiumUnlockedAt!)
           : null,
+      arrivalDateTime: arrivalDateTime != null
+          ? DateTime.tryParse(arrivalDateTime!)
+          : null,
+      departureDateTime: departureDateTime != null
+          ? DateTime.tryParse(departureDateTime!)
+          : null,
+      usedSwapsCount: usedSwapsCount,
+      allowedSwapsCount: allowedSwapsCount,
+      accommodation: accommodation?.toEntity(),
       days: days.map((e) => e.toEntity()).toList(),
     );
   }
@@ -93,4 +126,10 @@ class TripDto {
         return TripStatus.draft;
     }
   }
+}
+
+int? _readCount(dynamic raw) {
+  if (raw is int) return raw;
+  if (raw is num) return raw.toInt();
+  return null;
 }

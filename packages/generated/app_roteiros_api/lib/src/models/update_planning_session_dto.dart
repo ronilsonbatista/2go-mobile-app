@@ -27,8 +27,8 @@ class UpdatePlanningSessionDto {
       'destinations': destinations!.map((e) => e.toJson()).toList(),
     if (travelers != null) 'travelers': travelers!.toJson(),
     if (interests != null) 'interests': interests,
-    // Core whitelist is activityWindow. activityHours alone is rejected.
-    if (activityWindow != null) 'activityWindow': activityWindow!.toJson(),
+    // Core accepts activityHours. activityWindow stays a read alias for old drafts.
+    if (activityWindow != null) 'activityHours': activityWindow!.toJson(),
     if (travelStyle != null) 'travelStyle': travelStyle,
     if (budgetLevel != null) 'budgetLevel': budgetLevel,
   };

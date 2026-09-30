@@ -1,3 +1,4 @@
+import 'trip_accommodation.dart';
 import 'trip_day_entity.dart';
 
 enum TripStatus { draft, active, completed }
@@ -13,6 +14,11 @@ class TripEntity {
   final TripStatus status;
   final Map<String, dynamic>? preferences;
   final DateTime? premiumUnlockedAt;
+  final DateTime? arrivalDateTime;
+  final DateTime? departureDateTime;
+  final int? usedSwapsCount;
+  final int? allowedSwapsCount;
+  final TripAccommodation? accommodation;
   final List<TripDayEntity> days;
 
   const TripEntity({
@@ -26,6 +32,11 @@ class TripEntity {
     this.status = TripStatus.draft,
     this.preferences,
     this.premiumUnlockedAt,
+    this.arrivalDateTime,
+    this.departureDateTime,
+    this.usedSwapsCount,
+    this.allowedSwapsCount,
+    this.accommodation,
     this.days = const [],
   });
 
@@ -40,6 +51,11 @@ class TripEntity {
     TripStatus? status,
     Map<String, dynamic>? preferences,
     DateTime? premiumUnlockedAt,
+    DateTime? arrivalDateTime,
+    DateTime? departureDateTime,
+    int? usedSwapsCount,
+    int? allowedSwapsCount,
+    TripAccommodation? accommodation,
     List<TripDayEntity>? days,
   }) {
     return TripEntity(
@@ -53,6 +69,11 @@ class TripEntity {
       status: status ?? this.status,
       preferences: preferences ?? this.preferences,
       premiumUnlockedAt: premiumUnlockedAt ?? this.premiumUnlockedAt,
+      arrivalDateTime: arrivalDateTime ?? this.arrivalDateTime,
+      departureDateTime: departureDateTime ?? this.departureDateTime,
+      usedSwapsCount: usedSwapsCount ?? this.usedSwapsCount,
+      allowedSwapsCount: allowedSwapsCount ?? this.allowedSwapsCount,
+      accommodation: accommodation ?? this.accommodation,
       days: days ?? this.days,
     );
   }
