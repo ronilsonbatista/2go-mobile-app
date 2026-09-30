@@ -47,8 +47,10 @@ enum PlanningInterest {
       case 'MUSIC':
         return PlanningInterest.music;
       case 'GEEK_CULTURE':
+      case 'GEEKCULTURE':
         return PlanningInterest.geekCulture;
       case 'LOCAL_HISTORY':
+      case 'LOCALHISTORY':
         return PlanningInterest.localHistory;
       case 'NATURE':
       default:

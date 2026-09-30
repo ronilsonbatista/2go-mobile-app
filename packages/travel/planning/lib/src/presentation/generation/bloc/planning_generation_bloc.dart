@@ -11,9 +11,21 @@ import 'planning_generation_state.dart';
 
 class PlanningGenerationBloc
     extends Bloc<PlanningGenerationEvent, PlanningGenerationState> {
+  static const Duration _initialPollDelay = Duration(seconds: 2);
+  static const int _maxPollDelaySeconds = 30;
+
   final StartPlanningGenerationUseCase _startGenerationUseCase;
   final GetPlanningGenerationStatusUseCase _getStatusUseCase;
   Timer? _pollingTimer;
+  bool _pollingActive = false;
+  Duration _pollDelay = _initialPollDelay;
+  String? _pollingJourneyId;
+
+  @visibleForTesting
+  Duration? scheduledPollDelay;
+
+  @visibleForTesting
+  bool get isPolling => _pollingActive;
 
   PlanningGenerationBloc({
     required StartPlanningGenerationUseCase startGenerationUseCase,
@@ -50,10 +62,10 @@ class PlanningGenerationBloc
             status: _mapStatusToPageState(genStatus.status),
           ),
         );
-        if (genStatus.isPreviewReady) {
-          _stopPolling();
-        } else if (genStatus.isGenerating) {
+        if (_shouldKeepPolling(genStatus)) {
           _startPolling(event.journeyId);
+        } else {
+          _stopPolling();
         }
       },
       (AppFailure failure) {
@@ -88,7 +100,7 @@ class PlanningGenerationBloc
           ),
         );
 
-        if (genStatus.isPreviewReady || genStatus.isFailed) {
+        if (!_shouldKeepPolling(genStatus)) {
           _stopPolling();
         }
       },
@@ -101,6 +113,11 @@ class PlanningGenerationBloc
         );
       },
     );
+
+    if (_pollingActive) {
+      _bumpPollDelay();
+      _armPollTimer();
+    }
   }
 
   Future<void> _onRetry(
@@ -121,22 +138,56 @@ class PlanningGenerationBloc
       _stopPolling();
     } else if (event.state == AppLifecycleState.resumed &&
         state.journeyId.isNotEmpty &&
-        state.status != PlanningGenerationPageStatus.previewReady) {
-      add(CheckGenerationStatusEvent(state.journeyId));
+        state.status != PlanningGenerationPageStatus.previewReady &&
+        state.status != PlanningGenerationPageStatus.failed) {
       _startPolling(state.journeyId);
+      add(CheckGenerationStatusEvent(state.journeyId));
     }
   }
 
+  bool _shouldKeepPolling(PlanningGenerationStatus genStatus) {
+    if (genStatus.isPreviewReady || genStatus.isFailed) return false;
+    if (genStatus.status == GuestJourneyStatus.expired) return false;
+    return true;
+  }
+
   void _startPolling(String journeyId) {
+    _pollingActive = true;
+    _pollingJourneyId = journeyId;
+    _pollDelay = _initialPollDelay;
+    _armPollTimer();
+  }
+
+  void _armPollTimer() {
     _pollingTimer?.cancel();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (!isClosed) {
+    final journeyId = _pollingJourneyId;
+    if (!_pollingActive || journeyId == null || isClosed) {
+      scheduledPollDelay = null;
+      return;
+    }
+
+    final delay = _pollDelay;
+    scheduledPollDelay = delay;
+    _pollingTimer = Timer(delay, () {
+      if (!isClosed && _pollingActive) {
         add(CheckGenerationStatusEvent(journeyId));
       }
     });
   }
 
+  void _bumpPollDelay() {
+    final nextSeconds = (_pollDelay.inSeconds * 2).clamp(
+      2,
+      _maxPollDelaySeconds,
+    );
+    _pollDelay = Duration(seconds: nextSeconds);
+  }
+
   void _stopPolling() {
+    _pollingActive = false;
+    _pollingJourneyId = null;
+    _pollDelay = _initialPollDelay;
+    scheduledPollDelay = null;
     _pollingTimer?.cancel();
     _pollingTimer = null;
   }
@@ -146,6 +197,7 @@ class PlanningGenerationBloc
   ) {
     switch (status) {
       case GuestJourneyStatus.generating:
+      case GuestJourneyStatus.unknown:
         return PlanningGenerationPageStatus.generating;
       case GuestJourneyStatus.previewReady:
         return PlanningGenerationPageStatus.previewReady;

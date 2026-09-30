@@ -3,8 +3,10 @@ import '../../application/create_planning_journey_use_case.dart';
 import '../../application/finalize_planning_journey_use_case.dart';
 import '../../application/restore_planning_journey_use_case.dart';
 import '../../application/save_planning_progress_use_case.dart';
+import '../../domain/models/guest_journey.dart';
 import '../../domain/models/planning_activity_window.dart';
 import '../../domain/models/planning_destination.dart';
+import '../../domain/models/planning_draft.dart';
 import '../../domain/models/planning_interest.dart';
 import '../../domain/models/planning_travelers.dart';
 import '../../domain/repositories/planning_draft_storage.dart';
@@ -62,28 +64,14 @@ class PlanningWizardBloc
       final restoreResult = await _restoreUseCase(targetJourneyId);
       await restoreResult.fold(
         (journey) async {
-          final restoredDestinations = localDraft?.destinations != null
-              ? localDraft!.destinations!
-                    .map((e) => PlanningDestination.fromJson(e))
-                    .toList()
-              : state.destinations;
-
-          final restoredTravelers = localDraft?.travelers != null
-              ? PlanningTravelers.fromJson(localDraft!.travelers!)
-              : state.travelers;
-
-          final restoredInterests = localDraft?.interests != null
-              ? localDraft!.interests!
-                    .map((raw) => PlanningInterest.fromRaw(raw))
-                    .toList()
-              : (journey.interests ?? state.interests);
-
-          final restoredActivityWindow = localDraft?.activityWindow != null
-              ? PlanningActivityWindow.fromJson(localDraft!.activityWindow!)
-              : (journey.activityWindow ?? state.activityWindow);
-
+          final restored = _answersFromDraftOrJourney(
+            localDraft: localDraft,
+            journey: journey,
+          );
           final restoredBudgetLevel =
-              localDraft?.budgetLevel ??
+              (localDraft?.activeJourneyId == journey.id
+                  ? localDraft?.budgetLevel
+                  : null) ??
               journey.budgetLevel ??
               state.budgetLevel;
 
@@ -92,46 +80,28 @@ class PlanningWizardBloc
               status: PlanningWizardStatus.editing,
               journey: journey,
               currentStep: journey.currentStep.clamp(1, state.totalSteps),
-              draft: localDraft,
-              destinations: restoredDestinations,
-              travelers: restoredTravelers,
-              interests: restoredInterests,
-              activityWindow: restoredActivityWindow,
+              draft: await _draftStorage.readDraft() ?? localDraft,
+              destinations: restored.destinations,
+              travelers: restored.travelers,
+              interests: restored.interests,
+              activityWindow: restored.activityWindow,
               budgetLevel: restoredBudgetLevel,
             ),
           );
         },
         (failure) async {
           if (localDraft != null) {
-            final restoredDestinations = localDraft.destinations != null
-                ? localDraft.destinations!
-                      .map((e) => PlanningDestination.fromJson(e))
-                      .toList()
-                : state.destinations;
-
-            final restoredTravelers = localDraft.travelers != null
-                ? PlanningTravelers.fromJson(localDraft.travelers!)
-                : state.travelers;
-
-            final restoredInterests = localDraft.interests != null
-                ? localDraft.interests!
-                      .map((raw) => PlanningInterest.fromRaw(raw))
-                      .toList()
-                : state.interests;
-
-            final restoredActivityWindow = localDraft.activityWindow != null
-                ? PlanningActivityWindow.fromJson(localDraft.activityWindow!)
-                : state.activityWindow;
+            final restored = _answersFromDraftOrJourney(localDraft: localDraft);
 
             emit(
               state.copyWith(
                 status: PlanningWizardStatus.editing,
                 currentStep: localDraft.currentStep.clamp(1, state.totalSteps),
                 draft: localDraft,
-                destinations: restoredDestinations,
-                travelers: restoredTravelers,
-                interests: restoredInterests,
-                activityWindow: restoredActivityWindow,
+                destinations: restored.destinations,
+                travelers: restored.travelers,
+                interests: restored.interests,
+                activityWindow: restored.activityWindow,
                 budgetLevel: localDraft.budgetLevel ?? state.budgetLevel,
                 isDirty: true,
               ),
@@ -144,6 +114,43 @@ class PlanningWizardBloc
     } else {
       await _createNewJourney(emit);
     }
+  }
+
+  _RestoredPlanningAnswers _answersFromDraftOrJourney({
+    required PlanningDraft? localDraft,
+    GuestJourney? journey,
+  }) {
+    final matchesJourney =
+        journey == null || localDraft?.activeJourneyId == journey.id;
+
+    final destinations =
+        localDraft != null && matchesJourney && localDraft.destinations != null
+        ? localDraft.destinations!.map(PlanningDestination.fromJson).toList()
+        : (journey?.destinations ?? state.destinations);
+
+    final travelers =
+        localDraft != null && matchesJourney && localDraft.travelers != null
+        ? PlanningTravelers.fromJson(localDraft.travelers!)
+        : (journey?.travelers ?? state.travelers);
+
+    final interests =
+        localDraft != null && matchesJourney && localDraft.interests != null
+        ? localDraft.interests!.map(PlanningInterest.fromRaw).toList()
+        : (journey?.interests ?? state.interests);
+
+    final activityWindow =
+        localDraft != null &&
+            matchesJourney &&
+            localDraft.activityWindow != null
+        ? PlanningActivityWindow.fromJson(localDraft.activityWindow!)
+        : (journey?.activityWindow ?? state.activityWindow);
+
+    return _RestoredPlanningAnswers(
+      destinations: destinations,
+      travelers: travelers,
+      interests: interests,
+      activityWindow: activityWindow,
+    );
   }
 
   Future<void> _createNewJourney(Emitter<PlanningWizardState> emit) async {
@@ -214,12 +221,9 @@ class PlanningWizardBloc
         (failure) {
           emit(
             state.copyWith(
-              status: PlanningWizardStatus.editing,
-              currentStep: nextStep <= state.totalSteps
-                  ? nextStep
-                  : state.currentStep,
-              returnToReview: false,
+              status: PlanningWizardStatus.failure,
               isDirty: true,
+              errorMessage: failure.message,
             ),
           );
         },
@@ -437,4 +441,18 @@ class PlanningWizardBloc
       ),
     );
   }
+}
+
+class _RestoredPlanningAnswers {
+  final List<PlanningDestination> destinations;
+  final PlanningTravelers travelers;
+  final List<PlanningInterest> interests;
+  final PlanningActivityWindow activityWindow;
+
+  const _RestoredPlanningAnswers({
+    required this.destinations,
+    required this.travelers,
+    required this.interests,
+    required this.activityWindow,
+  });
 }

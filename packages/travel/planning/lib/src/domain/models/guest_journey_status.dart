@@ -8,7 +8,8 @@ enum GuestJourneyStatus {
   checkoutPending,
   paid,
   expired,
-  failed;
+  failed,
+  unknown;
 
   static GuestJourneyStatus fromRaw(String raw) {
     switch (raw.toUpperCase()) {
@@ -31,8 +32,9 @@ enum GuestJourneyStatus {
       case 'EXPIRED':
         return GuestJourneyStatus.expired;
       case 'FAILED':
-      default:
         return GuestJourneyStatus.failed;
+      default:
+        return GuestJourneyStatus.unknown;
     }
   }
 
@@ -58,6 +60,8 @@ enum GuestJourneyStatus {
         return 'EXPIRED';
       case GuestJourneyStatus.failed:
         return 'FAILED';
+      case GuestJourneyStatus.unknown:
+        return 'UNKNOWN';
     }
   }
 }

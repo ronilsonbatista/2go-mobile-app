@@ -35,6 +35,7 @@ class FakeGuestJourneyCredentialStorage
 class FakePlanningApiClient implements PlanningApiClient {
   final Map<String, PlanningSessionResponseDto> sessions = {};
   int createCalls = 0;
+  bool failUpdate = false;
 
   @override
   Future<CreatePlanningSessionResponseDto> createSession(
@@ -98,6 +99,13 @@ class FakePlanningApiClient implements PlanningApiClient {
     UpdatePlanningSessionDto dto, {
     required String guestToken,
   }) async {
+    if (failUpdate) {
+      throw DioException(
+        requestOptions: RequestOptions(path: '/planning-sessions/$id'),
+        type: DioExceptionType.connectionError,
+        message: 'Sem rede',
+      );
+    }
     final s = await getSession(id, guestToken: guestToken);
     final updated = PlanningSessionResponseDto(
       id: s.id,
