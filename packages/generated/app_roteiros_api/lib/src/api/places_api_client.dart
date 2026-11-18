@@ -13,6 +13,12 @@ class PlaceSearchResultDto {
   final String? websiteUri;
   final List<String> types;
 
+  /// Predefined locality thumb from Core (`iconUrl` preferred; else `imageUrl`).
+  final String? iconUrl;
+
+  /// Alternate image field some Core payloads use instead of [iconUrl].
+  final String? imageUrl;
+
   const PlaceSearchResultDto({
     required this.provider,
     required this.providerPlaceId,
@@ -25,14 +31,25 @@ class PlaceSearchResultDto {
     this.googleMapsUri,
     this.websiteUri,
     this.types = const [],
+    this.iconUrl,
+    this.imageUrl,
   });
+
+  /// Prefer [iconUrl], then [imageUrl] — both may be absent (UI uses 📍).
+  String? get resolvedIconUrl {
+    final icon = _nonEmpty(iconUrl);
+    if (icon != null) return icon;
+    return _nonEmpty(imageUrl);
+  }
 
   factory PlaceSearchResultDto.fromJson(Map<String, dynamic> json) {
     return PlaceSearchResultDto(
       provider: json['provider'] as String? ?? 'GOOGLE',
       providerPlaceId: json['providerPlaceId'] as String? ?? '',
       name: json['name'] as String? ?? '',
-      formattedAddress: json['formattedAddress'] as String?,
+      formattedAddress: json['formattedAddress'] as String? ??
+          json['subtitle'] as String? ??
+          json['country'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       rating: (json['rating'] as num?)?.toDouble(),
@@ -40,7 +57,15 @@ class PlaceSearchResultDto {
       googleMapsUri: json['googleMapsUri'] as String?,
       websiteUri: json['websiteUri'] as String?,
       types: (json['types'] as List<dynamic>?)?.cast<String>() ?? const [],
+      iconUrl: _nonEmpty(json['iconUrl']),
+      imageUrl: _nonEmpty(json['imageUrl']),
     );
+  }
+
+  static String? _nonEmpty(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
   }
 }
 
@@ -49,22 +74,63 @@ class PlacesApiClient {
 
   PlacesApiClient(this._dio);
 
+  /// Core `GET /places/autocomplete?q=` — after [ApiEnvelopeInterceptor],
+  /// [Response.data] is the inner `data` (`{ items }` / `{ predictions }` /
+  /// list). Also accepts a raw envelope when the interceptor is absent.
   Future<List<PlaceSearchResultDto>> searchPlaces(String query) async {
-    final response = await _dio.get<List<dynamic>>(
-      '/places/search',
-      queryParameters: {'query': query},
+    final response = await _dio.get<dynamic>(
+      '/places/autocomplete',
+      queryParameters: {'q': query},
     );
-    final data = response.data ?? [];
-    return data
-        .map((e) => PlaceSearchResultDto.fromJson(e as Map<String, dynamic>))
+    return _parseItems(response.data)
+        .map(
+          (e) => PlaceSearchResultDto.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
         .toList();
   }
 
   Future<PlaceSearchResultDto?> getPlaceDetails(String providerPlaceId) async {
-    final response = await _dio.get<Map<String, dynamic>>(
+    final response = await _dio.get<dynamic>(
       '/places/$providerPlaceId',
     );
-    if (response.data == null) return null;
-    return PlaceSearchResultDto.fromJson(response.data!);
+    final payload = _unwrapData(response.data);
+    if (payload is! Map) return null;
+    return PlaceSearchResultDto.fromJson(Map<String, dynamic>.from(payload));
+  }
+
+  /// Mirrors Home destinations parsing: list, `{ items }`, `{ predictions }`,
+  /// or raw `{ success, data, timestamp }`.
+  static List<dynamic> _parseItems(dynamic payload) {
+    if (payload == null) return const [];
+
+    if (payload is List) return payload;
+
+    if (payload is Map) {
+      final map = Map<String, dynamic>.from(payload);
+
+      if (map.containsKey('data')) {
+        final data = map['data'];
+        if (data is Map) {
+          final nested = Map<String, dynamic>.from(data);
+          final items = nested['items'] ?? nested['predictions'];
+          if (items is List) return items;
+        }
+        if (data is List) return data;
+      }
+
+      final items = map['items'] ?? map['predictions'];
+      if (items is List) return items;
+    }
+
+    return const [];
+  }
+
+  static dynamic _unwrapData(dynamic payload) {
+    if (payload is Map && payload.containsKey('data')) {
+      return payload['data'];
+    }
+    return payload;
   }
 }
