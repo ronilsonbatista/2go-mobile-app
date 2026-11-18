@@ -124,11 +124,11 @@ class AppDependencies {
       remoteDataSource: ApiTripsDataSource(dio),
     );
 
-    // Local catalog until Core home destinations + profile photo APIs land.
-    // demoPhotoAssetPath enables Home-10 (photo) layout; remove when Core
-    // returns photoUrl. Set forceInitialsOnly to preview Home-11.
-    final homeContentRepository = LocalHomeContentRepository(
-      demoPhotoAssetPath: 'assets/destinations/demo-avatar.jpg',
+    // Prefer Core when ApiConfig.baseUrl is set (all flavors); fall back to
+    // local stub until staging migrate+seed is live (TG-88).
+    final homeContentRepository = FallbackHomeContentRepository(
+      remote: RemoteHomeContentRepository(dio: dio),
+      fallback: LocalHomeContentRepository(forceInitialsOnly: true),
     );
 
     return AppDependencies._(

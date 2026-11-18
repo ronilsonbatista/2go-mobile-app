@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 
 import '../../domain/models/home_destination.dart';
-import 'home_asset_image.dart';
+import 'home_destination_image.dart';
 
 /// Portrait destination card for "Destinos em alta".
 class HomeDestinationCard extends StatelessWidget {
@@ -34,11 +34,9 @@ class HomeDestinationCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                HomeAssetImage(
+                HomeDestinationImage(
+                  imageUrl: destination.resolvedCardUrl,
                   assetPath: destination.cardAssetPath,
-                  errorBuilder: (_, __, ___) => const ColoredBox(
-                    color: TwoGoColors.surfaceSecondary,
-                  ),
                 ),
                 const DecoratedBox(
                   decoration: BoxDecoration(

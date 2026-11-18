@@ -1,7 +1,7 @@
 import '../models/home_destination.dart';
 import '../models/home_profile.dart';
 
-/// Facade for Home content. Local stub today; Core API later (Antigravity).
+/// Facade for Home content (local stub, remote Core, or fallback composite).
 abstract class HomeContentRepository {
   Future<List<HomeDestination>> fetchDestinations();
 

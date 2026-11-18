@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 
 import '../../domain/models/home_destination.dart';
-import 'home_asset_image.dart';
+import 'home_destination_image.dart';
 
 /// Full-bleed hero PageView with destination caption (course Home frames).
 class HomeHeroCarousel extends StatefulWidget {
@@ -69,11 +69,9 @@ class _HomeHeroCarouselState extends State<HomeHeroCarousel> {
           onPageChanged: widget.onIndexChanged,
           itemBuilder: (context, index) {
             final destination = widget.destinations[index];
-            return HomeAssetImage(
+            return HomeDestinationImage(
+              imageUrl: destination.resolvedHeroUrl,
               assetPath: destination.heroAssetPath,
-              errorBuilder: (_, __, ___) => const ColoredBox(
-                color: TwoGoColors.surfaceSecondary,
-              ),
             );
           },
         ),

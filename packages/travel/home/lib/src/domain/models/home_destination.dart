@@ -6,10 +6,12 @@ class HomeDestination extends Equatable {
     required this.id,
     required this.name,
     required this.country,
-    required this.heroAssetPath,
-    required this.cardAssetPath,
+    this.heroAssetPath = '',
+    this.cardAssetPath = '',
     this.imageUrl,
+    this.cardImageUrl,
     this.sortOrder = 0,
+    this.active = true,
   });
 
   final String id;
@@ -22,12 +24,37 @@ class HomeDestination extends Equatable {
   /// Portrait card asset (may equal [heroAssetPath]).
   final String cardAssetPath;
 
-  /// Future remote URL from Core (preferred when non-null).
+  /// Remote hero URL from Core (`GET /home/destinations`).
   final String? imageUrl;
+
+  /// Optional remote card URL; falls back to [imageUrl] when absent.
+  final String? cardImageUrl;
 
   final int sortOrder;
 
+  /// Core marks PUBLISHED+PUBLIC rows as active; inactive items are filtered out.
+  final bool active;
+
   String get caption => '$name - $country';
+
+  /// Prefer remote hero URL, else local asset.
+  String? get resolvedHeroUrl {
+    final url = imageUrl?.trim();
+    if (url != null && url.isNotEmpty) return url;
+    return null;
+  }
+
+  /// Prefer card URL, then hero URL, else local asset.
+  String? get resolvedCardUrl {
+    final card = cardImageUrl?.trim();
+    if (card != null && card.isNotEmpty) return card;
+    return resolvedHeroUrl;
+  }
+
+  bool get hasRemoteHero => resolvedHeroUrl != null;
+  bool get hasRemoteCard => resolvedCardUrl != null;
+  bool get hasLocalHero => heroAssetPath.trim().isNotEmpty;
+  bool get hasLocalCard => cardAssetPath.trim().isNotEmpty;
 
   @override
   List<Object?> get props => [
@@ -37,6 +64,8 @@ class HomeDestination extends Equatable {
     heroAssetPath,
     cardAssetPath,
     imageUrl,
+    cardImageUrl,
     sortOrder,
+    active,
   ];
 }
