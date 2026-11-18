@@ -30,6 +30,7 @@ void main() {
               'country': 'Turquia',
               'imageUrl': 'https://cdn.example/capadocia.jpg',
               'cardImageUrl': 'https://cdn.example/capadocia-card.jpg',
+              'providerPlaceId': 'places/ChIJcapadocia',
               'sortOrder': 2,
               'active': true,
             },
@@ -38,6 +39,7 @@ void main() {
               'name': 'Rio de Janeiro',
               'country': 'Brasil',
               'imageUrl': 'https://cdn.example/rio.jpg',
+              'providerPlaceId': 'places/ChIJrio',
               'sortOrder': 1,
               'active': true,
             },
@@ -46,6 +48,7 @@ void main() {
               'name': 'Hidden',
               'country': 'X',
               'imageUrl': 'https://cdn.example/hidden.jpg',
+              'providerPlaceId': 'places/ChIJhidden',
               'sortOrder': 0,
               'active': false,
             },
@@ -58,10 +61,12 @@ void main() {
         'capadocia',
       ]);
       expect(destinations.first.imageUrl, 'https://cdn.example/rio.jpg');
+      expect(destinations.first.providerPlaceId, 'places/ChIJrio');
       expect(
         destinations.last.cardImageUrl,
         'https://cdn.example/capadocia-card.jpg',
       );
+      expect(destinations.last.providerPlaceId, 'places/ChIJcapadocia');
       expect(destinations, isNot(contains(predicate((HomeDestination d) {
         return d.id == 'root-poison' || d.id == 'hidden';
       }))));
@@ -75,6 +80,7 @@ void main() {
             'name': 'Nova York',
             'country': 'EUA',
             'imageUrl': 'https://cdn.example/ny.jpg',
+            'providerPlaceId': 'places/ChIJny',
             'sortOrder': 0,
             'active': true,
           },
@@ -83,7 +89,75 @@ void main() {
 
       expect(destinations, hasLength(1));
       expect(destinations.single.id, 'nova-york');
+      expect(destinations.single.providerPlaceId, 'places/ChIJny');
       expect(destinations.single.hasRemoteHero, isTrue);
+    });
+
+    test('keeps providerPlaceId when present on data.items', () {
+      final destinations = parser.parse({
+        'success': true,
+        'data': {
+          'items': [
+            {
+              'id': 'lisboa',
+              'name': 'Lisboa',
+              'country': 'Portugal',
+              'imageUrl': 'https://cdn.example/lisboa.jpg',
+              'providerPlaceId': 'places/ChIJlisboa',
+              'sortOrder': 0,
+              'active': true,
+            },
+          ],
+        },
+      });
+
+      expect(destinations, hasLength(1));
+      expect(destinations.single.providerPlaceId, 'places/ChIJlisboa');
+    });
+
+    test('excludes items when providerPlaceId is absent, null, or blank', () {
+      final destinations = parser.parse({
+        'items': [
+          {
+            'id': 'missing-field',
+            'name': 'Missing',
+            'country': 'X',
+            'imageUrl': 'https://cdn.example/m.jpg',
+            'sortOrder': 0,
+            'active': true,
+          },
+          {
+            'id': 'null-field',
+            'name': 'Null',
+            'country': 'X',
+            'imageUrl': 'https://cdn.example/n.jpg',
+            'providerPlaceId': null,
+            'sortOrder': 1,
+            'active': true,
+          },
+          {
+            'id': 'blank-field',
+            'name': 'Blank',
+            'country': 'X',
+            'imageUrl': 'https://cdn.example/b.jpg',
+            'providerPlaceId': '   ',
+            'sortOrder': 2,
+            'active': true,
+          },
+          {
+            'id': 'ok',
+            'name': 'Ok',
+            'country': 'BR',
+            'imageUrl': 'https://cdn.example/ok.jpg',
+            'providerPlaceId': 'places/ChIJok',
+            'sortOrder': 3,
+            'active': true,
+          },
+        ],
+      });
+
+      expect(destinations.map((d) => d.id), ['ok']);
+      expect(destinations.single.providerPlaceId, 'places/ChIJok');
     });
 
     test('clampLimit enforces Core 1..50 and parse respects limit', () {
@@ -100,6 +174,7 @@ void main() {
           'name': 'Dest $i',
           'country': 'BR',
           'imageUrl': 'https://cdn.example/$i.jpg',
+          'providerPlaceId': 'places/ChIJ$i',
           'sortOrder': i,
           'active': true,
         };
@@ -182,6 +257,7 @@ void main() {
                       'name': 'Capadócia',
                       'country': 'Turquia',
                       'imageUrl': 'https://cdn.example/c.jpg',
+                      'providerPlaceId': 'places/ChIJcapa',
                       'sortOrder': 0,
                       'active': true,
                     },

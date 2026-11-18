@@ -10,6 +10,7 @@ class HomeDestination extends Equatable {
     this.cardAssetPath = '',
     this.imageUrl,
     this.cardImageUrl,
+    this.providerPlaceId,
     this.sortOrder = 0,
     this.active = true,
   });
@@ -29,6 +30,10 @@ class HomeDestination extends Equatable {
 
   /// Optional remote card URL; falls back to [imageUrl] when absent.
   final String? cardImageUrl;
+
+  /// Google Places id from Core (`providerPlaceId`). Required on remote Home
+  /// items; used to seed Onde step-1 without re-search.
+  final String? providerPlaceId;
 
   final int sortOrder;
 
@@ -65,6 +70,7 @@ class HomeDestination extends Equatable {
     cardAssetPath,
     imageUrl,
     cardImageUrl,
+    providerPlaceId,
     sortOrder,
     active,
   ];

@@ -68,7 +68,15 @@ class HomeDestinationsParser {
     final id = _string(json['id']) ?? _string(json['slug']);
     final name = _string(json['name']);
     final imageUrl = _string(json['imageUrl']);
-    if (id == null || name == null || imageUrl == null) return null;
+    // Core excludes Home items without Google Places id — mirror that here.
+    // Do not invent providerPlaceId from slug/`id`.
+    final providerPlaceId = _string(json['providerPlaceId']);
+    if (id == null ||
+        name == null ||
+        imageUrl == null ||
+        providerPlaceId == null) {
+      return null;
+    }
 
     final country = _string(json['country']) ?? '';
     final cardImageUrl = _string(json['cardImageUrl']);
@@ -81,6 +89,7 @@ class HomeDestinationsParser {
       country: country,
       imageUrl: imageUrl,
       cardImageUrl: cardImageUrl,
+      providerPlaceId: providerPlaceId,
       sortOrder: sortOrder,
       active: active,
     );

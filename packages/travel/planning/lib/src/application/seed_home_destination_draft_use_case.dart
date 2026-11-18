@@ -16,9 +16,9 @@ class SeedHomeDestinationDraftUseCase {
 
   /// Persists the selected destination as step-1 draft answers.
   ///
-  /// [providerPlaceId] is intentionally optional: Home carousel ids are
-  /// slugs today, not Places ids. Onde Q&A still requires a Places pick
-  /// before step-1 is valid until Core links them (Antigravity gap).
+  /// [providerPlaceId] should be the Google Places id from Core
+  /// `GET /home/destinations` (never invented from slug). When present,
+  /// Onde step-1 is valid without re-search.
   Future<PlanningDraft> call({
     required String name,
     String? country,

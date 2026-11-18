@@ -19,6 +19,7 @@ void main() {
         name: 'Capadócia',
         country: 'Turquia',
         coverImageUrl: 'https://cdn.example/capadocia.jpg',
+        providerPlaceId: 'places/ChIJcapadocia',
         now: DateTime.utc(2026, 11, 18),
       );
 
@@ -31,13 +32,27 @@ void main() {
       expect(destination.name, 'Capadócia');
       expect(destination.country, 'Turquia');
       expect(destination.coverImage, 'https://cdn.example/capadocia.jpg');
-      expect(destination.providerPlaceId, isNull);
+      expect(destination.providerPlaceId, 'places/ChIJcapadocia');
       expect(destination.arrivalDate, '2026-11-25');
       expect(destination.departureDate, '2026-11-29');
 
       final stored = await draftStorage.readDraft();
       expect(stored?.destinations?.first['name'], 'Capadócia');
+      expect(stored?.destinations?.first['providerPlaceId'],
+          'places/ChIJcapadocia');
       expect(stored?.activeJourneyId, isNull);
+    });
+
+    test('omits providerPlaceId from draft when Home field is absent', () async {
+      final draft = await useCase(
+        name: 'Fallback City',
+        country: 'BR',
+        coverImageUrl: 'https://cdn.example/f.jpg',
+      );
+
+      final destination = PlanningDestination.fromJson(draft.destinations!.first);
+      expect(destination.providerPlaceId, isNull);
+      expect(draft.destinations!.first.containsKey('providerPlaceId'), isFalse);
     });
 
     test('clears previous activeJourneyId so tap does not PATCH old session',

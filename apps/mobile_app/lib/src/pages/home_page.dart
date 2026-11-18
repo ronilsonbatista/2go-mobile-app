@@ -22,8 +22,9 @@ class HomePage extends StatelessWidget {
       country: destination.country,
       coverImageUrl:
           destination.resolvedCardUrl ?? destination.resolvedHeroUrl,
-      // Home carousel `id` is a slug, not a Places providerPlaceId.
-      // Leaving it unset keeps step-1 invalid until Onde confirms Places.
+      // Google Places id from Core Home payload — enables Onde step-1
+      // without re-search. Never invent from slug.
+      providerPlaceId: destination.providerPlaceId,
     );
   }
 
