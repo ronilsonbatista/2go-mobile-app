@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 
-import 'home_asset_image.dart';
-
-/// Destination media: prefer HTTPS Core URL, else local package asset.
+/// Destination media from Core only (`imageUrl` / `cardImageUrl`).
+///
+/// Local package assets are not used for destination photos — product rule:
+/// destination images come from the backend.
 class HomeDestinationImage extends StatelessWidget {
   const HomeDestinationImage({
     required this.imageUrl,
-    required this.assetPath,
     this.fit = BoxFit.cover,
     super.key,
   });
 
   final String? imageUrl;
-  final String assetPath;
   final BoxFit fit;
 
   @override
@@ -26,16 +25,7 @@ class HomeDestinationImage extends StatelessWidget {
         errorBuilder: (_, __, ___) => _fallback(),
       );
     }
-
-    if (assetPath.trim().isEmpty) {
-      return _fallback();
-    }
-
-    return HomeAssetImage(
-      assetPath: assetPath,
-      fit: fit,
-      errorBuilder: (_, __, ___) => _fallback(),
-    );
+    return _fallback();
   }
 
   Widget _fallback() => const ColoredBox(color: TwoGoColors.surfaceSecondary);

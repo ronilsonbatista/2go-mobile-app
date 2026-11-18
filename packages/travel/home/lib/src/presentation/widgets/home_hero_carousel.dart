@@ -71,7 +71,6 @@ class _HomeHeroCarouselState extends State<HomeHeroCarousel> {
             final destination = widget.destinations[index];
             return HomeDestinationImage(
               imageUrl: destination.resolvedHeroUrl,
-              assetPath: destination.heroAssetPath,
             );
           },
         ),

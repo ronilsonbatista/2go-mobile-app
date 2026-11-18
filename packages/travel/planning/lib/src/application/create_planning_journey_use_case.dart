@@ -33,13 +33,23 @@ class CreatePlanningJourneyUseCase {
         guestToken: created.guestToken,
       );
 
+      // Preserve local Q&A answers (e.g. Home → users-defaults destination)
+      // instead of wiping the draft when a guest session is created.
+      final existing = await _draftStorage.readDraft();
       await _draftStorage.saveDraft(
         PlanningDraft(
           activeJourneyId: created.journey.id,
           currentStep: created.journey.currentStep,
+          destinations: existing?.destinations,
+          travelers: existing?.travelers,
+          interests: existing?.interests,
+          activityWindow: existing?.activityWindow,
+          budgetLevel: existing?.budgetLevel,
+          travelStyle: existing?.travelStyle,
           answersVersion: created.journey.answersVersion,
           lastSyncedAt: DateTime.now(),
-          isDirty: false,
+          isDirty: existing?.destinations != null &&
+              existing!.destinations!.isNotEmpty,
         ),
       );
 

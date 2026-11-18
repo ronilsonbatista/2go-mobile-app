@@ -110,9 +110,43 @@ class PlanningWizardBloc
           }
         },
       );
+    } else if (_hasLocalAnswers(localDraft)) {
+      // Home / Onde answers already in users-defaults — restore without Core
+      // POST. Guest session is deferred until progress sync needs a journey.
+      final restored = _answersFromDraftOrJourney(localDraft: localDraft);
+      emit(
+        state.copyWith(
+          status: PlanningWizardStatus.editing,
+          currentStep: localDraft!.currentStep.clamp(1, state.totalSteps),
+          draft: localDraft,
+          destinations: restored.destinations.isEmpty
+              ? state.destinations
+              : restored.destinations,
+          travelers: restored.travelers,
+          interests: restored.interests,
+          activityWindow: restored.activityWindow,
+          budgetLevel: localDraft.budgetLevel ?? state.budgetLevel,
+          isDirty: true,
+        ),
+      );
     } else {
       await _createNewJourney(emit);
     }
+  }
+
+  bool _hasLocalAnswers(PlanningDraft? draft) {
+    if (draft == null) return false;
+    final destinations = draft.destinations;
+    if (destinations != null && destinations.isNotEmpty) {
+      final firstName = destinations.first['name']?.toString().trim() ?? '';
+      if (firstName.isNotEmpty) return true;
+    }
+    if (draft.travelers != null) return true;
+    if (draft.interests != null && draft.interests!.isNotEmpty) return true;
+    if (draft.budgetLevel != null && draft.budgetLevel!.trim().isNotEmpty) {
+      return true;
+    }
+    return false;
   }
 
   _RestoredPlanningAnswers _answersFromDraftOrJourney({
@@ -154,17 +188,27 @@ class PlanningWizardBloc
 
   Future<void> _createNewJourney(Emitter<PlanningWizardState> emit) async {
     final createResult = await _createUseCase();
-    createResult.fold(
-      (journey) {
+    await createResult.fold(
+      (journey) async {
+        final draft = await _draftStorage.readDraft();
+        final restored = _answersFromDraftOrJourney(localDraft: draft);
         emit(
           state.copyWith(
             status: PlanningWizardStatus.editing,
             journey: journey,
-            currentStep: 1,
+            currentStep: journey.currentStep.clamp(1, state.totalSteps),
+            draft: draft,
+            destinations: restored.destinations.isEmpty
+                ? state.destinations
+                : restored.destinations,
+            travelers: restored.travelers,
+            interests: restored.interests,
+            activityWindow: restored.activityWindow,
+            budgetLevel: draft?.budgetLevel ?? state.budgetLevel,
           ),
         );
       },
-      (failure) {
+      (failure) async {
         emit(
           state.copyWith(
             status: PlanningWizardStatus.failure,
@@ -228,13 +272,28 @@ class PlanningWizardBloc
         },
       );
     } else {
+      // No Core journey yet — persist users-defaults only (no trip/session POST).
+      final persistedStep = nextStep <= state.totalSteps
+          ? nextStep
+          : state.currentStep;
+      final draft = PlanningDraft(
+        currentStep: persistedStep,
+        destinations: state.destinations.map((d) => d.toJson()).toList(),
+        travelers: state.travelers.toJson(),
+        interests: state.interests.map((i) => i.toRaw()).toList(),
+        activityWindow: state.activityWindow.toJson(),
+        budgetLevel: state.budgetLevel,
+        answersVersion: state.draft?.answersVersion ?? 1,
+        isDirty: true,
+      );
+      await _draftStorage.saveDraft(draft);
       emit(
         state.copyWith(
           status: PlanningWizardStatus.editing,
-          currentStep: nextStep <= state.totalSteps
-              ? nextStep
-              : state.currentStep,
+          currentStep: persistedStep,
+          draft: draft,
           returnToReview: false,
+          isDirty: true,
         ),
       );
     }

@@ -35,6 +35,7 @@ class AppDependencies {
     required this.getPlanningGenerationStatusUseCase,
     required this.getPlanningPreviewUseCase,
     required this.claimPlanningJourneyUseCase,
+    required this.seedHomeDestinationDraftUseCase,
     required this.homeContentRepository,
   });
 
@@ -61,6 +62,7 @@ class AppDependencies {
   final GetPlanningGenerationStatusUseCase getPlanningGenerationStatusUseCase;
   final GetPlanningPreviewUseCase getPlanningPreviewUseCase;
   final ClaimPlanningJourneyUseCase claimPlanningJourneyUseCase;
+  final SeedHomeDestinationDraftUseCase seedHomeDestinationDraftUseCase;
 
   static Future<AppDependencies> create({required String environment}) async {
     final apiConfig = ApiConfig(environment: _mapEnvironment(environment));
@@ -173,6 +175,9 @@ class AppDependencies {
       getPlanningPreviewUseCase: GetPlanningPreviewUseCase(planningRepository),
       claimPlanningJourneyUseCase: ClaimPlanningJourneyUseCase(
         planningRepository,
+      ),
+      seedHomeDestinationDraftUseCase: SeedHomeDestinationDraftUseCase(
+        draftStorage: draftStorage,
       ),
     );
   }

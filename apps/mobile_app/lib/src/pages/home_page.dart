@@ -2,20 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:twogo_home/twogo_home.dart';
+import 'package:twogo_planning/twogo_planning.dart';
 import 'package:twogo_session/twogo_session.dart';
 
 /// Home route — course layout (guest silhouette / auth photo or initials).
 class HomePage extends StatelessWidget {
-  const HomePage({required this.homeCubit, super.key});
+  const HomePage({
+    required this.homeCubit,
+    required this.seedHomeDestinationDraft,
+    super.key,
+  });
 
   final HomeCubit homeCubit;
+  final SeedHomeDestinationDraftUseCase seedHomeDestinationDraft;
+
+  Future<void> _persistDestination(HomeDestination destination) {
+    return seedHomeDestinationDraft(
+      name: destination.name,
+      country: destination.country,
+      coverImageUrl:
+          destination.resolvedCardUrl ?? destination.resolvedHeroUrl,
+      // Home carousel `id` is a slug, not a Places providerPlaceId.
+      // Leaving it unset keeps step-1 invalid until Onde confirms Places.
+    );
+  }
+
+  Future<void> _createItinerary(BuildContext context) async {
+    final current = homeCubit.state.currentDestination;
+    if (current != null) {
+      await _persistDestination(current);
+    }
+    if (!context.mounted) return;
+    context.go('/planning/wizard');
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<HomeCubit>.value(
       value: homeCubit,
       child: HomeView(
-        onCreateItinerary: () => context.go('/planning/wizard'),
+        onCreateItinerary: () => _createItinerary(context),
         onAccessItineraries: () => context.go('/app/trips'),
         onProfileTap: () {
           final session = context.read<SessionCubit>().state;
@@ -24,6 +50,10 @@ class HomePage extends StatelessWidget {
           } else {
             context.go('/auth');
           }
+        },
+        onDestinationSelected: (destination) {
+          // Persist into users-defaults draft only — no Core trip/session POST.
+          _persistDestination(destination);
         },
       ),
     );
