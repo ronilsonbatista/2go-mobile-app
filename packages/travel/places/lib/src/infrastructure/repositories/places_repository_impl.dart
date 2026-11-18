@@ -24,6 +24,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
               latitude: dto.latitude,
               longitude: dto.longitude,
               types: dto.types,
+              iconUrl: dto.resolvedIconUrl,
             ),
           )
           .toList();
@@ -51,6 +52,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         latitude: dto.latitude,
         longitude: dto.longitude,
         types: dto.types,
+        iconUrl: dto.resolvedIconUrl,
       );
       return Result.success(mapped);
     } catch (error) {
