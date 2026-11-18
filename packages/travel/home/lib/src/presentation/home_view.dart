@@ -4,6 +4,7 @@ import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_session/twogo_session.dart';
 
 import '../application/home_cubit.dart';
+import '../domain/models/home_destination.dart';
 import 'widgets/home_cta_sheet.dart';
 import 'widgets/home_destinations_strip.dart';
 import 'widgets/home_hero_carousel.dart';
@@ -15,12 +16,17 @@ class HomeView extends StatefulWidget {
     required this.onCreateItinerary,
     required this.onAccessItineraries,
     required this.onProfileTap,
+    this.onDestinationSelected,
     super.key,
   });
 
   final VoidCallback onCreateItinerary;
   final VoidCallback onAccessItineraries;
   final VoidCallback onProfileTap;
+
+  /// Fired when the user taps a strip destination (after hero sync).
+  /// Used by the app shell to persist into the local Q&A draft.
+  final ValueChanged<HomeDestination>? onDestinationSelected;
 
   @override
   State<HomeView> createState() => _HomeViewState();
@@ -152,6 +158,7 @@ class _HomeViewState extends State<HomeView> {
                                 context.read<HomeCubit>().selectDestination(
                                   destination.id,
                                 );
+                                widget.onDestinationSelected?.call(destination);
                               },
                             ),
                             SizedBox(

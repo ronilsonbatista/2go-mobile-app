@@ -3,6 +3,7 @@ library;
 export 'src/application/claim_planning_journey_use_case.dart';
 export 'src/application/create_planning_journey_use_case.dart';
 export 'src/application/finalize_planning_journey_use_case.dart';
+export 'src/application/seed_home_destination_draft_use_case.dart';
 export 'src/application/get_planning_generation_status_use_case.dart';
 export 'src/application/get_planning_preview_use_case.dart';
 export 'src/application/restore_planning_journey_use_case.dart';

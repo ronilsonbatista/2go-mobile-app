@@ -263,6 +263,8 @@ class AppRouter {
                   path: '/app/home',
                   builder: (context, state) => HomePage(
                     homeCubit: dependencies.createHomeCubit(),
+                    seedHomeDestinationDraft:
+                        dependencies.seedHomeDestinationDraftUseCase,
                   ),
                 ),
               ],

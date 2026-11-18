@@ -655,18 +655,17 @@ class _MealSheetState extends State<_MealSheet> {
           if (widget.items.length > 1) ...[
             const SizedBox(height: TwoGoSpacing.sm),
             const Text('Fixar no item'),
-            RadioGroup<String>(
-              groupValue: _targetId,
-              onChanged: (value) => setState(() => _targetId = value),
-              child: Column(
-                children: [
-                  for (final item in widget.items)
-                    RadioListTile<String>(
-                      value: item.id,
-                      title: Text(item.title),
-                    ),
-                ],
-              ),
+            // Classic RadioListTile API (Flutter 3.32.x). RadioGroup lands in newer SDKs.
+            Column(
+              children: [
+                for (final item in widget.items)
+                  RadioListTile<String>(
+                    value: item.id,
+                    groupValue: _targetId,
+                    onChanged: (value) => setState(() => _targetId = value),
+                    title: Text(item.title),
+                  ),
+              ],
             ),
           ],
           if (_loading)
