@@ -23,18 +23,31 @@ class _FakeHomeRepository implements HomeContentRepository {
   }
 }
 
-HomeDestination _dest(String id, {int order = 0}) {
+HomeDestination _dest(String id, {int order = 0, String? providerPlaceId}) {
   return HomeDestination(
     id: id,
     name: id,
     country: 'Brasil',
     heroAssetPath: 'assets/destinations/rio-de-janeiro.jpg',
     cardAssetPath: 'assets/destinations/rio-de-janeiro-card.jpg',
+    providerPlaceId: providerPlaceId,
     sortOrder: order,
   );
 }
 
 void main() {
+  group('HomeDestination', () {
+    test('hasPlacesId prefers real Core ids over catalog: / empty', () {
+      expect(
+        _dest('roma', providerPlaceId: 'ChIJu46S-ZZhLxMROG5lkwZ3D7k')
+            .hasPlacesId,
+        isTrue,
+      );
+      expect(_dest('roma', providerPlaceId: 'catalog:roma').hasPlacesId, isFalse);
+      expect(_dest('roma').hasPlacesId, isFalse);
+    });
+  });
+
   group('HomeCubit', () {
     test('guest load has silhouette profile and destinations', () async {
       final cubit = HomeCubit(

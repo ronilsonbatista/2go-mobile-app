@@ -66,9 +66,12 @@ class PlanningWizardState {
     if (destinations.isEmpty) return false;
     for (int i = 0; i < destinations.length; i++) {
       final d = destinations[i];
-      if (d.providerPlaceId == null || d.providerPlaceId!.trim().isEmpty) {
-        return false;
-      }
+      // Real Places id required (Home tap should seed Core providerPlaceId).
+      // Synthetic `catalog:` ids are not valid for finalize POST.
+      final rawId = d.providerPlaceId?.trim() ?? '';
+      final hasPlaceId =
+          rawId.isNotEmpty && !rawId.startsWith('catalog:');
+      if (!hasPlaceId) return false;
       if (d.arrivalDate.trim().isEmpty || d.departureDate.trim().isEmpty) {
         return false;
       }

@@ -63,7 +63,7 @@ void main() {
     });
 
     test(
-      'InitializeWizardEvent creates new session when no active journey',
+      'InitializeWizardEvent starts local draft without Core journey',
       () async {
         bloc.add(const InitializeWizardEvent());
         await expectLater(
@@ -76,21 +76,26 @@ void main() {
             ),
             isA<PlanningWizardState>()
                 .having((s) => s.status, 'status', PlanningWizardStatus.editing)
-                .having((s) => s.currentStep, 'currentStep', 1),
+                .having((s) => s.currentStep, 'currentStep', 1)
+                .having((s) => s.journey, 'journey', isNull),
           ]),
         );
+
+        final draft = await draftStorage.readDraft();
+        expect(draft, isNotNull);
+        expect(draft!.currentStep, 1);
+        expect(draft.activeJourneyId, isNull);
       },
     );
 
     test(
-      'NextStepEvent advances step when valid and PreviousStepEvent decrements step',
+      'NextStepEvent advances locally and persists users-defaults draft',
       () async {
         bloc.add(const InitializeWizardEvent());
         await bloc.stream.firstWhere(
           (s) => s.status == PlanningWizardStatus.editing,
         );
 
-        // Make Step 1 valid
         bloc.add(
           const UpdateDestinationAtEvent(
             0,
@@ -110,6 +115,13 @@ void main() {
         bloc.add(const NextStepEvent());
         await bloc.stream.firstWhere((s) => s.currentStep == 2);
         expect(bloc.state.currentStep, 2);
+
+        final draft = await draftStorage.readDraft();
+        expect(draft?.currentStep, 2);
+        expect(draft?.destinations?.single['name'], 'Paris');
+        expect(draft?.isDirty, true);
+        // No Core journey yet — POST only at finalize.
+        expect(bloc.state.journey, isNull);
 
         bloc.add(const PreviousStepEvent());
         await bloc.stream.firstWhere((s) => s.currentStep == 1);
@@ -131,7 +143,7 @@ void main() {
     });
 
     test(
-      'NextStepEvent stays on the step when the patch fails and keeps a local copy',
+      'NextStepEvent advances even if Core update would fail (local-only Q&A)',
       () async {
         bloc.add(const InitializeWizardEvent());
         await bloc.stream.firstWhere(
@@ -158,15 +170,53 @@ void main() {
 
         apiClient.failUpdate = true;
         bloc.add(const NextStepEvent());
-        await bloc.stream.firstWhere(
-          (s) => s.status == PlanningWizardStatus.failure,
+        await bloc.stream.firstWhere((s) => s.currentStep == 2);
+
+        expect(bloc.state.currentStep, 2);
+        expect(bloc.state.status, PlanningWizardStatus.editing);
+        final draft = await draftStorage.readDraft();
+        expect(draft?.destinations?.single['name'], 'Lisboa');
+        expect(draft?.currentStep, 2);
+      },
+    );
+
+    test(
+      'InitializeWizardEvent restores local draft without journey id',
+      () async {
+        await draftStorage.saveDraft(
+          PlanningDraft(
+            currentStep: 3,
+            destinations: const [
+              {
+                'providerPlaceId': 'ChIJu46S-ZZhLxMROG5lkwZ3D7k',
+                'name': 'Roma',
+                'arrivalDate': '2026-07-25',
+                'arrivalTime': '09:00',
+                'departureDate': '2026-07-28',
+                'departureTime': '23:00',
+                'order': 0,
+              },
+            ],
+            travelers: const {'adults': 2, 'children': 2, 'elders': 0},
+            interests: const ['GASTRONOMY', 'MUSIC'],
+            isDirty: true,
+          ),
         );
 
-        expect(bloc.state.currentStep, 1);
-        final draft = await draftStorage.readDraft();
-        expect(draft?.isDirty, true);
-        expect(draft?.currentStep, 1);
-        expect(draft?.destinations?.single['name'], 'Lisboa');
+        bloc.add(const InitializeWizardEvent());
+        await bloc.stream.firstWhere(
+          (s) => s.status == PlanningWizardStatus.editing,
+        );
+
+        expect(bloc.state.currentStep, 3);
+        expect(bloc.state.destinations.single.name, 'Roma');
+        expect(bloc.state.travelers.adults, 2);
+        expect(bloc.state.travelers.children, 2);
+        expect(bloc.state.interests, const [
+          PlanningInterest.gastronomy,
+          PlanningInterest.music,
+        ]);
+        expect(bloc.state.journey, isNull);
       },
     );
 
@@ -225,6 +275,38 @@ void main() {
       bloc.add(const GoToStepEvent(5));
       await bloc.stream.firstWhere((s) => s.currentStep == 5);
       expect(bloc.state.currentStep, 5);
+    });
+
+    test('step 1 valid when Home seeded real providerPlaceId', () {
+      final state = PlanningWizardState(
+        destinations: const [
+          PlanningDestination(
+            providerPlaceId: 'ChIJu46S-ZZhLxMROG5lkwZ3D7k',
+            name: 'Roma',
+            arrivalDate: '2026-07-25',
+            arrivalTime: '09:00',
+            departureDate: '2026-07-28',
+            departureTime: '23:00',
+          ),
+        ],
+      );
+      expect(state.isStep1Valid, isTrue);
+    });
+
+    test('step 1 invalid for synthetic catalog: providerPlaceId', () {
+      final state = PlanningWizardState(
+        destinations: const [
+          PlanningDestination(
+            providerPlaceId: 'catalog:roma',
+            name: 'Roma',
+            arrivalDate: '2026-07-25',
+            arrivalTime: '09:00',
+            departureDate: '2026-07-28',
+            departureTime: '23:00',
+          ),
+        ],
+      );
+      expect(state.isStep1Valid, isFalse);
     });
   });
 }

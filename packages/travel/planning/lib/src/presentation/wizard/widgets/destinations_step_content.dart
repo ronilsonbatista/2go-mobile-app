@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_places/places.dart';
 import '../../../domain/models/planning_destination.dart';
+import '../form_course_tokens.dart';
 import 'destination_card_widget.dart';
 
 class DestinationsStepContent extends StatelessWidget {
@@ -42,11 +43,31 @@ class DestinationsStepContent extends StatelessWidget {
             );
           }),
           const SizedBox(height: TwoGoSpacing.xs),
-          TwoGoButton(
-            text: 'Adicionar outro destino',
-            variant: TwoGoButtonVariant.secondary,
-            icon: TwoGoIcons.add,
-            onPressed: onAddDestination,
+          InkWell(
+            onTap: onAddDestination,
+            borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: TwoGoSpacing.sm),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('🌎', style: TextStyle(fontSize: 20)),
+                  const SizedBox(width: TwoGoSpacing.sm),
+                  Flexible(
+                    child: Text(
+                      'Deseja adicionar mais um destino?',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TwoGoTypography.bodyMedium.copyWith(
+                        color: FormCourseTokens.ink,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: TwoGoSpacing.lg),
         ],

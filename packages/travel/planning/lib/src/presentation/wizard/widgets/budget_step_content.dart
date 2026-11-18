@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 import '../../../domain/models/planning_budget_option.dart';
+import '../form_course_tokens.dart';
+import 'form_course_icons.dart';
 
 class BudgetStepContent extends StatelessWidget {
   final String? selectedBudgetLevel;
@@ -14,132 +16,79 @@ class BudgetStepContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: TwoGoSpacing.md),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: TwoGoSpacing.sm),
-          Text(
-            'Qual o perfil financeiro da viagem?',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: TwoGoColors.textPrimary,
+          for (final option in PlanningBudgetOption.options) ...[
+            _StyleRow(
+              option: option,
+              selected: selectedBudgetLevel == option.rawValue,
+              onTap: () => onSelectBudgetLevel(option.rawValue),
             ),
-          ),
-          const SizedBox(height: TwoGoSpacing.xs),
-          Text(
-            'Defina a faixa de orçamento desejada para direcionar as sugestões de hospedagem, gastronomia e passeios.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: TwoGoColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: TwoGoSpacing.md),
-          Column(
-            children: [
-              for (
-                int index = 0;
-                index < PlanningBudgetOption.options.length;
-                index++
-              ) ...[
-                if (index > 0) const SizedBox(height: TwoGoSpacing.sm),
-                Builder(
-                  builder: (context) {
-                    final option = PlanningBudgetOption.options[index];
-                    final isSelected = selectedBudgetLevel == option.rawValue;
-
-                    return GestureDetector(
-                      onTap: () => onSelectBudgetLevel(option.rawValue),
-                      child: Container(
-                        padding: const EdgeInsets.all(TwoGoSpacing.md),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? TwoGoColors.brandLime.withValues(alpha: 0.12)
-                              : TwoGoColors.surfacePrimary,
-                          borderRadius: BorderRadius.circular(
-                            TwoGoRadius.medium,
-                          ),
-                          border: Border.all(
-                            color: isSelected
-                                ? TwoGoColors.brandLime
-                                : TwoGoColors.borderDefault,
-                            width: isSelected ? 2 : 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: TwoGoSpacing.sm,
-                                vertical: TwoGoSpacing.xs,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? TwoGoColors.brandLime
-                                    : TwoGoColors.surfaceSecondary,
-                                borderRadius: BorderRadius.circular(
-                                  TwoGoRadius.small,
-                                ),
-                              ),
-                              child: Text(
-                                option.symbol,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: isSelected
-                                      ? TwoGoColors.neutral900
-                                      : TwoGoColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: TwoGoSpacing.md),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    option.label,
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: isSelected
-                                              ? TwoGoColors.neutral900
-                                              : TwoGoColors.textPrimary,
-                                        ),
-                                  ),
-                                  const SizedBox(height: TwoGoSpacing.xxs),
-                                  Text(
-                                    option.subtitle,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: TwoGoColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: TwoGoSpacing.xs),
-                            Icon(
-                              isSelected
-                                  ? Icons.radio_button_checked
-                                  : Icons.radio_button_off,
-                              color: isSelected
-                                  ? TwoGoColors.neutral900
-                                  : TwoGoColors.textSecondary,
-                              size: 22,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ],
-          ),
+            const SizedBox(height: TwoGoSpacing.sm),
+          ],
           const SizedBox(height: TwoGoSpacing.lg),
         ],
+      ),
+    );
+  }
+}
+
+class _StyleRow extends StatelessWidget {
+  const _StyleRow({
+    required this.option,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final PlanningBudgetOption option;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: FormCourseTokens.surface,
+      borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TwoGoSpacing.md,
+            vertical: TwoGoSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+            border: Border.all(
+              color: selected
+                  ? FormCourseTokens.lime
+                  : FormCourseTokens.label.withValues(alpha: 0.25),
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              FormEstiloDollarGlyph(count: option.symbol.length, height: 20),
+              const SizedBox(width: TwoGoSpacing.md),
+              Expanded(
+                child: Text(
+                  option.label,
+                  style: TwoGoTypography.titleMedium.copyWith(
+                    color: FormCourseTokens.label,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const Icon(
+                TwoGoIcons.chevronRight,
+                color: FormCourseTokens.ink,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

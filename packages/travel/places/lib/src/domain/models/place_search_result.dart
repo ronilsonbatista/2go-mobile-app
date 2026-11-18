@@ -6,6 +6,9 @@ class PlaceSearchResult {
   final double? longitude;
   final List<String> types;
 
+  /// Predefined locality thumb/icon from Core Places autocomplete (CDN).
+  final String? iconUrl;
+
   const PlaceSearchResult({
     required this.providerPlaceId,
     required this.name,
@@ -13,6 +16,7 @@ class PlaceSearchResult {
     this.latitude,
     this.longitude,
     this.types = const [],
+    this.iconUrl,
   });
 
   String get city {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 import '../../../domain/models/planning_activity_window.dart';
+import '../form_course_tokens.dart';
 
 class ActivityHoursStepContent extends StatelessWidget {
   final PlanningActivityWindow activityWindow;
@@ -12,211 +13,159 @@ class ActivityHoursStepContent extends StatelessWidget {
     required this.onChanged,
   });
 
-  Future<void> _selectTime({
-    required BuildContext context,
-    required bool isStart,
-  }) async {
-    final currentStr = isStart
-        ? activityWindow.startTime
-        : activityWindow.endTime;
-    final parts = currentStr.split(':');
-    final initialTime = TimeOfDay(
-      hour: int.tryParse(parts[0]) ?? (isStart ? 9 : 18),
-      minute: int.tryParse(parts[1]) ?? (isStart ? 0 : 30),
-    );
-
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            timePickerTheme: TimePickerThemeData(
-              backgroundColor: TwoGoColors.surfacePrimary,
-              hourMinuteColor: TwoGoColors.brandLime.withValues(alpha: 0.15),
-              hourMinuteTextColor: TwoGoColors.neutral900,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      final formatted =
-          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-
-      if (isStart) {
-        onChanged(activityWindow.copyWith(startTime: formatted));
-      } else {
-        onChanged(activityWindow.copyWith(endTime: formatted));
-      }
-    }
-  }
+  static const _startOptions = [
+    '08:00',
+    '08:30',
+    '09:00',
+    '09:30',
+    '10:00',
+  ];
+  static const _endOptions = [
+    '18:00',
+    '18:30',
+    '19:00',
+    '19:30',
+    '20:00',
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isValid =
-        activityWindow.startTime.compareTo(activityWindow.endTime) < 0;
-
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: TwoGoSpacing.md),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: TwoGoSpacing.sm),
-          Text(
-            'Qual o seu ritmo diário?',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: TwoGoColors.textPrimary,
-            ),
+          _HoursCard(
+            emoji: '🌤️',
+            title: 'Início das atividades',
+            options: _startOptions,
+            selected: activityWindow.startTime,
+            onSelected: (value) =>
+                onChanged(activityWindow.copyWith(startTime: value)),
           ),
-          const SizedBox(height: TwoGoSpacing.xs),
-          Text(
-            'Defina os horários habituais em que você deseja iniciar e terminar as atividades do dia.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: TwoGoColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: TwoGoSpacing.lg),
-          TwoGoCard(
-            child: Padding(
-              padding: const EdgeInsets.all(TwoGoSpacing.md),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Início das atividades',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: TwoGoColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: TwoGoSpacing.xxs),
-                            InkWell(
-                              onTap: () =>
-                                  _selectTime(context: context, isStart: true),
-                              borderRadius: BorderRadius.circular(
-                                TwoGoRadius.small,
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: TwoGoSpacing.sm,
-                                  vertical: TwoGoSpacing.xs,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: TwoGoColors.borderDefault,
-                                  ),
-                                  borderRadius: BorderRadius.circular(
-                                    TwoGoRadius.small,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        activityWindow.startTime,
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: TwoGoColors.textPrimary,
-                                            ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: TwoGoSpacing.xxs),
-                                    Icon(
-                                      Icons.access_time,
-                                      size: 16,
-                                      color: TwoGoColors.textSecondary,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: TwoGoSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Fim das atividades',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: TwoGoColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: TwoGoSpacing.xxs),
-                            InkWell(
-                              onTap: () =>
-                                  _selectTime(context: context, isStart: false),
-                              borderRadius: BorderRadius.circular(
-                                TwoGoRadius.small,
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: TwoGoSpacing.sm,
-                                  vertical: TwoGoSpacing.xs,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: TwoGoColors.borderDefault,
-                                  ),
-                                  borderRadius: BorderRadius.circular(
-                                    TwoGoRadius.small,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        activityWindow.endTime,
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: TwoGoColors.textPrimary,
-                                            ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: TwoGoSpacing.xxs),
-                                    Icon(
-                                      Icons.access_time,
-                                      size: 16,
-                                      color: TwoGoColors.textSecondary,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (!isValid) ...[
-                    const SizedBox(height: TwoGoSpacing.sm),
-                    Text(
-                      'O horário de início deve ser anterior ao horário de término.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: TwoGoColors.feedbackError,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+          const SizedBox(height: TwoGoSpacing.md),
+          _HoursCard(
+            emoji: '🌙',
+            title: 'Fim das atividades',
+            options: _endOptions,
+            selected: activityWindow.endTime,
+            onSelected: (value) =>
+                onChanged(activityWindow.copyWith(endTime: value)),
           ),
           const SizedBox(height: TwoGoSpacing.lg),
         ],
+      ),
+    );
+  }
+}
+
+class _HoursCard extends StatelessWidget {
+  const _HoursCard({
+    required this.emoji,
+    required this.title,
+    required this.options,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String emoji;
+  final String title;
+  final List<String> options;
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(TwoGoSpacing.md),
+      decoration: BoxDecoration(
+        color: FormCourseTokens.surface,
+        borderRadius: BorderRadius.circular(TwoGoRadius.large),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 22)),
+              const SizedBox(width: TwoGoSpacing.sm),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TwoGoTypography.titleMedium.copyWith(
+                    color: FormCourseTokens.black,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: TwoGoSpacing.md),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final option in options) ...[
+                  _TimeChip(
+                    label: option,
+                    selected: option == selected,
+                    onTap: () => onSelected(option),
+                  ),
+                  const SizedBox(width: TwoGoSpacing.sm),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimeChip extends StatelessWidget {
+  const _TimeChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? FormCourseTokens.black : FormCourseTokens.surface,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TwoGoSpacing.md,
+            vertical: TwoGoSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: selected
+                  ? FormCourseTokens.black
+                  : FormCourseTokens.label.withValues(alpha: 0.45),
+            ),
+          ),
+          child: Text(
+            label,
+            style: TwoGoTypography.labelLarge.copyWith(
+              color: selected
+                  ? FormCourseTokens.surface
+                  : FormCourseTokens.black,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
     );
   }

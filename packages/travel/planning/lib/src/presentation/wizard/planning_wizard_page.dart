@@ -33,7 +33,7 @@ class PlanningWizardPage extends StatelessWidget {
     'Quem vai?',
     'Selecione os interesses que combinam com você.',
     'Defina o horário das atividades',
-    'Qual o perfil financeiro da viagem?',
+    'Qual o estilo da viagem?',
     'Tudo pronto para criarmos seu roteiro?',
   ];
 
@@ -208,8 +208,6 @@ class _PlanningWizardView extends StatelessWidget {
           isButtonEnabled: state.isCurrentStepValid,
           buttonText: state.status == PlanningWizardStatus.failure
               ? 'Tentar novamente'
-              : state.currentStep == 6
-              ? 'Criar meu roteiro'
               : 'Continuar',
           onBack: () {
             context.read<PlanningWizardBloc>().add(const PreviousStepEvent());

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 
+import '../form_course_tokens.dart';
+import 'form_course_icons.dart';
+
 class PlanningStepHeader extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
@@ -26,24 +29,34 @@ class PlanningStepHeader extends StatelessWidget {
       children: [
         Row(
           children: [
-            TwoGoIconButton(
-              icon: TwoGoIcons.back,
-              onPressed: onBack,
-              variant: TwoGoIconButtonVariant.ghost,
+            Material(
+              color: FormCourseTokens.surface,
+              shape: const CircleBorder(),
+              elevation: 1,
+              shadowColor: Colors.black26,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onBack,
+                child: const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Icon(
+                    TwoGoIcons.back,
+                    color: FormCourseTokens.ink,
+                    size: 22,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(width: TwoGoSpacing.xs),
-            Icon(
-              TwoGoIcons.flight,
-              size: TwoGoSizing.iconSm,
-              color: TwoGoColors.contentSecondary,
+            const SizedBox(width: TwoGoSpacing.sm),
+            Expanded(
+              child: _PlaneProgressBar(progress: progress),
             ),
-            const SizedBox(width: TwoGoSpacing.xs),
-            Expanded(child: TwoGoProgressBar(progress: progress)),
             const SizedBox(width: TwoGoSpacing.sm),
             Text(
               '$currentStep de $totalSteps',
               style: TwoGoTypography.labelMedium.copyWith(
-                color: TwoGoColors.textSecondary,
+                color: FormCourseTokens.label,
               ),
             ),
           ],
@@ -52,7 +65,8 @@ class PlanningStepHeader extends StatelessWidget {
         Text(
           title,
           style: TwoGoTypography.headlineMedium.copyWith(
-            color: TwoGoColors.textPrimary,
+            color: FormCourseTokens.black,
+            fontWeight: FontWeight.w700,
           ),
         ),
         if (subtitle != null && subtitle!.isNotEmpty) ...[
@@ -60,11 +74,61 @@ class PlanningStepHeader extends StatelessWidget {
           Text(
             subtitle!,
             style: TwoGoTypography.bodyMedium.copyWith(
-              color: TwoGoColors.textSecondary,
+              color: FormCourseTokens.label,
             ),
           ),
         ],
       ],
+    );
+  }
+}
+
+class _PlaneProgressBar extends StatelessWidget {
+  const _PlaneProgressBar({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final planeSize = 22.0;
+        final travel = (width - planeSize).clamp(0.0, width);
+        final dx = travel * progress;
+
+        return SizedBox(
+          height: 28,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.centerLeft,
+            children: [
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 13,
+                child: Container(
+                  height: 2,
+                  color: FormCourseTokens.label.withValues(alpha: 0.35),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                width: dx + planeSize / 2,
+                top: 13,
+                child: Container(
+                  height: 2,
+                  color: FormCourseTokens.black,
+                ),
+              ),
+              Positioned(
+                left: dx,
+                child: const FormProgressPlaneIcon(size: 22),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
