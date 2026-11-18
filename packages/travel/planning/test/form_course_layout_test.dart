@@ -103,7 +103,7 @@ void main() {
           body: ReviewStepContent(
             destinations: const [
               PlanningDestination(
-                providerPlaceId: 'catalog:roma',
+                providerPlaceId: 'ChIJu46S-ZZhLxMROG5lkwZ3D7k',
                 name: 'Roma',
                 country: 'Itália',
                 arrivalDate: '2026-07-25',

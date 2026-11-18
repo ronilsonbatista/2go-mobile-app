@@ -32,13 +32,19 @@ class HomeDestination extends Equatable {
   final String? cardImageUrl;
 
   /// Google Places id from Core (`providerPlaceId`). Required on remote Home
-  /// items; used to seed Onde step-1 without re-search.
+  /// items; used to seed Onde step-1 without re-search. Never invent from slug.
   final String? providerPlaceId;
 
   final int sortOrder;
 
   /// Core marks PUBLISHED+PUBLIC rows as active; inactive items are filtered out.
   final bool active;
+
+  /// True when Core supplied a real Places id (rejects empty / `catalog:` fakes).
+  bool get hasPlacesId {
+    final id = providerPlaceId?.trim() ?? '';
+    return id.isNotEmpty && !id.startsWith('catalog:');
+  }
 
   String get caption => '$name - $country';
 

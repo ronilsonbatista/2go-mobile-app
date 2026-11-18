@@ -188,7 +188,7 @@ void main() {
             currentStep: 3,
             destinations: const [
               {
-                'providerPlaceId': 'catalog:roma',
+                'providerPlaceId': 'ChIJu46S-ZZhLxMROG5lkwZ3D7k',
                 'name': 'Roma',
                 'arrivalDate': '2026-07-25',
                 'arrivalTime': '09:00',
@@ -277,7 +277,23 @@ void main() {
       expect(bloc.state.currentStep, 5);
     });
 
-    test('step 1 valid with catalog destination name without Places id', () {
+    test('step 1 valid when Home seeded real providerPlaceId', () {
+      final state = PlanningWizardState(
+        destinations: const [
+          PlanningDestination(
+            providerPlaceId: 'ChIJu46S-ZZhLxMROG5lkwZ3D7k',
+            name: 'Roma',
+            arrivalDate: '2026-07-25',
+            arrivalTime: '09:00',
+            departureDate: '2026-07-28',
+            departureTime: '23:00',
+          ),
+        ],
+      );
+      expect(state.isStep1Valid, isTrue);
+    });
+
+    test('step 1 invalid for synthetic catalog: providerPlaceId', () {
       final state = PlanningWizardState(
         destinations: const [
           PlanningDestination(
@@ -290,7 +306,7 @@ void main() {
           ),
         ],
       );
-      expect(state.isStep1Valid, isTrue);
+      expect(state.isStep1Valid, isFalse);
     });
   });
 }

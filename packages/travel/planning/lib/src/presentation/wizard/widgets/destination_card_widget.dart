@@ -23,6 +23,8 @@ class DestinationCardWidget extends StatelessWidget {
     this.onRemove,
   });
 
+  /// Opens Places search only when the user edits this row.
+  /// Home-seeded destinations already carry Core `providerPlaceId` — prefer that.
   Future<void> _selectDestination(BuildContext context) async {
     if (searchPlacesUseCase == null) return;
     final selectedPlace = await DestinationSearchSheet.show(

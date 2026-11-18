@@ -66,11 +66,12 @@ class PlanningWizardState {
     if (destinations.isEmpty) return false;
     for (int i = 0; i < destinations.length; i++) {
       final d = destinations[i];
+      // Real Places id required (Home tap should seed Core providerPlaceId).
+      // Synthetic `catalog:` ids are not valid for finalize POST.
+      final rawId = d.providerPlaceId?.trim() ?? '';
       final hasPlaceId =
-          d.providerPlaceId != null && d.providerPlaceId!.trim().isNotEmpty;
-      final hasName = d.name.trim().isNotEmpty;
-      // Catalog destinations (Home) may seed name + coverImage without Places id.
-      if (!hasPlaceId && !hasName) return false;
+          rawId.isNotEmpty && !rawId.startsWith('catalog:');
+      if (!hasPlaceId) return false;
       if (d.arrivalDate.trim().isEmpty || d.departureDate.trim().isEmpty) {
         return false;
       }
