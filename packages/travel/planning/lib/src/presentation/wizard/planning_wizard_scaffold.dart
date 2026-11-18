@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
+
+import 'form_course_tokens.dart';
 import 'widgets/planning_step_footer.dart';
 import 'widgets/planning_step_header.dart';
 
@@ -32,6 +34,7 @@ class PlanningWizardScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TwoGoKeyboardAwareScaffold(
+      backgroundColor: FormCourseTokens.background,
       body: SafeArea(
         child: TwoGoCenteredContent(
           maxWidth: 600,

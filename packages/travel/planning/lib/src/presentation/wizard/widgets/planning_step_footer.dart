@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 
+import '../form_course_tokens.dart';
+
 class PlanningStepFooter extends StatelessWidget {
   final String buttonText;
   final bool enabled;
@@ -24,10 +26,31 @@ class PlanningStepFooter extends StatelessWidget {
           horizontal: TwoGoSpacing.md,
           vertical: TwoGoSpacing.sm,
         ),
-        child: TwoGoButton(
-          text: buttonText,
-          loading: loading,
-          onPressed: enabled && !loading ? onPressed : null,
+        child: SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: FilledButton(
+            onPressed: enabled && !loading ? onPressed : null,
+            style: FilledButton.styleFrom(
+              backgroundColor: FormCourseTokens.lime,
+              disabledBackgroundColor: FormCourseTokens.disabledButton,
+              foregroundColor: FormCourseTokens.black,
+              disabledForegroundColor: FormCourseTokens.disabledLabel,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(TwoGoRadius.full),
+              ),
+              textStyle: TwoGoTypography.titleMedium.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            child: loading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(buttonText),
+          ),
         ),
       ),
     );

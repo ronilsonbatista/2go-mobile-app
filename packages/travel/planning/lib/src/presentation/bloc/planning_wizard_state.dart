@@ -66,9 +66,11 @@ class PlanningWizardState {
     if (destinations.isEmpty) return false;
     for (int i = 0; i < destinations.length; i++) {
       final d = destinations[i];
-      if (d.providerPlaceId == null || d.providerPlaceId!.trim().isEmpty) {
-        return false;
-      }
+      final hasPlaceId =
+          d.providerPlaceId != null && d.providerPlaceId!.trim().isNotEmpty;
+      final hasName = d.name.trim().isNotEmpty;
+      // Catalog destinations (Home) may seed name + coverImage without Places id.
+      if (!hasPlaceId && !hasName) return false;
       if (d.arrivalDate.trim().isEmpty || d.departureDate.trim().isEmpty) {
         return false;
       }

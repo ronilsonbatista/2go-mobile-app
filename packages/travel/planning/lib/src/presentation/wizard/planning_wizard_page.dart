@@ -33,7 +33,8 @@ class PlanningWizardPage extends StatelessWidget {
     'Quem vai?',
     'Selecione os interesses que combinam com você.',
     'Defina o horário das atividades',
-    'Qual o perfil financeiro da viagem?',
+    'Qual o estilo da viagem?',
+    // PDF 6/6 still missing — copy kept until Ronilson supplies frame.
     'Tudo pronto para criarmos seu roteiro?',
   ];
 

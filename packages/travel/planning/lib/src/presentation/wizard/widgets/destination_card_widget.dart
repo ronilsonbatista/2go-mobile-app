@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_places/places.dart';
 import '../../../domain/models/planning_destination.dart';
+import '../form_course_tokens.dart';
 import 'destination_search_sheet.dart';
+import 'form_asset_placeholder.dart';
 
 class DestinationCardWidget extends StatelessWidget {
   final int index;
@@ -108,154 +110,208 @@ class DestinationCardWidget extends StatelessWidget {
     }
   }
 
-  String _formatDisplayDate(String isoDate) {
-    if (isoDate.isEmpty) return 'dd/mm/aaaa';
-    final parts = isoDate.split('-');
-    if (parts.length == 3) {
-      return '${parts[2]}/${parts[1]}/${parts[0]}';
-    }
-    return isoDate;
+  String _formatPtDateTime(String isoDate, String time) {
+    if (isoDate.isEmpty) return 'Selecionar';
+    final dt = DateTime.tryParse(isoDate);
+    if (dt == null) return 'Selecionar';
+    const months = [
+      'janeiro',
+      'fevereiro',
+      'março',
+      'abril',
+      'maio',
+      'junho',
+      'julho',
+      'agosto',
+      'setembro',
+      'outubro',
+      'novembro',
+      'dezembro',
+    ];
+    final month = months[dt.month - 1];
+    final t = time.isEmpty ? '' : ' - ${_formatTimeDisplay(time)}';
+    return '${dt.day} de $month$t';
+  }
+
+  String _formatTimeDisplay(String time) {
+    final parts = time.split(':');
+    if (parts.isEmpty) return time;
+    final hour = int.tryParse(parts[0]) ?? 0;
+    final minute = parts.length > 1 ? parts[1] : '00';
+    if (minute == '00') return '$hour:00';
+    return '$hour:$minute';
   }
 
   @override
   Widget build(BuildContext context) {
-    return TwoGoCard(
+    final hasName = destination.name.trim().isNotEmpty;
+    final arrivalLabel = _formatPtDateTime(
+      destination.arrivalDate,
+      destination.arrivalTime,
+    );
+    final departureLabel = _formatPtDateTime(
+      destination.departureDate,
+      destination.departureTime,
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: FormCourseTokens.surface,
+        borderRadius: BorderRadius.circular(TwoGoRadius.large),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Destino ${index + 1}',
-                style: TwoGoTypography.titleMedium.copyWith(
-                  color: TwoGoColors.textPrimary,
+          _DestinationRow(
+            label: 'Onde',
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  hasName ? destination.name : 'Selecionar',
+                  style: TwoGoTypography.titleMedium.copyWith(
+                    color: FormCourseTokens.black,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              if (canRemove)
-                TwoGoIconButton(
-                  icon: TwoGoIcons.trash,
-                  onPressed: onRemove,
-                  variant: TwoGoIconButtonVariant.ghost,
-                ),
-            ],
-          ),
-          const SizedBox(height: TwoGoSpacing.sm),
-          InkWell(
+                const SizedBox(width: TwoGoSpacing.sm),
+                _DestinationThumb(coverImage: destination.coverImage),
+                if (canRemove) ...[
+                  const SizedBox(width: TwoGoSpacing.xs),
+                  TwoGoIconButton(
+                    icon: TwoGoIcons.trash,
+                    onPressed: onRemove,
+                    variant: TwoGoIconButtonVariant.ghost,
+                  ),
+                ],
+              ],
+            ),
             onTap: () => _selectDestination(context),
-            borderRadius: TwoGoRadius.borderMedium,
-            child: IgnorePointer(
-              child: TwoGoTextField(
-                label: 'Cidade ou país',
-                hintText: 'Buscar destino...',
-                prefixIcon: TwoGoIcons.search,
-                controller: TextEditingController(
-                  text: destination.name.isNotEmpty
-                      ? destination.name
-                      : 'Selecionar cidade ou país',
-                ),
+          ),
+          const Divider(height: 1, color: FormCourseTokens.summaryCard),
+          _DestinationRow(
+            label: 'Chegada',
+            trailing: Text(
+              arrivalLabel,
+              style: TwoGoTypography.bodyMedium.copyWith(
+                color: FormCourseTokens.black,
+                fontWeight: FontWeight.w500,
               ),
             ),
-          ),
-          const SizedBox(height: TwoGoSpacing.md),
-
-          // Chegada
-          Text(
-            'Chegada',
-            style: TwoGoTypography.labelMedium.copyWith(
-              color: TwoGoColors.textSecondary,
+            onTap: () async {
+              await _selectArrivalDate(context);
+              if (context.mounted) await _selectArrivalTime(context);
+            },
+            leadingIcon: const FormAssetPlaceholder(
+              assetName: 'calendar-chegada',
+              size: 18,
+              fallbackIcon: TwoGoIcons.calendar,
             ),
           ),
-          const SizedBox(height: TwoGoSpacing.xs),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: InkWell(
-                  onTap: () => _selectArrivalDate(context),
-                  borderRadius: TwoGoRadius.borderMedium,
-                  child: IgnorePointer(
-                    child: TwoGoTextField(
-                      hintText: 'Data de chegada',
-                      prefixIcon: TwoGoIcons.calendar,
-                      controller: TextEditingController(
-                        text: _formatDisplayDate(destination.arrivalDate),
-                      ),
-                    ),
-                  ),
-                ),
+          const Divider(height: 1, color: FormCourseTokens.summaryCard),
+          _DestinationRow(
+            label: 'Partida',
+            trailing: Text(
+              departureLabel,
+              style: TwoGoTypography.bodyMedium.copyWith(
+                color: FormCourseTokens.black,
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(width: TwoGoSpacing.xs),
-              Expanded(
-                flex: 2,
-                child: InkWell(
-                  onTap: () => _selectArrivalTime(context),
-                  borderRadius: TwoGoRadius.borderMedium,
-                  child: IgnorePointer(
-                    child: TwoGoTextField(
-                      hintText: 'Horário',
-                      prefixIcon: TwoGoIcons.clock,
-                      controller: TextEditingController(
-                        text: destination.arrivalTime.isNotEmpty
-                            ? destination.arrivalTime
-                            : '09:00',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: TwoGoSpacing.sm),
-
-          // Saída
-          Text(
-            'Saída',
-            style: TwoGoTypography.labelMedium.copyWith(
-              color: TwoGoColors.textSecondary,
             ),
-          ),
-          const SizedBox(height: TwoGoSpacing.xs),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: InkWell(
-                  onTap: () => _selectDepartureDate(context),
-                  borderRadius: TwoGoRadius.borderMedium,
-                  child: IgnorePointer(
-                    child: TwoGoTextField(
-                      hintText: 'Data de saída',
-                      prefixIcon: TwoGoIcons.calendar,
-                      controller: TextEditingController(
-                        text: _formatDisplayDate(destination.departureDate),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: TwoGoSpacing.xs),
-              Expanded(
-                flex: 2,
-                child: InkWell(
-                  onTap: () => _selectDepartureTime(context),
-                  borderRadius: TwoGoRadius.borderMedium,
-                  child: IgnorePointer(
-                    child: TwoGoTextField(
-                      hintText: 'Horário',
-                      prefixIcon: TwoGoIcons.clock,
-                      controller: TextEditingController(
-                        text: destination.departureTime.isNotEmpty
-                            ? destination.departureTime
-                            : '18:00',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            onTap: () async {
+              await _selectDepartureDate(context);
+              if (context.mounted) await _selectDepartureTime(context);
+            },
+            leadingIcon: const FormAssetPlaceholder(
+              assetName: 'clock-horario',
+              size: 18,
+              fallbackIcon: TwoGoIcons.clock,
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DestinationRow extends StatelessWidget {
+  const _DestinationRow({
+    required this.label,
+    required this.trailing,
+    required this.onTap,
+    this.leadingIcon,
+  });
+
+  final String label;
+  final Widget trailing;
+  final VoidCallback onTap;
+  final Widget? leadingIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: TwoGoSpacing.md,
+          vertical: TwoGoSpacing.md,
+        ),
+        child: Row(
+          children: [
+            if (leadingIcon != null) ...[
+              leadingIcon!,
+              const SizedBox(width: TwoGoSpacing.xs),
+            ],
+            Text(
+              label,
+              style: TwoGoTypography.bodyMedium.copyWith(
+                color: FormCourseTokens.label,
+              ),
+            ),
+            const Spacer(),
+            Flexible(child: trailing),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DestinationThumb extends StatelessWidget {
+  const _DestinationThumb({this.coverImage});
+
+  final String? coverImage;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = coverImage;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(TwoGoRadius.small),
+      child: SizedBox(
+        width: 36,
+        height: 36,
+        child: url != null && url.startsWith('http')
+            ? Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const _ThumbFallback(),
+              )
+            : const _ThumbFallback(),
+      ),
+    );
+  }
+}
+
+class _ThumbFallback extends StatelessWidget {
+  const _ThumbFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: FormCourseTokens.summaryCard,
+      child: const Icon(
+        Icons.location_on_outlined,
+        size: 18,
+        color: FormCourseTokens.label,
       ),
     );
   }

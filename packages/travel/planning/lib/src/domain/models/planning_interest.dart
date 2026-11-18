@@ -24,7 +24,7 @@ enum PlanningInterest {
       case PlanningInterest.music:
         return 'Música';
       case PlanningInterest.geekCulture:
-        return 'Cultura geek';
+        return 'Cultura Geek';
       case PlanningInterest.localHistory:
         return 'História local';
       case PlanningInterest.nature:

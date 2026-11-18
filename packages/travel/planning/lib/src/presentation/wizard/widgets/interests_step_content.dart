@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 import '../../../domain/models/planning_interest.dart';
+import '../form_course_tokens.dart';
+import 'form_asset_placeholder.dart';
 
 class InterestsStepContent extends StatelessWidget {
   final List<PlanningInterest> selectedInterests;
@@ -12,7 +14,30 @@ class InterestsStepContent extends StatelessWidget {
     required this.onToggleInterest,
   });
 
-  IconData _iconForInterest(PlanningInterest interest) {
+  String _assetName(PlanningInterest interest) {
+    switch (interest) {
+      case PlanningInterest.art:
+        return 'interest-arte';
+      case PlanningInterest.gastronomy:
+        return 'interest-gastronomia';
+      case PlanningInterest.sports:
+        return 'interest-esporte';
+      case PlanningInterest.architecture:
+        return 'interest-arquitetura';
+      case PlanningInterest.outdoor:
+        return 'interest-outdoor';
+      case PlanningInterest.music:
+        return 'interest-musica';
+      case PlanningInterest.geekCulture:
+        return 'interest-geek';
+      case PlanningInterest.localHistory:
+        return 'interest-historia';
+      case PlanningInterest.nature:
+        return 'interest-natureza';
+    }
+  }
+
+  IconData _fallbackIcon(PlanningInterest interest) {
     switch (interest) {
       case PlanningInterest.art:
         return Icons.palette_outlined;
@@ -23,7 +48,7 @@ class InterestsStepContent extends StatelessWidget {
       case PlanningInterest.architecture:
         return Icons.account_balance_outlined;
       case PlanningInterest.outdoor:
-        return Icons.hiking_outlined;
+        return Icons.directions_bike_outlined;
       case PlanningInterest.music:
         return Icons.music_note_outlined;
       case PlanningInterest.geekCulture:
@@ -37,113 +62,112 @@ class InterestsStepContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: TwoGoSpacing.md),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: TwoGoSpacing.sm),
-          Text(
-            'O que você mais gosta de fazer?',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: TwoGoColors.textPrimary,
+          for (final interest in PlanningInterest.values) ...[
+            _InterestRow(
+              label: interest.label,
+              assetName: _assetName(interest),
+              fallbackIcon: _fallbackIcon(interest),
+              selected: selectedInterests.contains(interest),
+              onTap: () => onToggleInterest(interest),
             ),
-          ),
-          const SizedBox(height: TwoGoSpacing.xs),
-          Text(
-            'Selecione um ou mais interesses para personalizar os passeios do seu roteiro.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: TwoGoColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: TwoGoSpacing.md),
-          Builder(
-            builder: (context) {
-              final screenWidth = MediaQuery.of(context).size.width;
-              final itemWidth =
-                  (screenWidth - (TwoGoSpacing.md * 2) - TwoGoSpacing.sm) / 2;
-
-              return Wrap(
-                spacing: TwoGoSpacing.sm,
-                runSpacing: TwoGoSpacing.sm,
-                children: [
-                  for (final interest in PlanningInterest.values)
-                    Builder(
-                      builder: (context) {
-                        final isSelected = selectedInterests.contains(interest);
-
-                        return GestureDetector(
-                          onTap: () => onToggleInterest(interest),
-                          child: Container(
-                            width: itemWidth,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: TwoGoSpacing.sm,
-                              vertical: TwoGoSpacing.sm,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? TwoGoColors.brandLime.withValues(
-                                      alpha: 0.15,
-                                    )
-                                  : TwoGoColors.surfacePrimary,
-                              borderRadius: BorderRadius.circular(
-                                TwoGoRadius.medium,
-                              ),
-                              border: Border.all(
-                                color: isSelected
-                                    ? TwoGoColors.brandLime
-                                    : TwoGoColors.borderDefault,
-                                width: isSelected ? 2 : 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _iconForInterest(interest),
-                                  color: isSelected
-                                      ? TwoGoColors.neutral900
-                                      : TwoGoColors.textSecondary,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: TwoGoSpacing.xs),
-                                Expanded(
-                                  child: Text(
-                                    interest.label,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                      color: TwoGoColors.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                                if (isSelected) ...[
-                                  const SizedBox(width: TwoGoSpacing.xxs),
-                                  const Icon(
-                                    Icons.check_circle,
-                                    color: TwoGoColors.neutral900,
-                                    size: 16,
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                ],
-              );
-            },
-          ),
+            const SizedBox(height: TwoGoSpacing.sm),
+          ],
           const SizedBox(height: TwoGoSpacing.lg),
         ],
       ),
+    );
+  }
+}
+
+class _InterestRow extends StatelessWidget {
+  const _InterestRow({
+    required this.label,
+    required this.assetName,
+    required this.fallbackIcon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final String assetName;
+  final IconData fallbackIcon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected
+          ? FormCourseTokens.interestSelectedFill
+          : FormCourseTokens.surface,
+      borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TwoGoSpacing.md,
+            vertical: TwoGoSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+            border: Border.all(
+              color: selected
+                  ? FormCourseTokens.lime
+                  : FormCourseTokens.label.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Row(
+            children: [
+              FormAssetPlaceholder(
+                assetName: assetName,
+                size: 28,
+                fallbackIcon: fallbackIcon,
+              ),
+              const SizedBox(width: TwoGoSpacing.md),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TwoGoTypography.titleMedium.copyWith(
+                    color: FormCourseTokens.black,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              _InterestCheckbox(selected: selected),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InterestCheckbox extends StatelessWidget {
+  const _InterestCheckbox({required this.selected});
+
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        color: selected ? FormCourseTokens.lime : FormCourseTokens.surface,
+        borderRadius: BorderRadius.circular(TwoGoRadius.small),
+        border: Border.all(
+          color: selected ? FormCourseTokens.lime : FormCourseTokens.label,
+          width: 1.5,
+        ),
+      ),
+      child: selected
+          ? const Icon(Icons.check, size: 16, color: FormCourseTokens.black)
+          : null,
     );
   }
 }
