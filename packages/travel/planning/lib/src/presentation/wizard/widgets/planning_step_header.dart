@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 
 import '../form_course_tokens.dart';
-import 'form_asset_placeholder.dart';
+import 'form_course_icons.dart';
 
 class PlanningStepHeader extends StatelessWidget {
   final int currentStep;
@@ -123,12 +123,7 @@ class _PlaneProgressBar extends StatelessWidget {
               ),
               Positioned(
                 left: dx,
-                child: const FormAssetPlaceholder(
-                  assetName: 'progress-plane',
-                  size: 22,
-                  fallbackIcon: TwoGoIcons.flight,
-                  fallbackColor: FormCourseTokens.black,
-                ),
+                child: const FormProgressPlaneIcon(size: 22),
               ),
             ],
           ),

@@ -36,6 +36,7 @@ class DestinationCardWidget extends StatelessWidget {
           name: selectedPlace.name,
           city: selectedPlace.city,
           country: selectedPlace.country,
+          coverImage: selectedPlace.iconUrl ?? destination.coverImage,
         ),
       );
     }

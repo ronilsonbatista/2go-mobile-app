@@ -209,8 +209,6 @@ class _PlanningWizardView extends StatelessWidget {
           isButtonEnabled: state.isCurrentStepValid,
           buttonText: state.status == PlanningWizardStatus.failure
               ? 'Tentar novamente'
-              : state.currentStep == 6
-              ? 'Criar meu roteiro'
               : 'Continuar',
           onBack: () {
             context.read<PlanningWizardBloc>().add(const PreviousStepEvent());

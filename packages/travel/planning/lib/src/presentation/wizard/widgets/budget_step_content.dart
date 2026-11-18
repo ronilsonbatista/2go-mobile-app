@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 import '../../../domain/models/planning_budget_option.dart';
 import '../form_course_tokens.dart';
+import 'form_course_icons.dart';
 
 class BudgetStepContent extends StatelessWidget {
   final String? selectedBudgetLevel;
@@ -56,7 +57,7 @@ class _StyleRow extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: TwoGoSpacing.md,
-            vertical: TwoGoSpacing.lg,
+            vertical: TwoGoSpacing.md,
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(TwoGoRadius.medium),
@@ -69,14 +70,7 @@ class _StyleRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // ASSET_REQUIRED: style-dollar-* — Text placeholder in #3A4088
-              Text(
-                option.symbol,
-                style: TwoGoTypography.titleLarge.copyWith(
-                  color: FormCourseTokens.styleDollar,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              FormEstiloDollarGlyph(count: option.symbol.length, height: 20),
               const SizedBox(width: TwoGoSpacing.md),
               Expanded(
                 child: Text(

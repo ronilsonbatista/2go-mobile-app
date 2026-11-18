@@ -93,6 +93,82 @@ void main() {
     expect(find.text('Continuar'), findsOneWidget);
   });
 
+  testWidgets('Revisao step 6 shows destino and interesses emoji rows', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TwoGoTheme.light,
+        home: Scaffold(
+          body: ReviewStepContent(
+            destinations: const [
+              PlanningDestination(
+                providerPlaceId: 'catalog:roma',
+                name: 'Roma',
+                country: 'Itália',
+                arrivalDate: '2026-07-25',
+                arrivalTime: '11:00',
+                departureDate: '2026-07-28',
+                departureTime: '23:00',
+              ),
+            ],
+            travelers: const PlanningTravelers(adults: 2, children: 2),
+            interests: const [
+              PlanningInterest.gastronomy,
+              PlanningInterest.architecture,
+            ],
+            activityWindow: const PlanningActivityWindow(),
+            budgetLevel: 'HIGH',
+            onEditSection: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Tudo pronto para criarmos seu roteiro?'), findsNothing);
+    expect(find.text('Destino'), findsOneWidget);
+    expect(find.text('Roma'), findsOneWidget);
+    expect(find.text('Itália'), findsOneWidget);
+    expect(find.text('💡 Toque para editar'), findsOneWidget);
+    expect(find.text('Viajantes'), findsOneWidget);
+    expect(find.text('2 adultos'), findsOneWidget);
+    expect(find.text('Estilo de viagem'), findsOneWidget);
+    expect(find.text('Premium'), findsOneWidget);
+    expect(find.text('Principais interesses'), findsOneWidget);
+    expect(find.text('🍲'), findsOneWidget);
+    expect(find.text('Gastronomia'), findsOneWidget);
+  });
+
+  testWidgets('confirm dialog Continuar/Cancelar before finalize', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TwoGoTheme.light,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: TextButton(
+                onPressed: () => PlanningConfirmationSheet.show(context),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Deseja continuar?'), findsOneWidget);
+    expect(
+      find.text('Após essa etapa, não será possível alterar as informações.'),
+      findsOneWidget,
+    );
+    expect(find.text('Continuar'), findsOneWidget);
+    expect(find.text('Cancelar'), findsOneWidget);
+  });
+
   testWidgets('activity hours shows start/end chips', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
