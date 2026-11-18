@@ -27,6 +27,7 @@ workspace:
   - packages/identity/profile
   - packages/identity/session
   - packages/travel/documents
+  - packages/travel/home
   - packages/travel/itinerary
   - packages/travel/maps
   - packages/travel/places

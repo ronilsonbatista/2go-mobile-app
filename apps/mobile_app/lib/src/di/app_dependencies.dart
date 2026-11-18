@@ -2,6 +2,7 @@ import 'package:app_roteiros_api/app_roteiros_api.dart';
 import 'package:dio/dio.dart';
 import 'package:twogo_authentication/twogo_authentication.dart';
 import 'package:twogo_config/twogo_config.dart';
+import 'package:twogo_home/twogo_home.dart';
 import 'package:twogo_networking/twogo_networking.dart';
 import 'package:twogo_payments/twogo_payments.dart';
 import 'package:twogo_places/places.dart';
@@ -34,6 +35,7 @@ class AppDependencies {
     required this.getPlanningGenerationStatusUseCase,
     required this.getPlanningPreviewUseCase,
     required this.claimPlanningJourneyUseCase,
+    required this.homeContentRepository,
   });
 
   final String environment;
@@ -49,6 +51,7 @@ class AppDependencies {
   final TripsRepository tripsRepository;
   final SearchPlacesUseCase searchPlacesUseCase;
   final CardTokenizer cardTokenizer;
+  final HomeContentRepository homeContentRepository;
 
   final CreatePlanningJourneyUseCase createPlanningJourneyUseCase;
   final RestorePlanningJourneyUseCase restorePlanningJourneyUseCase;
@@ -121,6 +124,13 @@ class AppDependencies {
       remoteDataSource: ApiTripsDataSource(dio),
     );
 
+    // Local catalog until Core home destinations + profile photo APIs land.
+    // demoPhotoAssetPath enables Home-10 (photo) layout; remove when Core
+    // returns photoUrl. Set forceInitialsOnly to preview Home-11.
+    final homeContentRepository = LocalHomeContentRepository(
+      demoPhotoAssetPath: 'assets/destinations/demo-avatar.jpg',
+    );
+
     return AppDependencies._(
       environment: environment,
       apiConfig: apiConfig,
@@ -135,6 +145,7 @@ class AppDependencies {
       tripsRepository: tripsRepository,
       searchPlacesUseCase: searchPlacesUseCase,
       cardTokenizer: NativeCardTokenizer(),
+      homeContentRepository: homeContentRepository,
       createPlanningJourneyUseCase: CreatePlanningJourneyUseCase(
         repository: planningRepository,
         credentialStorage: credentialStorage,
@@ -163,6 +174,13 @@ class AppDependencies {
       claimPlanningJourneyUseCase: ClaimPlanningJourneyUseCase(
         planningRepository,
       ),
+    );
+  }
+
+  HomeCubit createHomeCubit({bool autoAdvance = true}) {
+    return HomeCubit(
+      repository: homeContentRepository,
+      autoAdvance: autoAdvance,
     );
   }
 
