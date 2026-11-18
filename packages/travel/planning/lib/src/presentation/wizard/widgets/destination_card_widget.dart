@@ -4,7 +4,6 @@ import 'package:twogo_places/places.dart';
 import '../../../domain/models/planning_destination.dart';
 import '../form_course_tokens.dart';
 import 'destination_search_sheet.dart';
-import 'form_asset_placeholder.dart';
 
 class DestinationCardWidget extends StatelessWidget {
   final int index;
@@ -201,11 +200,7 @@ class DestinationCardWidget extends StatelessWidget {
               await _selectArrivalDate(context);
               if (context.mounted) await _selectArrivalTime(context);
             },
-            leadingIcon: const FormAssetPlaceholder(
-              assetName: 'calendar-chegada',
-              size: 18,
-              fallbackIcon: TwoGoIcons.calendar,
-            ),
+            leadingIcon: const Text('🗓️', style: TextStyle(fontSize: 18)),
           ),
           const Divider(height: 1, color: FormCourseTokens.summaryCard),
           _DestinationRow(
@@ -221,11 +216,7 @@ class DestinationCardWidget extends StatelessWidget {
               await _selectDepartureDate(context);
               if (context.mounted) await _selectDepartureTime(context);
             },
-            leadingIcon: const FormAssetPlaceholder(
-              assetName: 'clock-horario',
-              size: 18,
-              fallbackIcon: TwoGoIcons.clock,
-            ),
+            leadingIcon: const Text('⏰', style: TextStyle(fontSize: 18)),
           ),
         ],
       ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 import '../../../domain/models/planning_activity_window.dart';
 import '../form_course_tokens.dart';
-import 'form_asset_placeholder.dart';
 
 class ActivityHoursStepContent extends StatelessWidget {
   final PlanningActivityWindow activityWindow;
@@ -36,8 +35,7 @@ class ActivityHoursStepContent extends StatelessWidget {
       child: Column(
         children: [
           _HoursCard(
-            assetName: 'activity-sun-cloud',
-            fallbackIcon: Icons.wb_sunny_outlined,
+            emoji: '🌤️',
             title: 'Início das atividades',
             options: _startOptions,
             selected: activityWindow.startTime,
@@ -46,8 +44,7 @@ class ActivityHoursStepContent extends StatelessWidget {
           ),
           const SizedBox(height: TwoGoSpacing.md),
           _HoursCard(
-            assetName: 'activity-moon',
-            fallbackIcon: Icons.nightlight_round,
+            emoji: '🌙',
             title: 'Fim das atividades',
             options: _endOptions,
             selected: activityWindow.endTime,
@@ -63,16 +60,14 @@ class ActivityHoursStepContent extends StatelessWidget {
 
 class _HoursCard extends StatelessWidget {
   const _HoursCard({
-    required this.assetName,
-    required this.fallbackIcon,
+    required this.emoji,
     required this.title,
     required this.options,
     required this.selected,
     required this.onSelected,
   });
 
-  final String assetName;
-  final IconData fallbackIcon;
+  final String emoji;
   final String title;
   final List<String> options;
   final String selected;
@@ -92,11 +87,7 @@ class _HoursCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              FormAssetPlaceholder(
-                assetName: assetName,
-                size: 22,
-                fallbackIcon: fallbackIcon,
-              ),
+              Text(emoji, style: const TextStyle(fontSize: 22)),
               const SizedBox(width: TwoGoSpacing.sm),
               Text(
                 title,

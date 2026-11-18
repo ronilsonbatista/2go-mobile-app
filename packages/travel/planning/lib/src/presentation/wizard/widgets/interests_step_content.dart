@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 import '../../../domain/models/planning_interest.dart';
 import '../form_course_tokens.dart';
-import 'form_asset_placeholder.dart';
 
 class InterestsStepContent extends StatelessWidget {
   final List<PlanningInterest> selectedInterests;
@@ -14,49 +13,27 @@ class InterestsStepContent extends StatelessWidget {
     required this.onToggleInterest,
   });
 
-  String _assetName(PlanningInterest interest) {
+  /// Course PDF uses system Unicode emoji (no custom assets).
+  String _emoji(PlanningInterest interest) {
     switch (interest) {
       case PlanningInterest.art:
-        return 'interest-arte';
+        return '🖼️';
       case PlanningInterest.gastronomy:
-        return 'interest-gastronomia';
+        return '🍲';
       case PlanningInterest.sports:
-        return 'interest-esporte';
+        return '⚽';
       case PlanningInterest.architecture:
-        return 'interest-arquitetura';
+        return '🏯';
       case PlanningInterest.outdoor:
-        return 'interest-outdoor';
+        return '🚴';
       case PlanningInterest.music:
-        return 'interest-musica';
+        return '🎸';
       case PlanningInterest.geekCulture:
-        return 'interest-geek';
+        return '👾';
       case PlanningInterest.localHistory:
-        return 'interest-historia';
+        return '🏺';
       case PlanningInterest.nature:
-        return 'interest-natureza';
-    }
-  }
-
-  IconData _fallbackIcon(PlanningInterest interest) {
-    switch (interest) {
-      case PlanningInterest.art:
-        return Icons.palette_outlined;
-      case PlanningInterest.gastronomy:
-        return Icons.restaurant_outlined;
-      case PlanningInterest.sports:
-        return Icons.sports_soccer_outlined;
-      case PlanningInterest.architecture:
-        return Icons.account_balance_outlined;
-      case PlanningInterest.outdoor:
-        return Icons.directions_bike_outlined;
-      case PlanningInterest.music:
-        return Icons.music_note_outlined;
-      case PlanningInterest.geekCulture:
-        return Icons.sports_esports_outlined;
-      case PlanningInterest.localHistory:
-        return Icons.history_edu_outlined;
-      case PlanningInterest.nature:
-        return Icons.park_outlined;
+        return '🌳';
     }
   }
 
@@ -69,8 +46,7 @@ class InterestsStepContent extends StatelessWidget {
           for (final interest in PlanningInterest.values) ...[
             _InterestRow(
               label: interest.label,
-              assetName: _assetName(interest),
-              fallbackIcon: _fallbackIcon(interest),
+              emoji: _emoji(interest),
               selected: selectedInterests.contains(interest),
               onTap: () => onToggleInterest(interest),
             ),
@@ -86,15 +62,13 @@ class InterestsStepContent extends StatelessWidget {
 class _InterestRow extends StatelessWidget {
   const _InterestRow({
     required this.label,
-    required this.assetName,
-    required this.fallbackIcon,
+    required this.emoji,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
-  final String assetName;
-  final IconData fallbackIcon;
+  final String emoji;
   final bool selected;
   final VoidCallback onTap;
 
@@ -123,11 +97,7 @@ class _InterestRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              FormAssetPlaceholder(
-                assetName: assetName,
-                size: 28,
-                fallbackIcon: fallbackIcon,
-              ),
+              Text(emoji, style: const TextStyle(fontSize: 28)),
               const SizedBox(width: TwoGoSpacing.md),
               Expanded(
                 child: Text(

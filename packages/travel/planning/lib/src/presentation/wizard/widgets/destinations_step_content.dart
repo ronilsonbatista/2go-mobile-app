@@ -4,7 +4,6 @@ import 'package:twogo_places/places.dart';
 import '../../../domain/models/planning_destination.dart';
 import '../form_course_tokens.dart';
 import 'destination_card_widget.dart';
-import 'form_asset_placeholder.dart';
 
 class DestinationsStepContent extends StatelessWidget {
   final List<PlanningDestination> destinations;
@@ -52,11 +51,7 @@ class DestinationsStepContent extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const FormAssetPlaceholder(
-                    assetName: 'globe-add-destination',
-                    size: 20,
-                    fallbackIcon: Icons.public,
-                  ),
+                  const Text('🌎', style: TextStyle(fontSize: 20)),
                   const SizedBox(width: TwoGoSpacing.sm),
                   Text(
                     'Deseja adicionar mais um destino?',

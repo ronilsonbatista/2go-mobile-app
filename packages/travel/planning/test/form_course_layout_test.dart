@@ -29,7 +29,7 @@ void main() {
     expect(find.text('Adultos'), findsOneWidget);
   });
 
-  testWidgets('Interests step lists course rows with ASSET placeholders', (
+  testWidgets('Interests step lists course rows with system emoji', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -45,7 +45,9 @@ void main() {
     );
 
     expect(find.text('Gastronomia'), findsOneWidget);
+    expect(find.text('🍲'), findsOneWidget);
     expect(find.text('Cultura Geek'), findsOneWidget);
+    expect(find.text('👾'), findsOneWidget);
     expect(find.text('Atividades ao ar livre'), findsOneWidget);
   });
 
