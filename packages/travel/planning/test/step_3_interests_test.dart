@@ -10,7 +10,7 @@ void main() {
       expect(PlanningInterest.architecture.label, 'Arquitetura');
       expect(PlanningInterest.outdoor.label, 'Atividades ao ar livre');
       expect(PlanningInterest.music.label, 'Música');
-      expect(PlanningInterest.geekCulture.label, 'Cultura geek');
+      expect(PlanningInterest.geekCulture.label, 'Cultura Geek');
       expect(PlanningInterest.localHistory.label, 'História local');
       expect(PlanningInterest.nature.label, 'Natureza');
     });

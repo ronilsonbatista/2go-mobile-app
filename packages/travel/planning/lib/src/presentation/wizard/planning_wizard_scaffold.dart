@@ -33,8 +33,12 @@ class PlanningWizardScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TwoGoKeyboardAwareScaffold(
+    // Plain Scaffold: course layout needs Expanded + pinned footer.
+    // TwoGoKeyboardAwareScaffold wraps body in IntrinsicHeight/scroll and
+    // cannot host Expanded (breaks goldens / course smoke).
+    return Scaffold(
       backgroundColor: FormCourseTokens.background,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: TwoGoCenteredContent(
           maxWidth: 600,
@@ -56,6 +60,8 @@ class PlanningWizardScaffold extends StatelessWidget {
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   child: body,
                 ),
               ),

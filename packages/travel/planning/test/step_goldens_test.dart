@@ -124,8 +124,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Para onde você quer viajar?'), findsWidgets);
-      expect(find.text('Destino 1'), findsOneWidget);
-      expect(find.text('Adicionar outro destino'), findsOneWidget);
+      expect(find.text('Onde'), findsOneWidget);
+      expect(find.text('Deseja adicionar mais um destino?'), findsOneWidget);
     });
 
     testWidgets(
@@ -159,7 +159,10 @@ void main() {
       await tester.pumpWidget(buildWizardWidget(bloc));
       await tester.pumpAndSettle();
 
-      expect(find.text('O que você mais gosta de fazer?'), findsWidgets);
+      expect(
+        find.text('Selecione os interesses que combinam com você.'),
+        findsWidgets,
+      );
       expect(find.text('Arte'), findsOneWidget);
       expect(find.text('Gastronomia'), findsOneWidget);
     });
@@ -181,7 +184,8 @@ void main() {
         expect(find.byType(InterestsStepContent), findsOneWidget);
         expect(find.text('Arte'), findsOneWidget);
         expect(find.text('Gastronomia'), findsOneWidget);
-        expect(find.byIcon(Icons.check_circle), findsNWidgets(2));
+        // Course checkbox uses Icons.check inside a custom box.
+        expect(find.byIcon(Icons.check), findsNWidgets(2));
       },
     );
 
@@ -202,7 +206,7 @@ void main() {
       await tester.pumpWidget(buildWizardWidget(bloc));
       await tester.pumpAndSettle();
 
-      expect(find.text('Qual o seu ritmo diário?'), findsWidgets);
+      expect(find.text('Defina o horário das atividades'), findsWidgets);
       expect(find.text('09:00'), findsOneWidget);
       expect(find.text('18:30'), findsOneWidget);
     });
@@ -218,9 +222,10 @@ void main() {
         await tester.pumpWidget(buildWizardWidget(bloc));
         await tester.pumpAndSettle();
 
-        expect(find.text('Qual o perfil financeiro da viagem?'), findsWidgets);
+        expect(find.text('Qual o estilo da viagem?'), findsWidgets);
         expect(find.text('Econômica'), findsOneWidget);
-        expect(find.text('\$\$\$'), findsOneWidget);
+        expect(find.text('Premium'), findsOneWidget);
+        expect(find.byType(FormEstiloDollarGlyph), findsWidgets);
       },
     );
 
@@ -256,8 +261,12 @@ void main() {
         await tester.pumpWidget(buildWizardWidget(bloc));
         await tester.pumpAndSettle();
 
-        expect(find.text('Revise seu roteiro'), findsWidgets);
+        expect(
+          find.text('Tudo pronto para criarmos seu roteiro?'),
+          findsWidgets,
+        );
         expect(find.text('Paris, França'), findsOneWidget);
+        expect(find.text('💡 Toque para editar'), findsOneWidget);
       },
     );
 

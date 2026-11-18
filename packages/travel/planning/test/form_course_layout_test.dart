@@ -36,9 +36,12 @@ void main() {
       MaterialApp(
         theme: TwoGoTheme.light,
         home: Scaffold(
-          body: InterestsStepContent(
-            selectedInterests: const [PlanningInterest.gastronomy],
-            onToggleInterest: (_) {},
+          // Harness: step content is scrollable inside the wizard scaffold.
+          body: SingleChildScrollView(
+            child: InterestsStepContent(
+              selectedInterests: const [PlanningInterest.gastronomy],
+              onToggleInterest: (_) {},
+            ),
           ),
         ),
       ),
@@ -58,9 +61,11 @@ void main() {
       MaterialApp(
         theme: TwoGoTheme.light,
         home: Scaffold(
-          body: BudgetStepContent(
-            selectedBudgetLevel: 'MEDIUM',
-            onSelectBudgetLevel: (_) {},
+          body: SingleChildScrollView(
+            child: BudgetStepContent(
+              selectedBudgetLevel: 'MEDIUM',
+              onSelectBudgetLevel: (_) {},
+            ),
           ),
         ),
       ),
@@ -70,7 +75,8 @@ void main() {
     expect(find.text('Confortável'), findsOneWidget);
     expect(find.text('Premium'), findsOneWidget);
     expect(find.text('Luxuosa'), findsOneWidget);
-    expect(find.text('\$\$'), findsWidgets);
+    // Course Estilo uses Image.asset dollar glyphs, not text "$$".
+    expect(find.byType(FormEstiloDollarGlyph), findsNWidgets(4));
   });
 
   testWidgets('wizard scaffold has no bottom navigation bar', (tester) async {

@@ -168,11 +168,16 @@ class DestinationCardWidget extends StatelessWidget {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  hasName ? destination.name : 'Selecionar',
-                  style: TwoGoTypography.titleMedium.copyWith(
-                    color: FormCourseTokens.black,
-                    fontWeight: FontWeight.w600,
+                Flexible(
+                  child: Text(
+                    hasName ? destination.name : 'Selecionar',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: TwoGoTypography.titleMedium.copyWith(
+                      color: FormCourseTokens.black,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const SizedBox(width: TwoGoSpacing.sm),
@@ -194,6 +199,9 @@ class DestinationCardWidget extends StatelessWidget {
             label: 'Chegada',
             trailing: Text(
               arrivalLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
               style: TwoGoTypography.bodyMedium.copyWith(
                 color: FormCourseTokens.black,
                 fontWeight: FontWeight.w500,
@@ -210,6 +218,9 @@ class DestinationCardWidget extends StatelessWidget {
             label: 'Partida',
             trailing: Text(
               departureLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
               style: TwoGoTypography.bodyMedium.copyWith(
                 color: FormCourseTokens.black,
                 fontWeight: FontWeight.w500,

@@ -89,11 +89,15 @@ class _HoursCard extends StatelessWidget {
             children: [
               Text(emoji, style: const TextStyle(fontSize: 22)),
               const SizedBox(width: TwoGoSpacing.sm),
-              Text(
-                title,
-                style: TwoGoTypography.titleMedium.copyWith(
-                  color: FormCourseTokens.black,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TwoGoTypography.titleMedium.copyWith(
+                    color: FormCourseTokens.black,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

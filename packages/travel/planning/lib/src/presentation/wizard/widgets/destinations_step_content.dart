@@ -53,11 +53,16 @@ class DestinationsStepContent extends StatelessWidget {
                 children: [
                   const Text('🌎', style: TextStyle(fontSize: 20)),
                   const SizedBox(width: TwoGoSpacing.sm),
-                  Text(
-                    'Deseja adicionar mais um destino?',
-                    style: TwoGoTypography.bodyMedium.copyWith(
-                      color: FormCourseTokens.ink,
-                      fontWeight: FontWeight.w500,
+                  Flexible(
+                    child: Text(
+                      'Deseja adicionar mais um destino?',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TwoGoTypography.bodyMedium.copyWith(
+                        color: FormCourseTokens.ink,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
