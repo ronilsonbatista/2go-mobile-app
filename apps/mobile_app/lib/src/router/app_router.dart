@@ -261,7 +261,9 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: '/app/home',
-                  builder: (context, state) => const HomePage(),
+                  builder: (context, state) => HomePage(
+                    homeCubit: dependencies.createHomeCubit(),
+                  ),
                 ),
               ],
             ),
