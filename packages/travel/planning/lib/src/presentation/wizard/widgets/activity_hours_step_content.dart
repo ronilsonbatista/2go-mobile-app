@@ -13,19 +13,30 @@ class ActivityHoursStepContent extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const _startOptions = [
+  /// Início pills: 08:00 → 12:00 (30 min).
+  static const startOptions = [
     '08:00',
     '08:30',
     '09:00',
     '09:30',
     '10:00',
+    '10:30',
+    '11:00',
+    '11:30',
+    '12:00',
   ];
-  static const _endOptions = [
+
+  /// Fim pills: 18:00 → 22:00 (30 min).
+  static const endOptions = [
     '18:00',
     '18:30',
     '19:00',
     '19:30',
     '20:00',
+    '20:30',
+    '21:00',
+    '21:30',
+    '22:00',
   ];
 
   @override
@@ -39,7 +50,7 @@ class ActivityHoursStepContent extends StatelessWidget {
           _HoursCard(
             emoji: '🌤️',
             title: 'Início das atividades',
-            options: _startOptions,
+            options: startOptions,
             selected: activityWindow.startTime,
             onSelected: (value) =>
                 onChanged(activityWindow.copyWith(startTime: value)),
@@ -48,7 +59,7 @@ class ActivityHoursStepContent extends StatelessWidget {
           _HoursCard(
             emoji: '🌙',
             title: 'Fim das atividades',
-            options: _endOptions,
+            options: endOptions,
             selected: activityWindow.endTime,
             onSelected: (value) =>
                 onChanged(activityWindow.copyWith(endTime: value)),

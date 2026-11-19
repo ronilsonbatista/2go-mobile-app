@@ -198,6 +198,32 @@ void main() {
       },
     );
 
+    test('400 payload failure stops polling with friendly failed state', () async {
+      mockStartUseCase.response = Result.failure(
+        const InvalidPlanningDataFailure(
+          'Não foi possível gerar o roteiro. Revise os dados e tente novamente.',
+        ),
+      );
+
+      final bloc = PlanningGenerationBloc(
+        startGenerationUseCase: mockStartUseCase,
+        getStatusUseCase: mockStatusUseCase,
+      );
+
+      bloc.add(const StartGenerationEvent('journey-123'));
+      await bloc.stream.firstWhere(
+        (s) => s.status == PlanningGenerationPageStatus.failed,
+      );
+
+      expect(mockStartUseCase.calls, 1);
+      expect(bloc.isPolling, isFalse);
+      expect(
+        bloc.state.errorMessage,
+        contains('Não foi possível gerar o roteiro'),
+      );
+      await bloc.close();
+    });
+
     test('network error on GET does not post generate again', () async {
       mockStartUseCase.response = Result.success(
         const PlanningGenerationStatus(

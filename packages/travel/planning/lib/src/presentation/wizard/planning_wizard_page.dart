@@ -10,6 +10,7 @@ import 'widgets/activity_hours_step_content.dart';
 import 'widgets/budget_step_content.dart';
 import 'widgets/destinations_step_content.dart';
 import 'widgets/interests_step_content.dart';
+import 'form_course_tokens.dart';
 import 'widgets/planning_confirmation_sheet.dart';
 import 'widgets/review_step_content.dart';
 import 'widgets/travelers_step_content.dart';
@@ -75,6 +76,18 @@ class _PlanningWizardView extends StatelessWidget {
     }
   }
 
+  void _showFriendlyToast(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: FormCourseTokens.ink,
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PlanningWizardBloc, PlanningWizardState>(
@@ -95,24 +108,14 @@ class _PlanningWizardView extends StatelessWidget {
               onReadyToGenerate!(journeyId);
             }
           } else if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: TwoGoColors.feedbackError,
-              ),
-            );
+            _showFriendlyToast(context, state.errorMessage!);
           }
         }
 
         if (state.status == PlanningWizardStatus.failure &&
             state.errorMessage != null) {
-          // Show API error toast if POST fails — never leave spinner stuck.
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage!),
-              backgroundColor: TwoGoColors.feedbackError,
-            ),
-          );
+          // Friendly toast on save/finalize/generate failure — never red Dio dump.
+          _showFriendlyToast(context, state.errorMessage!);
         }
       },
       builder: (context, state) {

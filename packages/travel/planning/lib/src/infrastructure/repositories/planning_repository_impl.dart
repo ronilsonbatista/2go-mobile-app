@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:app_roteiros_api/app_roteiros_api.dart';
 import 'package:dio/dio.dart';
 import 'package:twogo_core/twogo_core.dart';
@@ -198,13 +200,20 @@ class PlanningRepositoryImpl implements PlanningRepository {
     }
   }
 
+  static const _friendlyClientError =
+      'Não foi possível gerar o roteiro. Revise os dados e tente novamente.';
+  static const _friendlyNetworkError =
+      'Não foi possível concluir. Verifique a conexão e tente novamente.';
+
   AppFailure _mapError(Object error) {
     if (error is DioException) {
+      _logDioFailure(error);
+      final status = error.response?.statusCode;
       final data = error.response?.data;
       if (data is Map) {
         final code = _asPlainString(data['code']);
         final message =
-            _asPlainString(data['message']) ?? 'Erro na requisição';
+            _asPlainString(data['message']) ?? _friendlyClientError;
 
         switch (code) {
           case 'PLANNING_JOURNEY_NOT_FOUND':
@@ -221,14 +230,41 @@ class PlanningRepositoryImpl implements PlanningRepository {
           case 'PLANNING_INVALID_DESTINATIONS':
           case 'PLANNING_INVALID_TRAVELERS':
           case 'PLANNING_INVALID_ACTIVITY_WINDOW':
+          case 'PLANNING_INVALID_DATA':
+          case 'PLANNING_INVALID_INTERESTS':
+          case 'PLANNING_INVALID_BUDGET':
             return InvalidPlanningDataFailure(message);
         }
       }
-      return UnknownPlanningFailure(
-        error.message ?? 'Erro de comunicação com o servidor',
-      );
+
+      // Never surface Dio's validateStatus dump to the UI.
+      if (status == 400 || status == 422) {
+        return const InvalidPlanningDataFailure(_friendlyClientError);
+      }
+      if (status == 401) {
+        return const GuestJourneyExpiredFailure();
+      }
+      if (status == 404) {
+        return const GuestJourneyNotFoundFailure();
+      }
+      return const UnknownPlanningFailure(_friendlyNetworkError);
     }
-    return UnknownPlanningFailure(error.toString());
+    developer.log(
+      'planning non-Dio failure: $error',
+      name: 'PlanningRepository',
+    );
+    return const UnknownPlanningFailure(_friendlyNetworkError);
+  }
+
+  static void _logDioFailure(DioException error) {
+    final req = error.requestOptions;
+    developer.log(
+      'planning API ${req.method} ${req.uri} → ${error.response?.statusCode}\n'
+      'request body: ${req.data}\n'
+      'response body: ${error.response?.data}',
+      name: 'PlanningRepository',
+      error: error,
+    );
   }
 
   /// Core sometimes returns `message` as a List of validation strings.
