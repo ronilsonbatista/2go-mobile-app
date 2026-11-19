@@ -42,13 +42,22 @@ class AppRouter {
         location.startsWith('/debug/');
   }
 
+  /// Optional debug override, e.g. `--dart-define=TWIGO_DEBUG_INITIAL_ROUTE=/debug/gerando`.
+  static const String debugInitialRoute = String.fromEnvironment(
+    'TWIGO_DEBUG_INITIAL_ROUTE',
+  );
+
   static GoRouter createRouter({required AppDependencies dependencies}) {
     final sessionCubit = dependencies.sessionCubit;
     final intentStorage = dependencies.intentStorage;
 
+    final initial = (kDebugMode && debugInitialRoute.isNotEmpty)
+        ? debugInitialRoute
+        : _getInitialLocation(sessionCubit.state.status);
+
     return GoRouter(
       navigatorKey: rootNavigatorKey,
-      initialLocation: _getInitialLocation(sessionCubit.state.status),
+      initialLocation: initial,
       refreshListenable: _GoRouterRefreshStream(sessionCubit.stream),
       redirect: (context, state) async {
         final sessionStatus = sessionCubit.state.status;
@@ -129,6 +138,41 @@ class AppRouter {
             path: '/debug/splash',
             parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) => const LaunchPage(),
+          ),
+        // Debug-only: Gerando loading UI for visual QA (no network).
+        if (kDebugMode)
+          GoRoute(
+            path: '/debug/gerando',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) {
+              return Scaffold(
+                backgroundColor: Colors.white,
+                body: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 32,
+                    ),
+                    child: Column(
+                      children: [
+                        const Spacer(flex: 2),
+                        const GerandoRoteiroHero(size: 240),
+                        const SizedBox(height: 28),
+                        Text(
+                          'Gerando seu roteiro...',
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const Spacer(flex: 3),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         GoRoute(
           path: '/auth',
