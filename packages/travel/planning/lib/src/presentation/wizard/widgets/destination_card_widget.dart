@@ -182,7 +182,11 @@ class DestinationCardWidget extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: TwoGoSpacing.sm),
-                PlaceThumb(iconUrl: destination.coverImage, size: 36),
+                PlaceThumb(
+                  iconUrl: destination.coverImage,
+                  placeName: destination.name,
+                  size: 36,
+                ),
                 if (canRemove) ...[
                   const SizedBox(width: TwoGoSpacing.xs),
                   TwoGoIconButton(

@@ -2,21 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 
 import '../form_course_tokens.dart';
+import 'destination_thumb_catalog.dart';
 
 /// Small locality thumb for Places autocomplete rows and selected Onde chips.
 ///
-/// Core `iconUrl` is often a static SVG under `/static/place-icons/*.svg`
-/// (Flutter [Image.network] cannot decode SVG). Raster CDN URLs load as photos;
-/// SVG place-icons map to a tinted location pin matching Core colors.
+/// Priority:
+/// 1. Raster `http(s)` [iconUrl] / cover (Core CDN photo)
+/// 2. Curated monument stub by [placeName] (Roma→Colosseum, Paris→tower, …)
+/// 3. Core SVG place-icons → tinted pin (last resort, never tofu [?])
 class PlaceThumb extends StatelessWidget {
   const PlaceThumb({
     this.iconUrl,
+    this.placeName,
     this.size = 40,
     this.borderRadius,
     super.key,
   });
 
   final String? iconUrl;
+  final String? placeName;
   final double size;
   final double? borderRadius;
 
@@ -35,34 +39,45 @@ class PlaceThumb extends StatelessWidget {
 
   Widget _buildContent() {
     final raw = iconUrl?.trim();
-    if (raw == null || raw.isEmpty) {
-      return const _PinFallback();
+    if (raw != null && raw.isNotEmpty) {
+      final url = _normalizeUrl(raw);
+      final svgKind = _svgPlaceKind(url);
+      if (svgKind == null &&
+          (url.startsWith('http://') || url.startsWith('https://'))) {
+        return Image.network(
+          url,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) return child;
+            return const ColoredBox(
+              color: FormCourseTokens.summaryCard,
+              child: Center(
+                child: TwoGoLoadingIndicator(size: 16, strokeWidth: 2),
+              ),
+            );
+          },
+          errorBuilder: (_, __, ___) => _curatedOrPin(),
+        );
+      }
+      // SVG / place-icons — prefer curated monument photo over generic pin.
+      return _curatedOrPin(svgKind: svgKind);
     }
 
-    final url = _normalizeUrl(raw);
-    final svgKind = _svgPlaceKind(url);
-    if (svgKind != null) {
-      return _SvgPlacePin(kind: svgKind);
-    }
+    return _curatedOrPin();
+  }
 
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return Image.network(
-        url,
+  Widget _curatedOrPin({_SvgPlaceKind? svgKind}) {
+    final asset = DestinationThumbCatalog.assetForName(placeName);
+    if (asset != null) {
+      return Image.asset(
+        asset,
+        package: DestinationThumbCatalog.package,
         fit: BoxFit.cover,
-        // Spinner (not Material tofu) while the photo loads.
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return const ColoredBox(
-            color: FormCourseTokens.summaryCard,
-            child: Center(
-              child: TwoGoLoadingIndicator(size: 16, strokeWidth: 2),
-            ),
-          );
-        },
-        errorBuilder: (_, __, ___) => const _PinFallback(),
+        errorBuilder: (_, __, ___) =>
+            svgKind != null ? _SvgPlacePin(kind: svgKind) : const _PinFallback(),
       );
     }
-
+    if (svgKind != null) return _SvgPlacePin(kind: svgKind);
     return const _PinFallback();
   }
 
@@ -81,7 +96,6 @@ class PlaceThumb extends StatelessWidget {
         lower.contains('/static/place-icons/');
     if (!isSvg && !isPlaceIcon) return null;
 
-    // Match basename only — avoid matching the "place" in "place-icons".
     final file = lower.split('/').last.split('?').first;
     if (file.startsWith('country')) return _SvgPlaceKind.country;
     if (file.startsWith('region')) return _SvgPlaceKind.region;

@@ -26,13 +26,15 @@ abstract class TwoGoIcons {
   static const IconData visibility = Icons.visibility_outlined;
   static const IconData visibilityOff = Icons.visibility_off_outlined;
 
-  // Navigation / Shell primitives (Material Icons — requires app
-  // `uses-material-design: true` or glyphs render as tofu / [?]).
-  static const IconData home = Icons.home_rounded;
+  // Bottom nav (design asset d3ddcc41): filled house when selected;
+  // outlined suitcase / bell / person when idle. Requires app
+  // `uses-material-design: true` or glyphs render as tofu / [?].
+  static const IconData home = Icons.home;
   static const IconData homeOutlined = Icons.home_outlined;
-  static const IconData travel = Icons.luggage_rounded;
-  static const IconData travelOutlined = Icons.luggage_outlined;
-  static const IconData notifications = Icons.notifications_rounded;
+  // Suitcase (Material card_travel) — design d3ddcc41 Viagens.
+  static const IconData travel = Icons.card_travel;
+  static const IconData travelOutlined = Icons.card_travel_outlined;
+  static const IconData notifications = Icons.notifications;
   static const IconData notificationsOutlined = Icons.notifications_outlined;
   static const IconData profile = Icons.person;
   static const IconData profileOutlined = Icons.person_outline;

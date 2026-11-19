@@ -16,7 +16,9 @@ class TravelersStepContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TwoGoSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: FormCourseTokens.pageGutter,
+      ),
       child: Column(
         children: [
           _TravelerRow(
@@ -26,7 +28,8 @@ class TravelersStepContent extends StatelessWidget {
             min: 1,
             onChanged: (val) => onChanged(travelers.copyWith(adults: val)),
           ),
-          const Divider(color: FormCourseTokens.summaryCard, height: 32),
+          // Course Age PDF: generous row separation (~24–28).
+          const Divider(color: FormCourseTokens.summaryCard, height: 28),
           _TravelerRow(
             label: 'Crianças',
             subtitle: 'Menos de 12 anos',
@@ -34,7 +37,7 @@ class TravelersStepContent extends StatelessWidget {
             min: 0,
             onChanged: (val) => onChanged(travelers.copyWith(children: val)),
           ),
-          const Divider(color: FormCourseTokens.summaryCard, height: 32),
+          const Divider(color: FormCourseTokens.summaryCard, height: 28),
           _TravelerRow(
             label: 'Idosos',
             subtitle: 'Mais de 65 anos',

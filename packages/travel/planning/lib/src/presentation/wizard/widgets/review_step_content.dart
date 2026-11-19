@@ -321,6 +321,7 @@ class _DestinationSummary extends StatelessWidget {
             // Never show broken Material tofu as the Destino thumb.
             PlaceThumb(
               iconUrl: destination.coverImage,
+              placeName: destination.name,
               size: FormCourseTokens.destinoThumbSize,
               borderRadius: FormCourseTokens.thumbRadius,
             ),

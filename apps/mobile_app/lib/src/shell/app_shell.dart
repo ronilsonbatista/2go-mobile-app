@@ -3,6 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:twogo_design_system/design_system.dart';
 
 /// Application Shell composing bottom navigation and nested route stacks.
+///
+/// Bottom nav icons match design asset d3ddcc41:
+/// selected Início = filled house; idle Viagens/Notificações/Perfil =
+/// outlined suitcase / bell / person on a white bar with a thin top hairline.
 class AppShell extends StatelessWidget {
   const AppShell({required this.navigationShell, super.key});
 
@@ -24,26 +28,28 @@ class AppShell extends StatelessWidget {
         onSelected: _onTabSelected,
         items: const [
           TwoGoBottomNavigationItem(
-            icon: Icon(TwoGoIcons.homeOutlined),
-            selectedIcon: Icon(TwoGoIcons.home),
+            // Filled house when selected (design d3ddcc41).
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
             label: 'Início',
             semanticLabel: 'Aba Início',
           ),
           TwoGoBottomNavigationItem(
-            icon: Icon(TwoGoIcons.travelOutlined),
-            selectedIcon: Icon(TwoGoIcons.travel),
+            // Outlined suitcase (Material card_travel).
+            icon: Icon(Icons.card_travel_outlined),
+            selectedIcon: Icon(Icons.card_travel),
             label: 'Viagens',
             semanticLabel: 'Aba Viagens',
           ),
           TwoGoBottomNavigationItem(
-            icon: Icon(TwoGoIcons.notificationsOutlined),
-            selectedIcon: Icon(TwoGoIcons.notifications),
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
             label: 'Notificações',
             semanticLabel: 'Aba Notificações',
           ),
           TwoGoBottomNavigationItem(
-            icon: Icon(TwoGoIcons.profileOutlined),
-            selectedIcon: Icon(TwoGoIcons.profile),
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
             label: 'Perfil',
             semanticLabel: 'Aba Perfil',
           ),

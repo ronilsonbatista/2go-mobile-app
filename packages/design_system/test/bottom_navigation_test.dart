@@ -55,11 +55,18 @@ void main() {
       expect(find.text('Notificações'), findsOneWidget);
       expect(find.text('Perfil'), findsOneWidget);
       expect(find.text('2'), findsOneWidget);
+      // Design d3ddcc41: filled house selected; outlined suitcase/bell/person idle.
+      expect(find.byIcon(TwoGoIcons.home), findsOneWidget);
+      expect(find.byIcon(TwoGoIcons.travelOutlined), findsOneWidget);
+      expect(find.byIcon(TwoGoIcons.notificationsOutlined), findsOneWidget);
+      expect(find.byIcon(TwoGoIcons.profileOutlined), findsOneWidget);
 
       await tester.tap(find.text('Viagens'));
       await tester.pump();
 
       expect(selectedIndex, equals(1));
+      expect(find.byIcon(TwoGoIcons.travel), findsOneWidget);
+      expect(find.byIcon(TwoGoIcons.homeOutlined), findsOneWidget);
     });
 
     testWidgets('Golden Test - TwoGoBottomNavigation', (tester) async {

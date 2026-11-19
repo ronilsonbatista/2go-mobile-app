@@ -42,14 +42,16 @@ class TwoGoBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = selectedItemColor ?? TwoGoColors.contentPrimary;
+    // Design d3ddcc41: white bar, thin hairline top, dark selected / muted idle.
+    final activeColor = selectedItemColor ?? TwoGoColors.neutral900;
     final inactiveColor = unselectedItemColor ?? TwoGoColors.contentSecondary;
+    final hairline = 1 / MediaQuery.devicePixelRatioOf(context);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: TwoGoColors.surfacePrimary,
+      decoration: BoxDecoration(
+        color: backgroundColor ?? TwoGoColors.neutral0,
         border: Border(
-          top: BorderSide(color: TwoGoColors.borderDefault, width: 1),
+          top: BorderSide(color: TwoGoColors.borderDefault, width: hairline),
         ),
       ),
       child: SafeArea(
@@ -107,7 +109,7 @@ class TwoGoBottomNavigation extends StatelessWidget {
                             style: TwoGoTypography.labelSmall.copyWith(
                               color: isSelected ? activeColor : inactiveColor,
                               fontWeight: isSelected
-                                  ? FontWeight.bold
+                                  ? FontWeight.w600
                                   : FontWeight.w500,
                               fontSize: 11,
                             ),

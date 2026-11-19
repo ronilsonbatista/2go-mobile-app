@@ -31,3 +31,4 @@ dev_dependencies:
 flutter:
   assets:
     - assets/icons/
+    - assets/destination_thumbs/

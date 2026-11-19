@@ -169,8 +169,25 @@ void main() {
     expect(find.text('Principais interesses'), findsOneWidget);
     expect(find.text('🍲'), findsOneWidget);
     expect(find.text('Gastronomia'), findsOneWidget);
-    // Destino thumb is PlaceThumb (photo / SVG pin), never a lone broken Icon.
+    // Destino thumb is PlaceThumb (monument photo / SVG pin), never tofu.
     expect(find.byType(PlaceThumb), findsOneWidget);
+  });
+
+  testWidgets('wizard header uses vector progress plane', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TwoGoTheme.light,
+        home: PlanningWizardScaffold(
+          currentStep: 1,
+          title: 'Para onde você quer viajar?',
+          body: const SizedBox.shrink(),
+          onBack: () {},
+          onNext: () {},
+        ),
+      ),
+    );
+    expect(find.byType(FormProgressPlaneIcon), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_left), findsOneWidget);
   });
 
   testWidgets('confirm dialog Continuar/Cancelar before finalize', (
