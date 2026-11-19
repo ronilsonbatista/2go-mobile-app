@@ -17,6 +17,11 @@ import '../pages/trips_page.dart';
 import '../shell/app_shell.dart';
 
 class AppRouter {
+  /// Root navigator — full-screen flows (Q&A / auth / checkout) cover the
+  /// tab shell so [TwoGoBottomNavigation] is never visible on those routes.
+  static final GlobalKey<NavigatorState> rootNavigatorKey =
+      GlobalKey<NavigatorState>(debugLabel: 'root');
+
   static const _guestAllowedPrefixes = <String>[
     '/launch',
     '/debug',
@@ -25,11 +30,24 @@ class AppRouter {
     '/planning',
   ];
 
+  static bool isFullScreenPath(String location) {
+    return location.startsWith('/planning') ||
+        location == '/auth' ||
+        location.startsWith('/auth/') ||
+        location == '/checkout' ||
+        location.startsWith('/checkout') ||
+        location == '/paid-handoff' ||
+        location.startsWith('/paid-handoff') ||
+        location == '/launch' ||
+        location.startsWith('/debug/');
+  }
+
   static GoRouter createRouter({required AppDependencies dependencies}) {
     final sessionCubit = dependencies.sessionCubit;
     final intentStorage = dependencies.intentStorage;
 
     return GoRouter(
+      navigatorKey: rootNavigatorKey,
       initialLocation: _getInitialLocation(sessionCubit.state.status),
       refreshListenable: _GoRouterRefreshStream(sessionCubit.stream),
       redirect: (context, state) async {
@@ -102,16 +120,19 @@ class AppRouter {
       routes: [
         GoRoute(
           path: '/launch',
+          parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) => const LaunchPage(),
         ),
         // Debug-only: hold Splash for visual certification without delaying prod cold-start.
         if (kDebugMode)
           GoRoute(
             path: '/debug/splash',
+            parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) => const LaunchPage(),
           ),
         GoRoute(
           path: '/auth',
+          parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
             return BlocProvider<AuthenticationBloc>(
               create: (context) => AuthenticationBloc(
@@ -139,8 +160,10 @@ class AppRouter {
             );
           },
         ),
+        // Q&A Form Course — root navigator, never under AppShell tab bar.
         GoRoute(
           path: '/planning/wizard',
+          parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
             return PlanningWizardPage(
               bloc: dependencies.createPlanningWizardBloc(),
@@ -154,6 +177,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/planning/generation/:journeyId',
+          parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
             final journeyId = state.pathParameters['journeyId']!;
             return PlanningGenerationPage(
@@ -167,6 +191,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/planning/preview/:journeyId',
+          parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
             final journeyId = state.pathParameters['journeyId']!;
             return PlanningPreviewPage(
@@ -190,6 +215,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/planning/claim',
+          parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
             final journeyId = state.uri.queryParameters['journeyId'] ?? '';
             final productId = state.uri.queryParameters['productId'];
@@ -207,6 +233,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/checkout',
+          parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
             final tripId = state.uri.queryParameters['tripId'] ?? '';
             return CheckoutPage(
@@ -232,6 +259,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/paid-handoff',
+          parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
             final tripId = state.uri.queryParameters['tripId'] ?? '';
             final purchaseId = state.uri.queryParameters['purchaseId'] ?? '';

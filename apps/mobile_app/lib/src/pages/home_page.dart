@@ -34,7 +34,8 @@ class HomePage extends StatelessWidget {
       await _persistDestination(current);
     }
     if (!context.mounted) return;
-    context.go('/planning/wizard');
+    // Push on the root navigator so Q&A covers AppShell (no tab bar).
+    context.push('/planning/wizard');
   }
 
   @override

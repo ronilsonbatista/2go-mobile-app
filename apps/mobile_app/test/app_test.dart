@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_mobile_app/src/app.dart';
 import 'package:twogo_mobile_app/src/di/app_dependencies.dart';
 import 'package:twogo_mobile_app/src/pages/launch_page.dart';
+import 'package:twogo_mobile_app/src/router/app_router.dart';
 import 'package:twogo_session/twogo_session.dart';
 
 void main() {
@@ -85,6 +87,31 @@ void main() {
 
       expect(find.text('Início'), findsAtLeastNWidgets(1));
       expect(find.byType(TwoGoBottomNavigation), findsOneWidget);
+    });
+
+    testWidgets('Q&A wizard has no bottom tab bar', (tester) async {
+      await dependencies.sessionCubit.logout();
+
+      final router = AppRouter.createRouter(dependencies: dependencies);
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(390, 844)),
+          child: MaterialApp.router(
+            theme: TwoGoTheme.light,
+            routerConfig: router,
+          ),
+        ),
+      );
+      // Skip guest home (HomeCubit timers) — open Form Course directly.
+      router.go('/planning/wizard');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.textContaining('Para onde'), findsOneWidget);
+      expect(find.byType(TwoGoBottomNavigation), findsNothing);
+      expect(find.text('Início'), findsNothing);
+      expect(find.text('Viagens'), findsNothing);
     });
 
     testWidgets('Profile logout clears session', (tester) async {
