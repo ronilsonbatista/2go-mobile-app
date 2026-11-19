@@ -41,6 +41,7 @@ export 'src/presentation/claim/planning_claim_page.dart';
 export 'src/presentation/generation/bloc/planning_generation_bloc.dart';
 export 'src/presentation/generation/bloc/planning_generation_event.dart';
 export 'src/presentation/generation/bloc/planning_generation_state.dart';
+export 'src/presentation/generation/gerando_roteiro_hero.dart';
 export 'src/presentation/generation/planning_generation_page.dart';
 export 'src/presentation/preview/bloc/planning_preview_bloc.dart';
 export 'src/presentation/preview/bloc/planning_preview_event.dart';
