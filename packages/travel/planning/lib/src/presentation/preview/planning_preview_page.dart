@@ -390,7 +390,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
               ),
               const SizedBox(height: TwoGoSpacing.lg),
               TwoGoButton(
-                text: 'Desbloquear Roteiro',
+                text: 'Aproveitar',
                 onPressed: () {
                   _bloc.add(const OpenPaywallEvent(source: 'LOCKED_DAY'));
                 },
@@ -437,7 +437,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
             ),
           ),
           TwoGoButton(
-            text: 'Desbloquear',
+            text: 'Aproveitar',
             fullWidth: false,
             onPressed: () {
               _bloc.add(const OpenPaywallEvent(source: 'BANNER'));

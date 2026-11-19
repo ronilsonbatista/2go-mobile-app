@@ -50,66 +50,70 @@ class _EmailStepViewState extends State<EmailStepView> {
 
         return TwoGoCenteredContent(
           maxWidth: AuthLayout.contentMaxWidth,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: TwoGoSpacing.xs),
-              // Title
-              Text(
-                'Entre ou cadastre-se\npara continuar',
-                textAlign: TextAlign.center,
-                style: TwoGoTypography.headlineLarge.copyWith(
-                  fontWeight: FontWeight.bold,
-                  height: 1.2,
-                ),
-              ),
-
-              const SizedBox(height: TwoGoSpacing.lg),
-
-              // Email Input Label & Field
-              TwoGoTextField(
-                label: 'Entrar com e-mail',
-                hint: 'seu.email@gmail.com',
-                controller: _controller,
-                keyboardType: TextInputType.emailAddress,
-                prefix: const Icon(
-                  Icons.email_outlined,
-                  size: 20,
-                  color: TwoGoColors.contentSecondary,
-                ),
-                onChanged: (val) {
-                  context.read<AuthenticationBloc>().add(EmailChanged(val));
-                },
-              ),
-
-              const SizedBox(height: TwoGoSpacing.md),
-
-              // Continuar CTA Button
-              TwoGoButton(
-                text: 'Continuar',
-                loading: isLoading,
-                onPressed: state.isEmailValid && !isLoading
-                    ? () {
-                        context.read<AuthenticationBloc>().add(
-                          const OtpRequestSubmitted(),
-                        );
-                      }
-                    : null,
-              ),
-
-              const SizedBox(height: TwoGoSpacing.md),
-
-              // Social Login Row
-              const AuthSocialLoginRow(),
-
-              const SizedBox(height: TwoGoSpacing.sm),
-
-              // Bottom Illustration Placeholder (collapses smoothly when keyboard opens)
-              if (!isKeyboardOpen) ...[
-                const _TravelIllustrationSlot(),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 const SizedBox(height: TwoGoSpacing.xs),
+                Text(
+                  'Entre ou cadastre-se\npara continuar',
+                  textAlign: TextAlign.center,
+                  style: TwoGoTypography.headlineLarge.copyWith(
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                ),
+
+                const SizedBox(height: TwoGoSpacing.lg),
+
+                TwoGoTextField(
+                  label: 'Entrar com e-mail',
+                  hint: 'seu.email@gmail.com',
+                  controller: _controller,
+                  keyboardType: TextInputType.emailAddress,
+                  prefix: const Icon(
+                    Icons.email_outlined,
+                    size: 20,
+                    color: TwoGoColors.contentSecondary,
+                  ),
+                  onChanged: (val) {
+                    context.read<AuthenticationBloc>().add(EmailChanged(val));
+                  },
+                ),
+
+                const SizedBox(height: TwoGoSpacing.md),
+
+                // Continuar → POST /auth/otp/request { email }
+                TwoGoButton(
+                  text: 'Continuar',
+                  loading: isLoading,
+                  onPressed: state.isEmailValid && !isLoading
+                      ? () {
+                          context.read<AuthenticationBloc>().add(
+                            const OtpRequestSubmitted(),
+                          );
+                        }
+                      : null,
+                ),
+
+                const SizedBox(height: TwoGoSpacing.md),
+
+                // Social: UI-only until Core supports FB/Google/Apple.
+                const AuthSocialLoginRow(
+                  socialLoginFacebook: false,
+                  socialLoginGoogle: false,
+                  socialLoginApple: false,
+                ),
+
+                const SizedBox(height: TwoGoSpacing.sm),
+
+                // Suitcase art pending — soft layout slot only.
+                if (!isKeyboardOpen) ...[
+                  const _TravelIllustrationSlot(),
+                  const SizedBox(height: TwoGoSpacing.xs),
+                ],
               ],
-            ],
+            ),
           ),
         );
       },
@@ -122,38 +126,21 @@ class _TravelIllustrationSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 60,
+    // Layout reserve for suitcase art; no harsh "pending" copy.
+    return SizedBox(
+      height: 140,
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: TwoGoSpacing.xs),
-      decoration: BoxDecoration(
-        color: TwoGoColors.surfaceSecondary.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(TwoGoRadius.medium),
-        border: Border.all(color: TwoGoColors.borderDefault),
-      ),
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.luggage_outlined,
-              size: 18,
-              color: TwoGoColors.contentSecondary,
-            ),
-            const SizedBox(width: TwoGoSpacing.xs),
-            Flexible(
-              child: Text(
-                'AUTH ILLUSTRATION PENDING',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TwoGoTypography.labelSmall.copyWith(
-                  color: TwoGoColors.contentSecondary,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: TwoGoColors.surfaceSecondary.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(TwoGoRadius.large),
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.luggage_outlined,
+            size: 40,
+            color: TwoGoColors.contentSecondary,
+          ),
         ),
       ),
     );

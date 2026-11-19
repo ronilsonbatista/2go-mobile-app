@@ -23,12 +23,16 @@ class OtpStepView extends StatelessWidget {
             context,
             message: 'Código inválido',
             variant: TwoGoSnackbarVariant.error,
+            duration: const Duration(seconds: 3),
+            showProgress: true,
           );
         } else if (state.resentSuccess) {
           TwoGoSnackbar.show(
             context,
             message: 'Código reenviado com sucesso',
             variant: TwoGoSnackbarVariant.success,
+            duration: const Duration(seconds: 3),
+            showProgress: true,
           );
         } else if (state.errorMessage != null &&
             state.step != AuthenticationStep.otpInvalid) {
@@ -36,6 +40,7 @@ class OtpStepView extends StatelessWidget {
             context,
             message: state.errorMessage!,
             variant: TwoGoSnackbarVariant.error,
+            showProgress: true,
           );
         }
       },
