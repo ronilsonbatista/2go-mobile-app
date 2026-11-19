@@ -16,8 +16,11 @@ class DestinationDateTimeSelection {
   final String time;
 }
 
-/// Course date+time sheet: month calendar + horizontal **Horário previsto**
+/// Course date+time panel: month calendar + horizontal **Horário previsto**
 /// hour pills (selected = black fill / white label).
+///
+/// Presented via [showGeneralDialog] at a **fixed height** with fade + short
+/// slide — never as a bottom sheet that grows while laying out.
 class DestinationDateTimeSheet extends StatefulWidget {
   const DestinationDateTimeSheet({
     super.key,
@@ -64,6 +67,9 @@ class DestinationDateTimeSheet extends StatefulWidget {
     '23:00',
   ];
 
+  /// Fixed panel height so open animation never morphs size (Form-Onde).
+  static const double panelHeight = 560;
+
   static Future<DestinationDateTimeSelection?> show(
     BuildContext context, {
     required DateTime initialDate,
@@ -73,18 +79,61 @@ class DestinationDateTimeSheet extends StatefulWidget {
     required String primaryLabel,
     required String secondaryLabel,
   }) {
-    return showModalBottomSheet<DestinationDateTimeSelection>(
+    return showGeneralDialog<DestinationDateTimeSelection>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => DestinationDateTimeSheet(
-        initialDate: initialDate,
-        firstDate: firstDate,
-        lastDate: lastDate,
-        initialTime: initialTime,
-        primaryLabel: primaryLabel,
-        secondaryLabel: secondaryLabel,
-      ),
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (ctx, animation, secondaryAnimation) {
+        final media = MediaQuery.of(ctx);
+        final height = panelHeight.clamp(420.0, media.size.height * 0.78);
+        final bottomPad = media.padding.bottom;
+
+        return SafeArea(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                FormCourseTokens.pageGutter,
+                0,
+                FormCourseTokens.pageGutter,
+                FormCourseTokens.pageGutter + bottomPad,
+              ),
+              child: SizedBox(
+                height: height.toDouble(),
+                width: double.infinity,
+                child: DestinationDateTimeSheet(
+                  initialDate: initialDate,
+                  firstDate: firstDate,
+                  lastDate: lastDate,
+                  initialTime: initialTime,
+                  primaryLabel: primaryLabel,
+                  secondaryLabel: secondaryLabel,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (ctx, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            // Short slide of the already-final-sized panel — no height grow.
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.06),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
     );
   }
 
@@ -134,161 +183,72 @@ class _DestinationDateTimeSheetState extends State<DestinationDateTimeSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-    final maxHeight =
-        MediaQuery.sizeOf(context).height -
-        MediaQuery.paddingOf(context).top -
-        bottomInset;
-
-    return AnimatedPadding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.easeOut,
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight * 0.92),
-          child: SafeArea(
-            top: false,
-            child: Material(
-              color: FormCourseTokens.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(FormCourseTokens.sheetRadius),
+    return Material(
+      color: FormCourseTokens.surface,
+      borderRadius: BorderRadius.circular(FormCourseTokens.sheetRadius),
+      clipBehavior: Clip.antiAlias,
+      elevation: 8,
+      shadowColor: Colors.black26,
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                FormCourseTokens.pageGutter,
+                FormCourseTokens.sheetTopPadding + TwoGoSpacing.sm,
+                FormCourseTokens.pageGutter,
+                TwoGoSpacing.md,
               ),
-              clipBehavior: Clip.antiAlias,
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Center(
-                    child: Container(
-                      margin: const EdgeInsets.only(top: TwoGoSpacing.xs),
-                      width: 36,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: FormCourseTokens.label.withValues(alpha: 0.35),
-                        borderRadius: BorderRadius.circular(999),
+                  Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: Theme.of(context).colorScheme.copyWith(
+                        primary: FormCourseTokens.black,
+                        onPrimary: FormCourseTokens.surface,
                       ),
+                    ),
+                    child: CalendarDatePicker(
+                      initialDate: _selectedDate,
+                      firstDate: widget.firstDate,
+                      lastDate: widget.lastDate,
+                      onDateChanged: (date) {
+                        setState(() => _selectedDate = date);
+                      },
                     ),
                   ),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(
-                        FormCourseTokens.pageGutter,
-                        FormCourseTokens.sheetTopPadding,
-                        FormCourseTokens.pageGutter,
-                        TwoGoSpacing.md,
+                  const SizedBox(height: TwoGoSpacing.md),
+                  Row(
+                    children: [
+                      const Text('⏰', style: TextStyle(fontSize: 18)),
+                      const SizedBox(width: TwoGoSpacing.xs),
+                      Text(
+                        'Horário previsto',
+                        style: TwoGoTypography.titleMedium.copyWith(
+                          color: FormCourseTokens.black,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: Theme.of(context).colorScheme
-                                  .copyWith(
-                                    primary: FormCourseTokens.black,
-                                    onPrimary: FormCourseTokens.surface,
-                                  ),
-                            ),
-                            child: CalendarDatePicker(
-                              initialDate: _selectedDate,
-                              firstDate: widget.firstDate,
-                              lastDate: widget.lastDate,
-                              onDateChanged: (date) {
-                                setState(() => _selectedDate = date);
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: TwoGoSpacing.md),
-                          Row(
-                            children: [
-                              const Text(
-                                '⏰',
-                                style: TextStyle(fontSize: 18),
-                              ),
-                              const SizedBox(width: TwoGoSpacing.xs),
-                              Text(
-                                'Horário previsto',
-                                style: TwoGoTypography.titleMedium.copyWith(
-                                  color: FormCourseTokens.black,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: TwoGoSpacing.sm),
-                          SingleChildScrollView(
-                            controller: _hourScroll,
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                for (final hour
-                                    in DestinationDateTimeSheet.hourOptions) ...[
-                                  _HourPill(
-                                    label: hour,
-                                    selected: hour == _selectedTime,
-                                    onTap: () {
-                                      setState(() => _selectedTime = hour);
-                                    },
-                                  ),
-                                  const SizedBox(width: TwoGoSpacing.sm),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      FormCourseTokens.pageGutter,
-                      TwoGoSpacing.sm,
-                      FormCourseTokens.pageGutter,
-                      TwoGoSpacing.md,
-                    ),
+                  const SizedBox(height: TwoGoSpacing.sm),
+                  SingleChildScrollView(
+                    controller: _hourScroll,
+                    scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: Text(
-                              widget.secondaryLabel,
-                              style: TwoGoTypography.titleMedium.copyWith(
-                                color: FormCourseTokens.black,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                        for (final hour
+                            in DestinationDateTimeSheet.hourOptions) ...[
+                          _HourPill(
+                            label: hour,
+                            selected: hour == _selectedTime,
+                            onTap: () {
+                              setState(() => _selectedTime = hour);
+                            },
                           ),
-                        ),
-                        const SizedBox(width: TwoGoSpacing.sm),
-                        Expanded(
-                          child: SizedBox(
-                            height: 52,
-                            child: FilledButton(
-                              onPressed: () {
-                                Navigator.of(context).pop(
-                                  DestinationDateTimeSelection(
-                                    date: _selectedDate,
-                                    time: _selectedTime,
-                                  ),
-                                );
-                              },
-                              style: FilledButton.styleFrom(
-                                backgroundColor: FormCourseTokens.lime,
-                                foregroundColor: FormCourseTokens.black,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    TwoGoRadius.full,
-                                  ),
-                                ),
-                                textStyle: TwoGoTypography.titleMedium.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              child: Text(widget.primaryLabel),
-                            ),
-                          ),
-                        ),
+                          const SizedBox(width: TwoGoSpacing.sm),
+                        ],
                       ],
                     ),
                   ),
@@ -296,7 +256,58 @@ class _DestinationDateTimeSheetState extends State<DestinationDateTimeSheet> {
               ),
             ),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              FormCourseTokens.pageGutter,
+              TwoGoSpacing.sm,
+              FormCourseTokens.pageGutter,
+              TwoGoSpacing.md,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      widget.secondaryLabel,
+                      style: TwoGoTypography.titleMedium.copyWith(
+                        color: FormCourseTokens.black,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: TwoGoSpacing.sm),
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(
+                          DestinationDateTimeSelection(
+                            date: _selectedDate,
+                            time: _selectedTime,
+                          ),
+                        );
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: FormCourseTokens.lime,
+                        foregroundColor: FormCourseTokens.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(TwoGoRadius.full),
+                        ),
+                        textStyle: TwoGoTypography.titleMedium.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      child: Text(widget.primaryLabel),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

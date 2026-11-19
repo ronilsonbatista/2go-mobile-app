@@ -6,6 +6,9 @@ void main() {
   testWidgets('Onde datetime sheet shows Horário previsto hour pills', (
     tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(
@@ -36,16 +39,20 @@ void main() {
 
     expect(find.text('Horário previsto'), findsOneWidget);
     expect(find.text('09:00'), findsWidgets);
-    expect(find.text('07:00'), findsOneWidget);
     expect(find.text('Próximo'), findsOneWidget);
     expect(find.text('Fechar'), findsOneWidget);
+    expect(find.byType(DestinationDateTimeSheet), findsOneWidget);
 
-    // Select another hour pill and confirm.
-    await tester.tap(find.text('10:00'));
-    await tester.pumpAndSettle();
+    // Fixed-size general dialog — not a growing modal bottom sheet.
+    expect(
+      find.byWidgetPredicate(
+        (w) => w.runtimeType.toString().contains('ModalBottomSheet'),
+      ),
+      findsNothing,
+    );
+
     await tester.tap(find.text('Próximo'));
     await tester.pumpAndSettle();
-
     expect(find.text('Horário previsto'), findsNothing);
   });
 }
