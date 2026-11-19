@@ -1,0 +1,350 @@
+import 'package:flutter/material.dart';
+import 'package:twogo_design_system/design_system.dart';
+
+import '../form_course_tokens.dart';
+
+/// Result of the Onde Chegada / Partida sheet (calendar + hour pills).
+class DestinationDateTimeSelection {
+  const DestinationDateTimeSelection({
+    required this.date,
+    required this.time,
+  });
+
+  final DateTime date;
+
+  /// `HH:mm` (hour on the hour).
+  final String time;
+}
+
+/// Course date+time sheet: month calendar + horizontal **Horário previsto**
+/// hour pills (selected = black fill / white label).
+class DestinationDateTimeSheet extends StatefulWidget {
+  const DestinationDateTimeSheet({
+    super.key,
+    required this.initialDate,
+    required this.firstDate,
+    required this.lastDate,
+    required this.initialTime,
+    required this.primaryLabel,
+    required this.secondaryLabel,
+  });
+
+  final DateTime initialDate;
+  final DateTime firstDate;
+  final DateTime lastDate;
+  final String initialTime;
+  final String primaryLabel;
+  final String secondaryLabel;
+
+  /// Hours `00:00` … `23:00` for the horizontal pill strip.
+  static const hourOptions = <String>[
+    '00:00',
+    '01:00',
+    '02:00',
+    '03:00',
+    '04:00',
+    '05:00',
+    '06:00',
+    '07:00',
+    '08:00',
+    '09:00',
+    '10:00',
+    '11:00',
+    '12:00',
+    '13:00',
+    '14:00',
+    '15:00',
+    '16:00',
+    '17:00',
+    '18:00',
+    '19:00',
+    '20:00',
+    '21:00',
+    '22:00',
+    '23:00',
+  ];
+
+  static Future<DestinationDateTimeSelection?> show(
+    BuildContext context, {
+    required DateTime initialDate,
+    required DateTime firstDate,
+    required DateTime lastDate,
+    required String initialTime,
+    required String primaryLabel,
+    required String secondaryLabel,
+  }) {
+    return showModalBottomSheet<DestinationDateTimeSelection>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DestinationDateTimeSheet(
+        initialDate: initialDate,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        initialTime: initialTime,
+        primaryLabel: primaryLabel,
+        secondaryLabel: secondaryLabel,
+      ),
+    );
+  }
+
+  @override
+  State<DestinationDateTimeSheet> createState() =>
+      _DestinationDateTimeSheetState();
+}
+
+class _DestinationDateTimeSheetState extends State<DestinationDateTimeSheet> {
+  late DateTime _selectedDate;
+  late String _selectedTime;
+  final _hourScroll = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = DateTime(
+      widget.initialDate.year,
+      widget.initialDate.month,
+      widget.initialDate.day,
+    );
+    _selectedTime = _normalizeHour(widget.initialTime);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
+  }
+
+  @override
+  void dispose() {
+    _hourScroll.dispose();
+    super.dispose();
+  }
+
+  static String _normalizeHour(String raw) {
+    final parts = raw.split(':');
+    final hour = int.tryParse(parts.isNotEmpty ? parts[0] : '') ?? 9;
+    final clamped = hour.clamp(0, 23);
+    return '${clamped.toString().padLeft(2, '0')}:00';
+  }
+
+  void _scrollToSelected() {
+    if (!_hourScroll.hasClients) return;
+    final index = DestinationDateTimeSheet.hourOptions.indexOf(_selectedTime);
+    if (index < 0) return;
+    // Approximate pill width + gap (~76).
+    final offset = (index * 76.0) - 40;
+    _hourScroll.jumpTo(offset.clamp(0.0, _hourScroll.position.maxScrollExtent));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final maxHeight =
+        MediaQuery.sizeOf(context).height -
+        MediaQuery.paddingOf(context).top -
+        bottomInset;
+
+    return AnimatedPadding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight * 0.92),
+          child: SafeArea(
+            top: false,
+            child: Material(
+              color: FormCourseTokens.surface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(FormCourseTokens.sheetRadius),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: TwoGoSpacing.xs),
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: FormCourseTokens.label.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(
+                        FormCourseTokens.pageGutter,
+                        FormCourseTokens.sheetTopPadding,
+                        FormCourseTokens.pageGutter,
+                        TwoGoSpacing.md,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: Theme.of(context).colorScheme
+                                  .copyWith(
+                                    primary: FormCourseTokens.black,
+                                    onPrimary: FormCourseTokens.surface,
+                                  ),
+                            ),
+                            child: CalendarDatePicker(
+                              initialDate: _selectedDate,
+                              firstDate: widget.firstDate,
+                              lastDate: widget.lastDate,
+                              onDateChanged: (date) {
+                                setState(() => _selectedDate = date);
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: TwoGoSpacing.md),
+                          Row(
+                            children: [
+                              const Text(
+                                '⏰',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                              const SizedBox(width: TwoGoSpacing.xs),
+                              Text(
+                                'Horário previsto',
+                                style: TwoGoTypography.titleMedium.copyWith(
+                                  color: FormCourseTokens.black,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: TwoGoSpacing.sm),
+                          SingleChildScrollView(
+                            controller: _hourScroll,
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                for (final hour
+                                    in DestinationDateTimeSheet.hourOptions) ...[
+                                  _HourPill(
+                                    label: hour,
+                                    selected: hour == _selectedTime,
+                                    onTap: () {
+                                      setState(() => _selectedTime = hour);
+                                    },
+                                  ),
+                                  const SizedBox(width: TwoGoSpacing.sm),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      FormCourseTokens.pageGutter,
+                      TwoGoSpacing.sm,
+                      FormCourseTokens.pageGutter,
+                      TwoGoSpacing.md,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text(
+                              widget.secondaryLabel,
+                              style: TwoGoTypography.titleMedium.copyWith(
+                                color: FormCourseTokens.black,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: TwoGoSpacing.sm),
+                        Expanded(
+                          child: SizedBox(
+                            height: 52,
+                            child: FilledButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(
+                                  DestinationDateTimeSelection(
+                                    date: _selectedDate,
+                                    time: _selectedTime,
+                                  ),
+                                );
+                              },
+                              style: FilledButton.styleFrom(
+                                backgroundColor: FormCourseTokens.lime,
+                                foregroundColor: FormCourseTokens.black,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    TwoGoRadius.full,
+                                  ),
+                                ),
+                                textStyle: TwoGoTypography.titleMedium.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              child: Text(widget.primaryLabel),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HourPill extends StatelessWidget {
+  const _HourPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? FormCourseTokens.black : FormCourseTokens.surface,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TwoGoSpacing.md,
+            vertical: TwoGoSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: selected
+                  ? FormCourseTokens.black
+                  : FormCourseTokens.label.withValues(alpha: 0.45),
+            ),
+          ),
+          child: Text(
+            label,
+            style: TwoGoTypography.labelLarge.copyWith(
+              color: selected
+                  ? FormCourseTokens.surface
+                  : FormCourseTokens.black,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
