@@ -69,8 +69,10 @@ void main() {
       await tester.pump();
 
       expect(find.text('Gerando seu roteiro...'), findsOneWidget);
-      expect(find.byType(TwoGoLoadingIndicator), findsOneWidget);
+      expect(find.byType(GerandoRoteiroHero), findsOneWidget);
+      expect(find.byType(TwoGoLoadingIndicator), findsNothing);
 
+      // Infinite hero animations — tear down without pumpAndSettle.
       await tester.pumpWidget(const SizedBox());
     });
 

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:twogo_design_system/design_system.dart';
+
 import 'bloc/planning_generation_bloc.dart';
 import 'bloc/planning_generation_event.dart';
 import 'bloc/planning_generation_state.dart';
+import 'gerando_roteiro_hero.dart';
 
 class PlanningGenerationPage extends StatefulWidget {
   final String journeyId;
@@ -57,7 +59,7 @@ class _PlanningGenerationPageState extends State<PlanningGenerationPage>
     return BlocProvider.value(
       value: _bloc,
       child: Scaffold(
-        backgroundColor: TwoGoColors.backgroundPrimary,
+        backgroundColor: TwoGoColors.surfacePrimary,
         body: SafeArea(
           child: BlocConsumer<PlanningGenerationBloc, PlanningGenerationState>(
             listener: (context, state) {
@@ -94,22 +96,14 @@ class _PlanningGenerationPageState extends State<PlanningGenerationPage>
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Spacer(),
-          const Center(child: TwoGoLoadingIndicator(size: 56)),
-          const SizedBox(height: 32),
+          const Spacer(flex: 2),
+          const GerandoRoteiroHero(size: 240),
+          const SizedBox(height: 28),
           Text(
             'Gerando seu roteiro...',
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: TwoGoColors.contentPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Nossa IA está combinando suas preferências, datas e horários para criar uma experiência inesquecível.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: TwoGoColors.contentSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -130,18 +124,20 @@ class _PlanningGenerationPageState extends State<PlanningGenerationPage>
                     color: TwoGoColors.feedbackWarning,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    state.errorMessage ?? 'Conexão instável. Reconectando...',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: TwoGoColors.feedbackWarning,
-                      fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: Text(
+                      state.errorMessage ?? 'Conexão instável. Reconectando...',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: TwoGoColors.feedbackWarning,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ],
-          const Spacer(),
+          const Spacer(flex: 3),
         ],
       ),
     );
