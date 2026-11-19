@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_trips/trips.dart';
 
@@ -11,7 +12,15 @@ class TripsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const TwoGoAppBar(title: 'Viagens', showBackButton: false),
+      appBar: TwoGoAppBar(
+        title: 'Viagens',
+        showBackButton: false,
+        leading: TwoGoIconButton(
+          icon: TwoGoIcons.close,
+          tooltip: 'Fechar',
+          onPressed: () => context.go('/app/home'),
+        ),
+      ),
       body: HandoffTripsView(tripsRepository: tripsRepository, tripId: tripId),
     );
   }

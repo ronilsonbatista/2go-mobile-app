@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:twogo_design_system/design_system.dart';
 
 class NotificationsPage extends StatelessWidget {
@@ -7,7 +8,15 @@ class NotificationsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const TwoGoAppBar(title: 'Notificações', showBackButton: false),
+      appBar: TwoGoAppBar(
+        title: 'Notificações',
+        showBackButton: false,
+        leading: TwoGoIconButton(
+          icon: TwoGoIcons.close,
+          tooltip: 'Fechar',
+          onPressed: () => context.go('/app/home'),
+        ),
+      ),
       body: SafeArea(
         child: TwoGoCenteredContent(
           maxWidth: 390,
