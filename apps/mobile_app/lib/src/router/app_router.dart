@@ -9,6 +9,7 @@ import 'package:twogo_session/twogo_session.dart';
 import 'package:twogo_storage/twogo_storage.dart';
 import 'package:twogo_trips/trips.dart';
 
+import '../debug/debug_preview_repository.dart';
 import '../di/app_dependencies.dart';
 import '../pages/home_page.dart';
 import '../pages/launch_page.dart';
@@ -43,7 +44,7 @@ class AppRouter {
         location.startsWith('/debug/');
   }
 
-  /// Optional debug override, e.g. `--dart-define=TWIGO_DEBUG_INITIAL_ROUTE=/debug/gerando` or `/debug/hotel`.
+  /// Optional debug override, e.g. `--dart-define=TWIGO_DEBUG_INITIAL_ROUTE=/debug/gerando`, `/debug/hotel`, or `/debug/preview`.
   static const String debugInitialRoute = String.fromEnvironment(
     'TWIGO_DEBUG_INITIAL_ROUTE',
   );
@@ -200,6 +201,28 @@ class AppRouter {
                 biasLatitude: 41.9028,
                 biasLongitude: 12.4964,
                 previewOnly: true,
+              );
+            },
+          ),
+        // Debug-only: day-1 preview UI with fixture data (no network).
+        if (kDebugMode)
+          GoRoute(
+            path: '/debug/preview',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) {
+              final bloc = PlanningPreviewBloc(
+                getPreviewUseCase: GetPlanningPreviewUseCase(
+                  DebugPreviewRepository(),
+                ),
+              );
+              return PlanningPreviewPage(
+                journeyId: 'debug-preview',
+                bloc: bloc,
+                now: () => DateTime(2026, 6, 30, 12, 0),
+                onBack: () => context.go('/app/home'),
+                onUnlockRequested: (id, productId) {
+                  context.go('/auth');
+                },
               );
             },
           ),

@@ -44,6 +44,8 @@ class PlanningVisibleActivity extends Equatable {
   final String? description;
   final String category;
   final String? period;
+  final String? timeLabel;
+  final int? duration;
   final double cost;
   final int order;
   final String? location;
@@ -61,6 +63,8 @@ class PlanningVisibleActivity extends Equatable {
     this.description,
     required this.category,
     this.period,
+    this.timeLabel,
+    this.duration,
     required this.cost,
     required this.order,
     this.location,
@@ -79,12 +83,27 @@ class PlanningVisibleActivity extends Equatable {
       sourceType == 'BASE_ATTRACTION' ||
       sourceType == 'BASE_RESTAURANT';
 
+  bool get isMeal {
+    switch (category.toUpperCase()) {
+      case 'CAFE':
+      case 'RESTAURANT':
+      case 'BAR':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  bool get isTransport => category.toUpperCase() == 'TRANSPORT';
+
   @override
   List<Object?> get props => [
     title,
     description,
     category,
     period,
+    timeLabel,
+    duration,
     cost,
     order,
     location,

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
-import '../../../domain/models/planning_preview.dart';
 
+import '../../../domain/models/planning_preview.dart';
+import 'planning_preview_upsell_banner.dart';
+
+/// Centered unlock / upsell modal. CTA **Aproveitar** → login handoff.
 class PlanningUnlockSheet extends StatelessWidget {
   final PlanningUnlockOffer offer;
   final VoidCallback onUnlockRequested;
@@ -21,105 +24,126 @@ class PlanningUnlockSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(TwoGoSpacing.lg),
-      decoration: const BoxDecoration(
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+      child: Material(
         color: TwoGoColors.neutral0,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(TwoGoSpacing.lg),
-        ),
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        borderRadius: BorderRadius.circular(24),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
           children: [
-            // Close header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const TwoGoBadge(
-                  label: 'ACESSO COMPLETO',
-                  variant: TwoGoBadgeVariant.brand,
+            // Soft map-ish header wash
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 120,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      TwoGoColors.neutral100,
+                      TwoGoColors.neutral0,
+                    ],
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: onDismiss,
-                  color: TwoGoColors.neutral600,
-                ),
-              ],
-            ),
-            const SizedBox(height: TwoGoSpacing.md),
-
-            // Title & Price
-            Text(
-              offer.name,
-              style: TwoGoTypography.headlineSmall.copyWith(
-                fontWeight: FontWeight.bold,
-                color: TwoGoColors.neutral900,
               ),
             ),
-            const SizedBox(height: TwoGoSpacing.xs),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  _formatPrice(),
-                  style: TwoGoTypography.headlineMedium.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: TwoGoColors.brandLimePressed,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Material(
+                      color: TwoGoColors.neutral100,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: onDismiss,
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 20,
+                            color: TwoGoColors.neutral800,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: TwoGoSpacing.xs),
-                Text(
-                  '/ pagamento único',
-                  style: TwoGoTypography.bodySmall.copyWith(
-                    color: TwoGoColors.neutral600,
+                  const PlanningUpsellBadge(size: 88),
+                  const SizedBox(height: TwoGoSpacing.md),
+                  Text(
+                    'Tenha acesso a todos os dias de roteiro por apenas',
+                    textAlign: TextAlign.center,
+                    style: TwoGoTypography.bodyLarge.copyWith(
+                      color: TwoGoColors.neutral700,
+                      height: 1.3,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: TwoGoSpacing.lg),
-
-            // Benefits
-            _buildBenefitRow(
-              Icons.calendar_month_rounded,
-              'Acesso ilimitado a todos os dias do roteiro',
-            ),
-            const SizedBox(height: TwoGoSpacing.sm),
-            _buildBenefitRow(
-              Icons.restaurant_menu_rounded,
-              'Seleção exclusiva de restaurantes e experiências',
-            ),
-            const SizedBox(height: TwoGoSpacing.sm),
-            _buildBenefitRow(
-              Icons.edit_road_rounded,
-              'Personalização total do itinerário',
-            ),
-            const SizedBox(height: TwoGoSpacing.xl),
-
-            // CTA → Login/OTP (Upsell Aproveitar).
-            TwoGoButton(
-              text: 'Aproveitar',
-              onPressed: offer.available ? onUnlockRequested : null,
+                  const SizedBox(height: TwoGoSpacing.sm),
+                  Text(
+                    _formatPrice(),
+                    textAlign: TextAlign.center,
+                    style: TwoGoTypography.headlineMedium.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: TwoGoColors.neutral900,
+                    ),
+                  ),
+                  const SizedBox(height: TwoGoSpacing.lg),
+                  const _BenefitRow(text: 'Dicas exclusivas'),
+                  const SizedBox(height: TwoGoSpacing.sm),
+                  const _BenefitRow(text: 'Roteiro personalizado'),
+                  const SizedBox(height: TwoGoSpacing.sm),
+                  const _BenefitRow(text: 'Acesso offline ao seu roteiro'),
+                  const SizedBox(height: TwoGoSpacing.xl),
+                  TwoGoButton(
+                    text: 'Aproveitar',
+                    onPressed: offer.available ? onUnlockRequested : null,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildBenefitRow(IconData icon, String text) {
+class _BenefitRow extends StatelessWidget {
+  const _BenefitRow({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: TwoGoColors.neutral800),
+        Container(
+          width: 22,
+          height: 22,
+          decoration: const BoxDecoration(
+            color: TwoGoColors.success,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.check_rounded,
+            size: 14,
+            color: TwoGoColors.neutral0,
+          ),
+        ),
         const SizedBox(width: TwoGoSpacing.sm),
         Expanded(
           child: Text(
             text,
             style: TwoGoTypography.bodyMedium.copyWith(
-              color: TwoGoColors.neutral900,
+              color: TwoGoColors.neutral700,
             ),
           ),
         ),

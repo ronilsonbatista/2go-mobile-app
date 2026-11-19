@@ -81,6 +81,8 @@ class PlanningMapper {
                       description: act.description,
                       category: act.category,
                       period: act.period,
+                      timeLabel: act.timeLabel,
+                      duration: act.duration,
                       cost: act.cost,
                       order: act.order,
                       location: act.location,
