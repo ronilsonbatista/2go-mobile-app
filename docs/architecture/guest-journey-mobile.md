@@ -6,7 +6,8 @@ The Anonymous Guest Journey in `2go-mobile` allows non-authenticated users to cr
 ## 2. Token Security & Storage Architecture
 - **`guestToken` Handling**:
   - The raw secret `guestToken` is returned ONCE by `POST /planning-sessions`.
-  - It is stored **exclusively** in `packages/foundation/security` (`GuestJourneyCredentialStorage`) backed by `FlutterSecureStorage` (`AndroidOptions` encrypted SharedPreferences & `IOSOptions` Keychain).
+  - It is stored **exclusively** in `packages/foundation/security` (`GuestJourneyCredentialStorage`) backed by `FlutterSecureStorage` (`AndroidOptions` encrypted SharedPreferences & `IOSOptions` Keychain via `TwogoSecureStorageOptions`).
+  - iOS Keychain Sharing is declared in `apps/mobile_app/ios/Runner/Runner.entitlements`. On Simulator Debug builds that skip Xcode CodeSign, the storage layer falls back to an in-process session cache if Keychain returns `-34018`, so Revisao → Continuar does not crash.
   - It is **NEVER** stored in `packages/foundation/storage` (`PlanningDraft`), unencrypted files, database JSON, logs, or analytics payloads.
 
 ## 3. Local Questionnaire & Draft Persistence

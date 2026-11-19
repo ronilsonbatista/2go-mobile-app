@@ -1,7 +1,28 @@
 import 'package:app_roteiros_api/app_roteiros_api.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:twogo_planning/twogo_planning.dart';
+import 'package:twogo_security/twogo_security.dart';
 import 'planning_repository_test.dart';
+
+class _ThrowingGuestJourneyCredentialStorage
+    implements GuestJourneyCredentialStorage {
+  @override
+  Future<void> saveGuestToken({
+    required String journeyId,
+    required String guestToken,
+  }) async {
+    throw StateError('simulated keychain failure');
+  }
+
+  @override
+  Future<String?> readGuestToken(String journeyId) async => null;
+
+  @override
+  Future<void> clearGuestToken(String journeyId) async {}
+
+  @override
+  Future<void> clearAllGuestTokens() async {}
+}
 
 void main() {
   late FakePlanningApiClient apiClient;
@@ -62,6 +83,23 @@ void main() {
         final draft = await draftStorage.readDraft();
         expect(draft?.activeJourneyId, 'journey-123');
         expect(draft?.isDirty, false);
+      },
+    );
+
+    test(
+      'CreatePlanningJourneyUseCase returns failure instead of crashing when credential save throws',
+      () async {
+        final throwing = _ThrowingGuestJourneyCredentialStorage();
+        final useCase = CreatePlanningJourneyUseCase(
+          repository: repository,
+          credentialStorage: throwing,
+          draftStorage: draftStorage,
+        );
+
+        final res = await useCase();
+
+        expect(res.isSuccess, isFalse);
+        expect(res.exceptionOrNull(), isA<UnknownPlanningFailure>());
       },
     );
 
