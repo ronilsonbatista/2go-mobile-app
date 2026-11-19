@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_places/places.dart';
@@ -6,7 +7,10 @@ import 'package:twogo_places/places.dart';
 import '../form_course_tokens.dart';
 import 'place_thumb.dart';
 
-/// Facilitated locality search (type "Roma" → autocomplete rows with thumb).
+/// Full-screen Places locality search (type "Roma" → autocomplete rows).
+///
+/// Presented as a [fullscreenDialog] route so the title stays in the safe
+/// area when the keyboard opens (not a half [TwoGoBottomSheet]).
 class DestinationSearchSheet extends StatefulWidget {
   final SearchPlacesUseCase searchPlacesUseCase;
 
@@ -16,10 +20,13 @@ class DestinationSearchSheet extends StatefulWidget {
     BuildContext context, {
     required SearchPlacesUseCase searchPlacesUseCase,
   }) {
-    return TwoGoBottomSheet.show<PlaceSearchResult>(
-      context,
-      title: 'Para onde você vai?',
-      child: DestinationSearchSheet(searchPlacesUseCase: searchPlacesUseCase),
+    return Navigator.of(context).push<PlaceSearchResult>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => DestinationSearchSheet(
+          searchPlacesUseCase: searchPlacesUseCase,
+        ),
+      ),
     );
   }
 
@@ -29,6 +36,7 @@ class DestinationSearchSheet extends StatefulWidget {
 
 class _DestinationSearchSheetState extends State<DestinationSearchSheet> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _focus = FocusNode();
   Timer? _debounceTimer;
 
   bool _isLoading = false;
@@ -37,8 +45,9 @@ class _DestinationSearchSheetState extends State<DestinationSearchSheet> {
 
   @override
   void dispose() {
-    _controller.dispose();
     _debounceTimer?.cancel();
+    _controller.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
@@ -60,22 +69,19 @@ class _DestinationSearchSheetState extends State<DestinationSearchSheet> {
       });
 
       final result = await widget.searchPlacesUseCase(query);
+      if (!mounted) return;
       result.fold(
         (places) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-              _results = places;
-            });
-          }
+          setState(() {
+            _isLoading = false;
+            _results = places;
+          });
         },
         (failure) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-              _errorMessage = failure.message;
-            });
-          }
+          setState(() {
+            _isLoading = false;
+            _errorMessage = failure.message;
+          });
         },
       );
     });
@@ -83,20 +89,66 @@ class _DestinationSearchSheetState extends State<DestinationSearchSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 480,
-      child: Column(
-        children: [
-          TwoGoTextField(
-            controller: _controller,
-            hintText: 'Digite uma cidade…',
-            prefixIcon: TwoGoIcons.search,
-            onChanged: _onQueryChanged,
-            autofocus: true,
-          ),
-          const SizedBox(height: TwoGoSpacing.md),
-          Expanded(child: _buildSearchResults()),
-        ],
+    // Header stays under SafeArea; only the results list shrinks for the keyboard.
+    return Scaffold(
+      backgroundColor: FormCourseTokens.surface,
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                FormCourseTokens.pageGutter,
+                FormCourseTokens.sheetTopPadding,
+                FormCourseTokens.sheetCloseInset,
+                TwoGoSpacing.xs,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Para onde você vai?',
+                      style: TwoGoTypography.titleLarge.copyWith(
+                        color: FormCourseTokens.black,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  TwoGoIconButton(
+                    icon: TwoGoIcons.close,
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                FormCourseTokens.pageGutter,
+                TwoGoSpacing.md,
+                FormCourseTokens.pageGutter,
+                TwoGoSpacing.sm,
+              ),
+              child: TwoGoTextField(
+                controller: _controller,
+                focusNode: _focus,
+                hintText: 'Digite uma cidade…',
+                prefixIcon: TwoGoIcons.search,
+                onChanged: _onQueryChanged,
+                autofocus: true,
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: FormCourseTokens.pageGutter,
+                ),
+                child: _buildSearchResults(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -140,6 +192,7 @@ class _DestinationSearchSheetState extends State<DestinationSearchSheet> {
     }
 
     return ListView.separated(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       itemCount: _results.length,
       separatorBuilder: (_, __) =>
           const Divider(height: 1, color: FormCourseTokens.summaryCard),

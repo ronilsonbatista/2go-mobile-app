@@ -3,8 +3,8 @@
 
 // Simulator-only: skip Xcode native CodeSign (absolute /usr/bin/codesign fails on
 // macOS 15+/26 provenance xattrs). Frameworks are signed via tools/bin shim during
-// Flutter assemble; app is deep-signed by tools/scripts/ios_sim_resign.sh WITH
-// Runner/Runner.entitlements (Keychain Sharing) so FlutterSecureStorage works.
+// Flutter assemble; app is deep-signed by tools/scripts/ios_sim_resign.sh WITHOUT
+// custom entitlements (non-empty ad-hoc entitlements → launchd errno 153 on sim).
 // Device/Archive (iphoneos) keep normal signing + CODE_SIGN_ENTITLEMENTS.
 CODE_SIGNING_ALLOWED[sdk=iphonesimulator*] = NO
 CODE_SIGNING_REQUIRED[sdk=iphonesimulator*] = NO
