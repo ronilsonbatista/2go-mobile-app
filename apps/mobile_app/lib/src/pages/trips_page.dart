@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:twogo_design_system/design_system.dart';
+import 'package:twogo_places/places.dart';
 import 'package:twogo_trips/trips.dart';
 
 class TripsPage extends StatelessWidget {
   final TripsRepository tripsRepository;
   final String? tripId;
+  final SearchHotelsUseCase? searchHotels;
+  final GetPlaceDetailsUseCase? getPlaceDetails;
 
-  const TripsPage({super.key, required this.tripsRepository, this.tripId});
+  const TripsPage({
+    super.key,
+    required this.tripsRepository,
+    this.tripId,
+    this.searchHotels,
+    this.getPlaceDetails,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +30,12 @@ class TripsPage extends StatelessWidget {
           onPressed: () => context.go('/app/home'),
         ),
       ),
-      body: HandoffTripsView(tripsRepository: tripsRepository, tripId: tripId),
+      body: HandoffTripsView(
+        tripsRepository: tripsRepository,
+        tripId: tripId,
+        searchHotels: searchHotels,
+        getPlaceDetails: getPlaceDetails,
+      ),
     );
   }
 }

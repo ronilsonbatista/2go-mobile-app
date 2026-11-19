@@ -100,6 +100,55 @@ class PlacesApiClient {
     return PlaceSearchResultDto.fromJson(Map<String, dynamic>.from(payload));
   }
 
+  /// Core `GET /places/hotels/autocomplete?q=` — lodging typeahead.
+  /// Optional [latitude]/[longitude]/[radiusMeters] bias toward trip destination.
+  Future<List<PlaceSearchResultDto>> searchHotelsAutocomplete(
+    String query, {
+    double? latitude,
+    double? longitude,
+    int? radiusMeters,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/places/hotels/autocomplete',
+      queryParameters: {
+        'q': query,
+        if (latitude != null) 'lat': latitude,
+        if (longitude != null) 'lng': longitude,
+        if (radiusMeters != null) 'radiusMeters': radiusMeters,
+      },
+    );
+    return _parseItems(response.data)
+        .map(
+          (e) => PlaceSearchResultDto.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
+        .toList();
+  }
+
+  /// Core `GET /places/hotels/search?q=` — lodging Text Search fallback.
+  Future<List<PlaceSearchResultDto>> searchHotels(
+    String query, {
+    double? latitude,
+    double? longitude,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/places/hotels/search',
+      queryParameters: {
+        'q': query,
+        if (latitude != null) 'lat': latitude,
+        if (longitude != null) 'lng': longitude,
+      },
+    );
+    return _parseItems(response.data)
+        .map(
+          (e) => PlaceSearchResultDto.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
+        .toList();
+  }
+
   /// Mirrors Home destinations parsing: list, `{ items }`, `{ predictions }`,
   /// or raw `{ success, data, timestamp }`.
   static List<dynamic> _parseItems(dynamic payload) {

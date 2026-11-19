@@ -7,6 +7,7 @@ import 'package:twogo_checkout/twogo_checkout.dart';
 import 'package:twogo_planning/twogo_planning.dart';
 import 'package:twogo_session/twogo_session.dart';
 import 'package:twogo_storage/twogo_storage.dart';
+import 'package:twogo_trips/trips.dart';
 
 import '../di/app_dependencies.dart';
 import '../pages/home_page.dart';
@@ -42,7 +43,7 @@ class AppRouter {
         location.startsWith('/debug/');
   }
 
-  /// Optional debug override, e.g. `--dart-define=TWIGO_DEBUG_INITIAL_ROUTE=/debug/gerando`.
+  /// Optional debug override, e.g. `--dart-define=TWIGO_DEBUG_INITIAL_ROUTE=/debug/gerando` or `/debug/hotel`.
   static const String debugInitialRoute = String.fromEnvironment(
     'TWIGO_DEBUG_INITIAL_ROUTE',
   );
@@ -62,6 +63,13 @@ class AppRouter {
       redirect: (context, state) async {
         final sessionStatus = sessionCubit.state.status;
         final location = state.matchedLocation;
+
+        // Keep debug preview routes sticky while capturing screenshots.
+        if (kDebugMode &&
+            debugInitialRoute.isNotEmpty &&
+            location.startsWith('/debug/')) {
+          return null;
+        }
 
         if (sessionStatus == SessionStatus.restoring ||
             sessionStatus == SessionStatus.unknown) {
@@ -171,6 +179,27 @@ class AppRouter {
                     ),
                   ),
                 ),
+              );
+            },
+          ),
+        if (kDebugMode)
+          GoRoute(
+            path: '/debug/hotel',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) {
+              return AddAccommodationSearchPage(
+                controls: TripControls(
+                  repository: dependencies.tripsRepository,
+                  reloadTrip: () async {},
+                  searchHotels: dependencies.searchHotelsUseCase,
+                  getPlaceDetails: dependencies.getPlaceDetailsUseCase,
+                ),
+                tripId: 'debug-preview',
+                searchHotels: dependencies.searchHotelsUseCase,
+                getPlaceDetails: dependencies.getPlaceDetailsUseCase,
+                biasLatitude: 41.9028,
+                biasLongitude: 12.4964,
+                previewOnly: true,
               );
             },
           ),
@@ -348,6 +377,8 @@ class AppRouter {
                   builder: (context, state) => TripsPage(
                     tripsRepository: dependencies.tripsRepository,
                     tripId: state.uri.queryParameters['tripId'],
+                    searchHotels: dependencies.searchHotelsUseCase,
+                    getPlaceDetails: dependencies.getPlaceDetailsUseCase,
                   ),
                 ),
               ],

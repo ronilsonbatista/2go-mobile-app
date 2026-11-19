@@ -15,25 +15,47 @@ class PlacesRepositoryImpl implements PlacesRepository {
   Future<Result<List<PlaceSearchResult>>> searchPlaces(String query) async {
     try {
       final results = await _apiClient.searchPlaces(query);
-      final mapped = results
-          .map(
-            (dto) => PlaceSearchResult(
-              providerPlaceId: dto.providerPlaceId,
-              name: dto.name,
-              formattedAddress: dto.formattedAddress,
-              latitude: dto.latitude,
-              longitude: dto.longitude,
-              types: dto.types,
-              iconUrl: dto.resolvedIconUrl,
-            ),
-          )
-          .toList();
-      return Result.success(mapped);
+      return Result.success(results.map(_mapDto).toList());
     } catch (error) {
-      if (error is DioException) {
-        return Result.failure(ErrorMapper.mapDioError(error));
-      }
-      return Result.failure(UnknownFailure(message: error.toString()));
+      return _failure(error);
+    }
+  }
+
+  @override
+  Future<Result<List<PlaceSearchResult>>> searchHotelsAutocomplete(
+    String query, {
+    double? latitude,
+    double? longitude,
+    int? radiusMeters,
+  }) async {
+    try {
+      final results = await _apiClient.searchHotelsAutocomplete(
+        query,
+        latitude: latitude,
+        longitude: longitude,
+        radiusMeters: radiusMeters,
+      );
+      return Result.success(results.map(_mapDto).toList());
+    } catch (error) {
+      return _failure(error);
+    }
+  }
+
+  @override
+  Future<Result<List<PlaceSearchResult>>> searchHotels(
+    String query, {
+    double? latitude,
+    double? longitude,
+  }) async {
+    try {
+      final results = await _apiClient.searchHotels(
+        query,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      return Result.success(results.map(_mapDto).toList());
+    } catch (error) {
+      return _failure(error);
     }
   }
 
@@ -44,22 +66,28 @@ class PlacesRepositoryImpl implements PlacesRepository {
     try {
       final dto = await _apiClient.getPlaceDetails(providerPlaceId);
       if (dto == null) return Result.success(null);
-
-      final mapped = PlaceSearchResult(
-        providerPlaceId: dto.providerPlaceId,
-        name: dto.name,
-        formattedAddress: dto.formattedAddress,
-        latitude: dto.latitude,
-        longitude: dto.longitude,
-        types: dto.types,
-        iconUrl: dto.resolvedIconUrl,
-      );
-      return Result.success(mapped);
+      return Result.success(_mapDto(dto));
     } catch (error) {
-      if (error is DioException) {
-        return Result.failure(ErrorMapper.mapDioError(error));
-      }
-      return Result.failure(UnknownFailure(message: error.toString()));
+      return _failure(error);
     }
+  }
+
+  PlaceSearchResult _mapDto(PlaceSearchResultDto dto) {
+    return PlaceSearchResult(
+      providerPlaceId: dto.providerPlaceId,
+      name: dto.name,
+      formattedAddress: dto.formattedAddress,
+      latitude: dto.latitude,
+      longitude: dto.longitude,
+      types: dto.types,
+      iconUrl: dto.resolvedIconUrl,
+    );
+  }
+
+  Result<T> _failure<T>(Object error) {
+    if (error is DioException) {
+      return Result.failure(ErrorMapper.mapDioError(error));
+    }
+    return Result.failure(UnknownFailure(message: error.toString()));
   }
 }

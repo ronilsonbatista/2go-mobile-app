@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
+import 'package:twogo_places/places.dart';
 
 import '../../domain/entities/itinerary_item_entity.dart';
 import '../../domain/paid_trip_controls.dart';
@@ -10,8 +11,18 @@ import '../../domain/repositories/trips_repository.dart';
 class TripControls {
   final TripsRepository repository;
   final Future<void> Function() reloadTrip;
+  final SearchHotelsUseCase? searchHotels;
+  final GetPlaceDetailsUseCase? getPlaceDetails;
 
-  const TripControls({required this.repository, required this.reloadTrip});
+  const TripControls({
+    required this.repository,
+    required this.reloadTrip,
+    this.searchHotels,
+    this.getPlaceDetails,
+  });
+
+  bool get canSearchHotels =>
+      searchHotels != null && getPlaceDetails != null;
 }
 
 String apiErrorMessage(Object error) {
