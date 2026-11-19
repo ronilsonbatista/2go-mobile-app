@@ -4,8 +4,13 @@
 # Post-build ad-hoc deep-sign of Runner.app for iOS Simulator when macOS
 # provenance xattrs break Xcode's app signing after Flutter assemble.
 #
-# Embeds Runner.entitlements (Keychain Sharing) so FlutterSecureStorage can
-# write guest tokens without PlatformException -34018 on Simulator.
+# Do NOT embed custom entitlements on Simulator ad-hoc signatures. On
+# Xcode 26 / iOS 18.5+ Simulator, any non-empty entitlements blob
+# (including get-task-allow or keychain-access-groups) makes launchd
+# reject the spawn with NSPOSIXErrorDomain 153 — SpringBoard shows a
+# brief splash then closes. Device/Archive keep CODE_SIGN_ENTITLEMENTS.
+# Guest Keychain -34018 on Simulator is covered by in-memory session
+# fallbacks in SecureTokenStorageImpl / GuestJourneyCredentialStorageImpl.
 #
 # Requires TWIGO_ALLOW_IOS_SIM_CODESIGN_WORKAROUND=1 (same gate as flutter_ios_sim.sh).
 set -euo pipefail
@@ -18,7 +23,6 @@ fi
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SHIM="$ROOT/tools/bin/codesign"
 APP="${1:-$ROOT/apps/mobile_app/build/ios/Debug-iphonesimulator/Runner.app}"
-ENTITLEMENTS_SRC="$ROOT/apps/mobile_app/ios/Runner/Runner.entitlements"
 
 if [[ ! -d "$APP" ]]; then
   echo "Runner.app not found at $APP" >&2
@@ -33,27 +37,24 @@ case "$APP" in
     ;;
 esac
 
+/usr/bin/xattr -cr "$APP" 2>/dev/null || true
+
+# Root-level debug dylibs (Flutter 3.32+ stub) must be executable + ad-hoc signed.
+for root_bin in "$APP/Runner" "$APP/Runner.debug.dylib" "$APP/__preview.dylib"; do
+  if [[ -f "$root_bin" ]]; then
+    chmod +x "$root_bin" 2>/dev/null || true
+    "$SHIM" --force --sign - --timestamp=none "$root_bin" >/dev/null 2>&1 || true
+  fi
+done
+
 if [[ -d "$APP/Frameworks" ]]; then
-  find "$APP/Frameworks" -type f -perm +111 | while read -r f; do
+  find "$APP/Frameworks" -type f \( -perm +111 -o -name '*.dylib' \) | while read -r f; do
+    chmod +x "$f" 2>/dev/null || true
     "$SHIM" --force --sign - --timestamp=none "$f" >/dev/null 2>&1 || true
   done
 fi
 
-RESOLVED="$(mktemp -t 2go-runner-entitlements.XXXXXX)"
-cleanup() { rm -f "$RESOLVED"; }
-trap cleanup EXIT
+# Empty entitlements only — non-empty blobs → launchd errno 153 on Simulator.
+"$SHIM" --force --deep --sign - "$APP"
 
-if [[ -f "$ENTITLEMENTS_SRC" ]]; then
-  # Ad-hoc Simulator signatures have an empty AppIdentifierPrefix.
-  sed 's/\$(AppIdentifierPrefix)//g' "$ENTITLEMENTS_SRC" > "$RESOLVED"
-  # Debugger attach on Simulator Debug.
-  /usr/libexec/PlistBuddy -c "Add :get-task-allow bool true" "$RESOLVED" 2>/dev/null \
-    || /usr/libexec/PlistBuddy -c "Set :get-task-allow true" "$RESOLVED" 2>/dev/null \
-    || true
-  "$SHIM" --force --deep --sign - --entitlements "$RESOLVED" "$APP"
-else
-  echo "Warning: $ENTITLEMENTS_SRC missing — signing without Keychain entitlements" >&2
-  "$SHIM" --force --deep --sign - "$APP"
-fi
-
-echo "Signed $APP (with Keychain entitlements)"
+echo "Signed $APP (Simulator ad-hoc, no custom entitlements)"

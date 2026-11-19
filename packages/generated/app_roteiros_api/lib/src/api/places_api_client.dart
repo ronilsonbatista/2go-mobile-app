@@ -57,8 +57,8 @@ class PlaceSearchResultDto {
       googleMapsUri: json['googleMapsUri'] as String?,
       websiteUri: json['websiteUri'] as String?,
       types: (json['types'] as List<dynamic>?)?.cast<String>() ?? const [],
-      iconUrl: _nonEmpty(json['iconUrl']),
-      imageUrl: _nonEmpty(json['imageUrl']),
+      iconUrl: _httpsUrl(json['iconUrl']),
+      imageUrl: _httpsUrl(json['imageUrl']),
     );
   }
 
@@ -66,6 +66,16 @@ class PlaceSearchResultDto {
     if (value == null) return null;
     final text = value.toString().trim();
     return text.isEmpty ? null : text;
+  }
+
+  /// Core often emits `http://` CDN URLs; upgrade for iOS ATS cleartext bans.
+  static String? _httpsUrl(dynamic value) {
+    final text = _nonEmpty(value);
+    if (text == null) return null;
+    if (text.startsWith('http://')) {
+      return 'https://${text.substring('http://'.length)}';
+    }
+    return text;
   }
 }
 

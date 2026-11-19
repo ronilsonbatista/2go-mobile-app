@@ -18,7 +18,14 @@ class ApiConfig {
     this.sendTimeout = const Duration(seconds: 15),
   });
 
+  /// Compile-time override: `--dart-define=API_BASE_URL=https://…`
+  /// (wins over [customBaseUrl] and the environment default).
+  static const String apiBaseUrlDefine = String.fromEnvironment('API_BASE_URL');
+
   String get baseUrl {
+    if (apiBaseUrlDefine.isNotEmpty) {
+      return apiBaseUrlDefine;
+    }
     if (customBaseUrl != null && customBaseUrl!.isNotEmpty) {
       return customBaseUrl!;
     }

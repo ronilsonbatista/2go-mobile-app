@@ -218,6 +218,25 @@ void main() {
   });
 
   group('PlacesApiClient autocomplete', () {
+    test('fromJson upgrades http iconUrl to https for ATS', () {
+      final dto = PlaceSearchResultDto.fromJson({
+        'providerPlaceId': 'places/ChIJRoma',
+        'name': 'Roma',
+        'iconUrl':
+            'http://core-api-production-50ce.up.railway.app/static/place-icons/city.svg',
+        'imageUrl': 'http://cdn.example/photo.jpg',
+      });
+      expect(
+        dto.iconUrl,
+        'https://core-api-production-50ce.up.railway.app/static/place-icons/city.svg',
+      );
+      expect(dto.imageUrl, 'https://cdn.example/photo.jpg');
+      expect(
+        dto.resolvedIconUrl,
+        'https://core-api-production-50ce.up.railway.app/static/place-icons/city.svg',
+      );
+    });
+
     test('GET /places/autocomplete?q= reads data.items envelope', () async {
       final dio = Dio(BaseOptions(baseUrl: 'https://core.test'));
       String? path;
