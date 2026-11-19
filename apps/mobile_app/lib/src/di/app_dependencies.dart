@@ -26,6 +26,8 @@ class AppDependencies {
     required this.paymentsRepository,
     required this.tripsRepository,
     required this.searchPlacesUseCase,
+    required this.searchHotelsUseCase,
+    required this.getPlaceDetailsUseCase,
     required this.cardTokenizer,
     required this.createPlanningJourneyUseCase,
     required this.restorePlanningJourneyUseCase,
@@ -51,6 +53,8 @@ class AppDependencies {
   final PaymentsRepository paymentsRepository;
   final TripsRepository tripsRepository;
   final SearchPlacesUseCase searchPlacesUseCase;
+  final SearchHotelsUseCase searchHotelsUseCase;
+  final GetPlaceDetailsUseCase getPlaceDetailsUseCase;
   final CardTokenizer cardTokenizer;
   final HomeContentRepository homeContentRepository;
 
@@ -115,6 +119,12 @@ class AppDependencies {
     final searchPlacesUseCase = SearchPlacesUseCase(
       repository: placesRepository,
     );
+    final searchHotelsUseCase = SearchHotelsUseCase(
+      repository: placesRepository,
+    );
+    final getPlaceDetailsUseCase = GetPlaceDetailsUseCase(
+      repository: placesRepository,
+    );
 
     final paymentsRepository = PaymentsRepositoryImpl(
       remoteDataSource: PaymentsRemoteDataSourceImpl(
@@ -146,6 +156,8 @@ class AppDependencies {
       paymentsRepository: paymentsRepository,
       tripsRepository: tripsRepository,
       searchPlacesUseCase: searchPlacesUseCase,
+      searchHotelsUseCase: searchHotelsUseCase,
+      getPlaceDetailsUseCase: getPlaceDetailsUseCase,
       cardTokenizer: NativeCardTokenizer(),
       homeContentRepository: homeContentRepository,
       createPlanningJourneyUseCase: CreatePlanningJourneyUseCase(

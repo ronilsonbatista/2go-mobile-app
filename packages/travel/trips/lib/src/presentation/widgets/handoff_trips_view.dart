@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
+import 'package:twogo_places/places.dart';
 
 import '../../domain/repositories/trips_repository.dart';
 import '../bloc/trips_cubit.dart';
@@ -13,12 +14,16 @@ class HandoffTripsView extends StatefulWidget {
   final TripsRepository tripsRepository;
   final String? tripId;
   final ValueChanged<Uri>? onOpenUrl;
+  final SearchHotelsUseCase? searchHotels;
+  final GetPlaceDetailsUseCase? getPlaceDetails;
 
   const HandoffTripsView({
     super.key,
     required this.tripsRepository,
     this.tripId,
     this.onOpenUrl,
+    this.searchHotels,
+    this.getPlaceDetails,
   });
 
   @override
@@ -77,6 +82,8 @@ class _HandoffTripsViewState extends State<HandoffTripsView> {
               controls: TripControls(
                 repository: widget.tripsRepository,
                 reloadTrip: () => _cubit.loadTrip(widget.tripId),
+                searchHotels: widget.searchHotels,
+                getPlaceDetails: widget.getPlaceDetails,
               ),
             );
         }

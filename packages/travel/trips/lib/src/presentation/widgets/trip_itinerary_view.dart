@@ -6,6 +6,7 @@ import '../../domain/entities/trip_accommodation.dart';
 import '../../domain/entities/trip_day_entity.dart';
 import '../../domain/entities/trip_entity.dart';
 import '../place_details/place_details_sheet.dart';
+import 'accommodation/add_accommodation_flow.dart';
 import 'trip_control_sheets.dart';
 
 /// Roteiro devolvido por `GET /trips/:id`.
@@ -110,11 +111,7 @@ class TripItineraryView extends StatelessWidget {
             const SizedBox(height: TwoGoSpacing.sm),
             if (trip.accommodation == null)
               TextButton(
-                onPressed: () => showAccommodationSheet(
-                  context,
-                  controls: controls!,
-                  tripId: trip.id,
-                ),
+                onPressed: () => _openAddOrEditAccommodation(context, trip),
                 child: const Text('Cadastrar hospedagem'),
               )
             else
@@ -122,11 +119,7 @@ class TripItineraryView extends StatelessWidget {
                 spacing: TwoGoSpacing.xs,
                 children: [
                   TextButton(
-                    onPressed: () => showAccommodationSheet(
-                      context,
-                      controls: controls!,
-                      tripId: trip.id,
-                    ),
+                    onPressed: () => _openAddOrEditAccommodation(context, trip),
                     child: const Text('Editar hospedagem'),
                   ),
                   TextButton(
@@ -144,6 +137,30 @@ class TripItineraryView extends StatelessWidget {
           ...days.map((day) => _buildDay(context, day)),
         ],
       ),
+    );
+  }
+
+  Future<void> _openAddOrEditAccommodation(
+    BuildContext context,
+    TripEntity trip,
+  ) async {
+    final c = controls;
+    if (c == null) return;
+    if (c.canSearchHotels) {
+      await showAddAccommodationFlow(
+        context,
+        controls: c,
+        tripId: trip.id,
+        searchHotels: c.searchHotels!,
+        getPlaceDetails: c.getPlaceDetails!,
+        trip: trip,
+      );
+      return;
+    }
+    await showAccommodationSheet(
+      context,
+      controls: c,
+      tripId: trip.id,
     );
   }
 
