@@ -32,11 +32,13 @@ unsigned builds so bootstrap never dies on PlatformException -34018.
 
 `GuestJourneyCredentialStorageImpl` keeps an in-process memory fallback for the same
 -34018 case so Revisao → Continuar (CreatePlanningJourney) can still persist the
-guest token for the session. Keychain Sharing is enabled via
-`apps/mobile_app/ios/Runner/Runner.entitlements` (`CODE_SIGN_ENTITLEMENTS` on
-Debug/Profile/Release). The Xcode phase **Sign Simulator Keychain Entitlements**
-and `ios_sim_resign.sh` ad-hoc sign Simulator `Runner.app` with that entitlements
-file so FlutterSecureStorage Keychain writes succeed when signing is restored.
+guest token for the session. Keychain Sharing remains declared in
+`apps/mobile_app/ios/Runner/Runner.entitlements` for **device/archive**
+(`CODE_SIGN_ENTITLEMENTS`). Simulator ad-hoc resign must **not** embed those
+entitlements: on Xcode 26 / iOS 18.5+ Simulator, any non-empty entitlements
+blob makes launchd reject spawn (`NSPOSIXErrorDomain` 153) — SpringBoard shows
+a brief splash then closes. Use `ios_sim_resign.sh` / the Xcode phase
+**Sign Simulator Runner (adhoc, no entitlements)** for plain deep-sign only.
 
 ## Components
 - `tools/bin/codesign` — local shim that strips xattrs then calls `/usr/bin/codesign`

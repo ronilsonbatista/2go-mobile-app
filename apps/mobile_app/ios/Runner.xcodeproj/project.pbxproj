@@ -203,7 +203,7 @@
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				70995D9A2E13368288ACB6B0 /* [CP] Embed Pods Frameworks */,
-				A1B2C3D4E5F60718293A0002 /* Sign Simulator Keychain Entitlements */,
+				A1B2C3D4E5F60718293A0002 /* Sign Simulator Runner (adhoc, no entitlements) */,
 			);
 			buildRules = (
 			);
@@ -373,22 +373,21 @@
 			shellPath = /bin/sh;
 			shellScript = "if [ \"$PLATFORM_NAME\" = \"iphonesimulator\" ]; then\n  export PATH=\"${SRCROOT}/../../../tools/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH\"\nfi\nxattr -cr \"$TARGET_BUILD_DIR\" 2>/dev/null || true\n/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
 		};
-		A1B2C3D4E5F60718293A0002 /* Sign Simulator Keychain Entitlements */ = {
+		A1B2C3D4E5F60718293A0002 /* Sign Simulator Runner (adhoc, no entitlements) */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
-				"${SRCROOT}/Runner/Runner.entitlements",
 				"${TARGET_BUILD_DIR}/${WRAPPER_NAME}",
 			);
-			name = "Sign Simulator Keychain Entitlements";
+			name = "Sign Simulator Runner (adhoc, no entitlements)";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Simulator-only: when CODE_SIGNING_ALLOWED=NO (provenance workaround), embed\n# Keychain Sharing entitlements via ad-hoc resign so FlutterSecureStorage works.\nif [ \"$PLATFORM_NAME\" != \"iphonesimulator\" ]; then\n  exit 0\nfi\nAPP=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"\nif [ ! -d \"$APP\" ]; then\n  echo \"warning: Runner.app missing at $APP — skip Keychain resign\"\n  exit 0\nfi\nexport PATH=\"${SRCROOT}/../../../tools/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH\"\nENTITLEMENTS_SRC=\"${SRCROOT}/Runner/Runner.entitlements\"\nRESOLVED=\"${TEMP_DIR}/Runner.sim.entitlements\"\nif [ -f \"$ENTITLEMENTS_SRC\" ]; then\n  sed 's/\\$(AppIdentifierPrefix)//g' \"$ENTITLEMENTS_SRC\" > \"$RESOLVED\"\n  /usr/libexec/PlistBuddy -c \"Add :get-task-allow bool true\" \"$RESOLVED\" 2>/dev/null \\\n    || /usr/libexec/PlistBuddy -c \"Set :get-task-allow true\" \"$RESOLVED\" 2>/dev/null \\\n    || true\n  codesign --force --deep --sign - --entitlements \"$RESOLVED\" \"$APP\" || true\nelse\n  echo \"warning: Runner.entitlements missing\"\nfi\n";
+			shellScript = "# Simulator-only: when CODE_SIGNING_ALLOWED=NO (provenance workaround), ad-hoc\n# deep-sign Runner.app WITHOUT custom entitlements. Non-empty entitlements\n# (keychain / get-task-allow) make launchd reject spawn with errno 153 on\n# Xcode 26 / iOS 18.5+ Simulator. Device builds keep CODE_SIGN_ENTITLEMENTS.\nif [ \"$PLATFORM_NAME\" != \"iphonesimulator\" ]; then\n  exit 0\nfi\nAPP=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"\nif [ ! -d \"$APP\" ]; then\n  echo \"warning: Runner.app missing at $APP — skip sim resign\"\n  exit 0\nfi\nexport TWIGO_ALLOW_IOS_SIM_CODESIGN_WORKAROUND=1\nexport PATH=\"${SRCROOT}/../../../tools/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH\"\nif [ -x \"${SRCROOT}/../../../tools/scripts/ios_sim_resign.sh\" ]; then\n  \"${SRCROOT}/../../../tools/scripts/ios_sim_resign.sh\" \"$APP\" || true\nelse\n  for f in \"$APP/Runner\" \"$APP/Runner.debug.dylib\" \"$APP/__preview.dylib\"; do\n    [ -f \"$f\" ] || continue\n    chmod +x \"$f\" 2>/dev/null || true\n    codesign --force --sign - --timestamp=none \"$f\" >/dev/null 2>&1 || true\n  done\n  codesign --force --deep --sign - \"$APP\" || true\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
