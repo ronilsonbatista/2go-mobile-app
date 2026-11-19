@@ -3,6 +3,7 @@ import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_places/places.dart';
 import '../../../domain/models/planning_destination.dart';
 import '../form_course_tokens.dart';
+import 'destination_datetime_sheet.dart';
 import 'destination_search_sheet.dart';
 import 'place_thumb.dart';
 import 'planning_course_sheet.dart';
@@ -46,72 +47,57 @@ class DestinationCardWidget extends StatelessWidget {
     }
   }
 
-  Future<void> _selectArrivalDate(BuildContext context) async {
+  Future<void> _selectArrivalDateTime(BuildContext context) async {
+    final now = DateTime.now();
+    final first = DateTime(now.year, now.month, now.day);
     final initial =
         DateTime.tryParse(destination.arrivalDate) ??
-        DateTime.now().add(const Duration(days: 7));
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 730)),
+        now.add(const Duration(days: 7));
+    final picked = await DestinationDateTimeSheet.show(
+      context,
+      initialDate: initial.isBefore(first) ? first : initial,
+      firstDate: first,
+      lastDate: now.add(const Duration(days: 730)),
+      initialTime: destination.arrivalTime.isEmpty
+          ? '09:00'
+          : destination.arrivalTime,
+      primaryLabel: 'Próximo',
+      secondaryLabel: 'Fechar',
     );
-    if (picked != null) {
-      final formattedDate = picked.toIso8601String().split('T').first;
-      onChanged(destination.copyWith(arrivalDate: formattedDate));
-    }
+    if (picked == null) return;
+    onChanged(
+      destination.copyWith(
+        arrivalDate: picked.date.toIso8601String().split('T').first,
+        arrivalTime: picked.time,
+      ),
+    );
   }
 
-  Future<void> _selectDepartureDate(BuildContext context) async {
+  Future<void> _selectDepartureDateTime(BuildContext context) async {
     final arrival =
         DateTime.tryParse(destination.arrivalDate) ?? DateTime.now();
+    final arrivalDay = DateTime(arrival.year, arrival.month, arrival.day);
     final initial =
         DateTime.tryParse(destination.departureDate) ??
         arrival.add(const Duration(days: 4));
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial.isBefore(arrival) ? arrival : initial,
-      firstDate: arrival,
+    final picked = await DestinationDateTimeSheet.show(
+      context,
+      initialDate: initial.isBefore(arrivalDay) ? arrivalDay : initial,
+      firstDate: arrivalDay,
       lastDate: DateTime.now().add(const Duration(days: 730)),
+      initialTime: destination.departureTime.isEmpty
+          ? '23:00'
+          : destination.departureTime,
+      primaryLabel: 'Salvar',
+      secondaryLabel: 'Voltar',
     );
-    if (picked != null) {
-      final formattedDate = picked.toIso8601String().split('T').first;
-      onChanged(destination.copyWith(departureDate: formattedDate));
-    }
-  }
-
-  Future<void> _selectArrivalTime(BuildContext context) async {
-    final parts = destination.arrivalTime.split(':');
-    final initialTime = TimeOfDay(
-      hour: parts.isNotEmpty ? int.tryParse(parts[0]) ?? 9 : 9,
-      minute: parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0,
+    if (picked == null) return;
+    onChanged(
+      destination.copyWith(
+        departureDate: picked.date.toIso8601String().split('T').first,
+        departureTime: picked.time,
+      ),
     );
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-    );
-    if (picked != null) {
-      final formattedTime =
-          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-      onChanged(destination.copyWith(arrivalTime: formattedTime));
-    }
-  }
-
-  Future<void> _selectDepartureTime(BuildContext context) async {
-    final parts = destination.departureTime.split(':');
-    final initialTime = TimeOfDay(
-      hour: parts.isNotEmpty ? int.tryParse(parts[0]) ?? 18 : 18,
-      minute: parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0,
-    );
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-    );
-    if (picked != null) {
-      final formattedTime =
-          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-      onChanged(destination.copyWith(departureTime: formattedTime));
-    }
   }
 
   Future<void> _confirmRemove(BuildContext context) async {
@@ -218,10 +204,7 @@ class DestinationCardWidget extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            onTap: () async {
-              await _selectArrivalDate(context);
-              if (context.mounted) await _selectArrivalTime(context);
-            },
+            onTap: () => _selectArrivalDateTime(context),
             leadingIcon: const Text('🗓️', style: TextStyle(fontSize: 18)),
           ),
           const Divider(height: 1, color: FormCourseTokens.summaryCard),
@@ -237,10 +220,7 @@ class DestinationCardWidget extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            onTap: () async {
-              await _selectDepartureDate(context);
-              if (context.mounted) await _selectDepartureTime(context);
-            },
+            onTap: () => _selectDepartureDateTime(context),
             leadingIcon: const Text('⏰', style: TextStyle(fontSize: 18)),
           ),
         ],
