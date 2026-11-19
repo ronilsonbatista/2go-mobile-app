@@ -39,6 +39,8 @@ class PlanningWizardScaffold extends StatelessWidget {
     return Scaffold(
       backgroundColor: FormCourseTokens.background,
       resizeToAvoidBottomInset: true,
+      // Product rule: Form Course has no app tab bar (Início/Viagens/…).
+      bottomNavigationBar: null,
       body: SafeArea(
         // TwoGoCenteredContent defaults to horizontal lg (24). Combined with
         // FormCourseTokens.pageGutter that doubled the side inset to ~40pt on
