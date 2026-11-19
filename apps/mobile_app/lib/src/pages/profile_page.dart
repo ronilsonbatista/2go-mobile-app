@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_session/twogo_session.dart';
 
@@ -13,7 +14,15 @@ class ProfilePage extends StatelessWidget {
         final email = state.userId ?? 'passageiro@2go.com';
 
         return Scaffold(
-          appBar: const TwoGoAppBar(title: 'Perfil', showBackButton: false),
+          appBar: TwoGoAppBar(
+            title: 'Perfil',
+            showBackButton: false,
+            leading: TwoGoIconButton(
+              icon: TwoGoIcons.close,
+              tooltip: 'Fechar',
+              onPressed: () => context.go('/app/home'),
+            ),
+          ),
           body: SafeArea(
             child: SingleChildScrollView(
               child: TwoGoCenteredContent(

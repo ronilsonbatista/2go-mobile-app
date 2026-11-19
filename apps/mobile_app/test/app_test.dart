@@ -106,6 +106,43 @@ void main() {
       await tester.element(find.byType(HomeView)).read<HomeCubit>().close();
     });
 
+    testWidgets('Viagens close returns to Home', (tester) async {
+      await dependencies.sessionCubit.logout();
+
+      final router = AppRouter.createRouter(dependencies: dependencies);
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(390, 844)),
+          child: BlocProvider<SessionCubit>.value(
+            value: dependencies.sessionCubit,
+            child: MaterialApp.router(
+              theme: TwoGoTheme.light,
+              routerConfig: router,
+            ),
+          ),
+        ),
+      );
+      router.go('/app/trips');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Viagens'), findsOneWidget);
+      expect(find.text('Minhas Viagens'), findsOneWidget);
+      expect(find.byIcon(TwoGoIcons.close), findsOneWidget);
+      expect(find.byType(TwoGoBottomNavigation), findsNothing);
+
+      await tester.tap(find.byIcon(TwoGoIcons.close));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.textContaining('Criar'), findsWidgets);
+      // IndexedStack keeps offstage branches; assert location instead of absence.
+      expect(router.routerDelegate.currentConfiguration.uri.path, '/app/home');
+
+      await tester.element(find.byType(HomeView)).read<HomeCubit>().close();
+    });
+
     testWidgets('Q&A wizard has no bottom tab bar', (tester) async {
       await dependencies.sessionCubit.logout();
 
