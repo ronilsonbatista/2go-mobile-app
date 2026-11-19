@@ -5,6 +5,7 @@ import '../../domain/entities/itinerary_item_entity.dart';
 import '../../domain/entities/trip_accommodation.dart';
 import '../../domain/entities/trip_day_entity.dart';
 import '../../domain/entities/trip_entity.dart';
+import '../place_details/place_details_sheet.dart';
 import 'trip_control_sheets.dart';
 
 /// Roteiro devolvido por `GET /trips/:id`.
@@ -314,10 +315,11 @@ class TripItineraryView extends StatelessWidget {
                         child: const Text('Duração'),
                       ),
                       TextButton(
-                        onPressed: () => showVerifiedDetails(
+                        onPressed: () => showPlaceDetailsFlow(
                           context,
+                          item: item,
                           controls: controls!,
-                          itemId: item.id,
+                          onOpenUrl: onOpenUrl,
                         ),
                         child: const Text('Detalhes'),
                       ),

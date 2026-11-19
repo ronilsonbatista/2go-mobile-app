@@ -243,6 +243,78 @@ class MealRecommendationsResult {
   }
 }
 
+/// Photo from Core `verifiedDetails.photos` (Core PR #3).
+class PlacePhoto {
+  final String? name;
+  final String? photoUri;
+  final int? widthPx;
+  final int? heightPx;
+
+  const PlacePhoto({
+    this.name,
+    this.photoUri,
+    this.widthPx,
+    this.heightPx,
+  });
+
+  factory PlacePhoto.fromJson(Map<String, dynamic> json) {
+    return PlacePhoto(
+      name: _readText(json['name']),
+      photoUri:
+          _readText(json['photoUri']) ??
+          _readText(json['uri']) ??
+          _readText(json['url']),
+      widthPx: _readInt(json['widthPx']),
+      heightPx: _readInt(json['heightPx']),
+    );
+  }
+
+  bool get hasUri => photoUri != null && photoUri!.trim().isNotEmpty;
+}
+
+/// Review from Core `verifiedDetails.reviews`.
+class PlaceReview {
+  final String? authorName;
+  final String? authorPhotoUri;
+  final String? authorUri;
+  final double? rating;
+  final String? text;
+  final String? relativePublishTimeDescription;
+  final String? publishTime;
+
+  const PlaceReview({
+    this.authorName,
+    this.authorPhotoUri,
+    this.authorUri,
+    this.rating,
+    this.text,
+    this.relativePublishTimeDescription,
+    this.publishTime,
+  });
+
+  factory PlaceReview.fromJson(Map<String, dynamic> json) {
+    return PlaceReview(
+      authorName:
+          _readText(json['authorName']) ??
+          _readText(json['author']) ??
+          _readText(json['name']),
+      authorPhotoUri:
+          _readText(json['authorPhotoUri']) ??
+          _readText(json['authorPhotoUrl']) ??
+          _readText(json['profilePhotoUri']),
+      authorUri: _readText(json['authorUri']),
+      rating: _readDouble(json['rating']),
+      text: _readText(json['text']) ?? _readText(json['comment']),
+      relativePublishTimeDescription: _readText(
+        json['relativePublishTimeDescription'],
+      ),
+      publishTime: _readText(json['publishTime']),
+    );
+  }
+}
+
+/// Maps-verified place payload from `GET /itinerary-items/:id` → `verifiedDetails`.
+/// Aligned with Core Places enrichment (hours, photos, reviews, editorial).
 class VerifiedPlaceDetails {
   final String? name;
   final String? formattedAddress;
@@ -252,7 +324,19 @@ class VerifiedPlaceDetails {
   final String? websiteUri;
   final String? internationalPhoneNumber;
   final String? priceLevel;
+  /// UI-ready `$` / `$$` / … from Core `priceLevelDisplay`.
+  final String? priceLevelDisplay;
   final List<String>? types;
+  final String? primaryType;
+  final String? primaryTypeDisplayName;
+  final double? latitude;
+  final double? longitude;
+  final String? openingHoursText;
+  final List<String>? weekdayDescriptions;
+  final String? editorialSummary;
+  final String? cuisineType;
+  final List<PlacePhoto>? photos;
+  final List<PlaceReview>? reviews;
 
   const VerifiedPlaceDetails({
     this.name,
@@ -263,7 +347,18 @@ class VerifiedPlaceDetails {
     this.websiteUri,
     this.internationalPhoneNumber,
     this.priceLevel,
+    this.priceLevelDisplay,
     this.types,
+    this.primaryType,
+    this.primaryTypeDisplayName,
+    this.latitude,
+    this.longitude,
+    this.openingHoursText,
+    this.weekdayDescriptions,
+    this.editorialSummary,
+    this.cuisineType,
+    this.photos,
+    this.reviews,
   });
 
   factory VerifiedPlaceDetails.fromJson(Map<String, dynamic> json) {
@@ -275,16 +370,63 @@ class VerifiedPlaceDetails {
               .where((type) => type.isNotEmpty)
               .toList()
         : null;
+
+    final weekday = json['weekdayDescriptions'];
+    final weekdayDescriptions = weekday is List
+        ? weekday
+              .whereType<String>()
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList()
+        : null;
+
+    final photos = _readList(json['photos'], PlacePhoto.fromJson);
+    final reviews = _readList(json['reviews'], PlaceReview.fromJson);
+
+    final location = json['location'];
+    double? lat = _readDouble(json['latitude']);
+    double? lng = _readDouble(json['longitude']);
+    if (location is Map) {
+      lat ??= _readDouble(location['latitude']) ?? _readDouble(location['lat']);
+      lng ??=
+          _readDouble(location['longitude']) ?? _readDouble(location['lng']);
+    }
+
+    final editorial = json['editorialSummary'];
+    final editorialSummary = editorial is String
+        ? _readText(editorial)
+        : (_readNestedText(editorial, 'text') ??
+              _readNestedText(editorial, 'overview'));
+
     return VerifiedPlaceDetails(
       name: _readText(json['name']),
       formattedAddress: _readText(json['formattedAddress']),
       rating: _readDouble(json['rating']),
-      userRatingsTotal: _readInt(json['userRatingsTotal']),
+      userRatingsTotal: _readInt(json['userRatingsTotal']) ??
+          _readInt(json['userRatingCount']),
       googleMapsUri: _readText(json['googleMapsUri']),
       websiteUri: _readText(json['websiteUri']),
       internationalPhoneNumber: _readText(json['internationalPhoneNumber']),
       priceLevel: _readRaw(json['priceLevel']),
+      priceLevelDisplay: _readText(json['priceLevelDisplay']),
       types: types == null || types.isEmpty ? null : types,
+      primaryType: _readText(json['primaryType']),
+      primaryTypeDisplayName: _readText(json['primaryTypeDisplayName']),
+      latitude: lat,
+      longitude: lng,
+      openingHoursText:
+          _readText(json['openingHoursText']) ??
+          _readOpeningHours(json['regularOpeningHours']) ??
+          _readOpeningHours(json['currentOpeningHours']) ??
+          _readText(json['openingHours']),
+      weekdayDescriptions:
+          weekdayDescriptions == null || weekdayDescriptions.isEmpty
+          ? null
+          : weekdayDescriptions,
+      editorialSummary: editorialSummary,
+      cuisineType: _readText(json['cuisineType']),
+      photos: photos,
+      reviews: reviews,
     );
   }
 
@@ -297,7 +439,61 @@ class VerifiedPlaceDetails {
       websiteUri != null ||
       internationalPhoneNumber != null ||
       priceLevel != null ||
-      (types != null && types!.isNotEmpty);
+      priceLevelDisplay != null ||
+      (types != null && types!.isNotEmpty) ||
+      primaryType != null ||
+      primaryTypeDisplayName != null ||
+      latitude != null ||
+      longitude != null ||
+      openingHoursText != null ||
+      (weekdayDescriptions != null && weekdayDescriptions!.isNotEmpty) ||
+      editorialSummary != null ||
+      cuisineType != null ||
+      (photos != null && photos!.isNotEmpty) ||
+      (reviews != null && reviews!.isNotEmpty);
+}
+
+List<T>? _readList<T>(
+  dynamic raw,
+  T Function(Map<String, dynamic> json) map,
+) {
+  if (raw is! List) return null;
+  final items = <T>[];
+  for (final entry in raw) {
+    if (entry is Map) {
+      items.add(map(Map<String, dynamic>.from(entry)));
+    }
+  }
+  return items.isEmpty ? null : items;
+}
+
+String? _readOpeningHours(dynamic raw) {
+  if (raw == null) return null;
+  if (raw is String) return _readText(raw);
+  if (raw is! Map) return null;
+  final map = Map<String, dynamic>.from(raw);
+  final weekday = map['weekdayDescriptions'] ?? map['weekdayText'];
+  if (weekday is List) {
+    final today = weekday.whereType<String>().map((e) => e.trim()).where(
+      (e) => e.isNotEmpty,
+    );
+    final joined = today.join(' · ');
+    if (joined.isNotEmpty) {
+      // Prefer a compact today-style range when the string has ":" hours.
+      final compact = RegExp(r'(\d{1,2}:\d{2})\s*[–\-—]\s*(\d{1,2}:\d{2})')
+          .firstMatch(joined);
+      if (compact != null) {
+        return '${compact.group(1)}-${compact.group(2)}';
+      }
+      return joined;
+    }
+  }
+  return _readText(map['openNowText']) ?? _readText(map['text']);
+}
+
+String? _readNestedText(dynamic raw, String key) {
+  if (raw is! Map) return null;
+  return _readText(raw[key]);
 }
 
 class AccommodationDraft {
