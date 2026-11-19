@@ -59,6 +59,8 @@ class PlanningVisibleActivityDto {
   final String? description;
   final String category;
   final String? period;
+  final String? timeLabel;
+  final int? duration;
   final double cost;
   final int order;
   final String? location;
@@ -76,6 +78,8 @@ class PlanningVisibleActivityDto {
     this.description,
     required this.category,
     this.period,
+    this.timeLabel,
+    this.duration,
     required this.cost,
     required this.order,
     this.location,
@@ -95,6 +99,8 @@ class PlanningVisibleActivityDto {
       description: json['description'] as String?,
       category: json['category'] as String? ?? 'TOURIST_ATTRACTION',
       period: json['period'] as String?,
+      timeLabel: json['timeLabel'] as String?,
+      duration: (json['duration'] as num?)?.toInt(),
       cost: (json['cost'] as num?)?.toDouble() ?? 0.0,
       order: json['order'] as int? ?? 1,
       location: json['location'] as String?,
@@ -114,6 +120,8 @@ class PlanningVisibleActivityDto {
     'description': description,
     'category': category,
     'period': period,
+    'timeLabel': timeLabel,
+    'duration': duration,
     'cost': cost,
     'order': order,
     'location': location,

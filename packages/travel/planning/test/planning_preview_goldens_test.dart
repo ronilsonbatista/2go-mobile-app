@@ -20,7 +20,7 @@ class FakePlanningRepository implements PlanningRepository {
         ),
         policy: PlanningPreviewPolicy(
           visibleDayCount: 1,
-          autoPaywallDelaySeconds: 0, // 0 to avoid timer in goldens
+          autoPaywallDelaySeconds: 0,
         ),
         visibleDays: [
           PlanningVisibleDay(
@@ -31,13 +31,24 @@ class FakePlanningRepository implements PlanningRepository {
             description: 'Primeiro dia incrível',
             activities: [
               PlanningVisibleActivity(
+                title: 'Café da manhã',
+                category: 'CAFE',
+                period: 'Manhã',
+                cost: 0,
+                order: 1,
+                sourceType: 'AI',
+              ),
+              PlanningVisibleActivity(
                 title: 'Coliseu de Roma',
                 description: 'Visita guiada pelo monumento',
                 category: 'TOURIST_ATTRACTION',
                 period: 'Manhã',
+                timeLabel: '08:30 - 09:30',
                 cost: 20.0,
-                order: 1,
+                order: 2,
                 location: 'Piazza del Colosseo',
+                latitude: 41.89,
+                longitude: 12.49,
                 sourceType: 'BASE_ATTRACTION',
               ),
             ],
@@ -73,7 +84,8 @@ class FakePlanningRepository implements PlanningRepository {
   Future<Result<CreatedGuestJourneyResult>> createJourney({
     int? answersVersion,
     int? initialStep,
-  }) async => throw UnimplementedError();
+  }) async =>
+      throw UnimplementedError();
 
   @override
   Future<Result<GuestJourney>> finalizeJourney(String journeyId) async =>
@@ -82,7 +94,8 @@ class FakePlanningRepository implements PlanningRepository {
   @override
   Future<Result<PlanningGenerationStatus>> getGenerationStatus(
     String journeyId,
-  ) async => throw UnimplementedError();
+  ) async =>
+      throw UnimplementedError();
 
   @override
   Future<Result<GuestJourney>> getJourney(String journeyId) async =>
@@ -91,7 +104,8 @@ class FakePlanningRepository implements PlanningRepository {
   @override
   Future<Result<PlanningGenerationStatus>> startGeneration(
     String journeyId,
-  ) async => throw UnimplementedError();
+  ) async =>
+      throw UnimplementedError();
 
   @override
   Future<Result<GuestJourney>> updateJourney({
@@ -103,7 +117,8 @@ class FakePlanningRepository implements PlanningRepository {
     PlanningActivityWindow? activityWindow,
     String? budgetLevel,
     String? travelStyle,
-  }) async => throw UnimplementedError();
+  }) async =>
+      throw UnimplementedError();
 
   @override
   Future<Result<ClaimJourneyResult>> claimJourney(String journeyId) async =>
@@ -136,6 +151,7 @@ void main() {
           child: PlanningPreviewPage(
             journeyId: 'journey-golden-123',
             bloc: bloc,
+            now: () => DateTime(2026, 6, 30, 12, 0),
           ),
         ),
       ),
@@ -154,9 +170,13 @@ void main() {
     await tester.pump();
 
     expect(find.text('Roma'), findsOneWidget);
-    expect(find.text('Dia 1: Chegada em Roma'), findsOneWidget);
+    expect(find.text('Faltam apenas'), findsOneWidget);
+    expect(find.text('Sáb 25/07'), findsOneWidget);
+    expect(find.text('Adicionar hospedagem'), findsOneWidget);
     expect(find.text('Coliseu de Roma'), findsOneWidget);
-    expect(find.text('Curadoria 2GO'), findsOneWidget);
-    expect(find.text('R\$ 19,99'), findsOneWidget);
+    expect(find.text('Mapa'), findsWidgets);
+    expect(find.textContaining('R\$ 19,99'), findsWidgets);
+
+    await tester.pumpWidget(const SizedBox());
   });
 }

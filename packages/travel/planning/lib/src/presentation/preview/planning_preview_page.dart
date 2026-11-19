@@ -6,6 +6,9 @@ import '../../domain/models/planning_preview.dart';
 import 'bloc/planning_preview_bloc.dart';
 import 'bloc/planning_preview_event.dart';
 import 'bloc/planning_preview_state.dart';
+import 'widgets/planning_preview_countdown.dart';
+import 'widgets/planning_preview_day_chips.dart';
+import 'widgets/planning_preview_upsell_banner.dart';
 import 'widgets/planning_timeline_item.dart';
 import 'widgets/planning_unlock_sheet.dart';
 
@@ -14,6 +17,8 @@ class PlanningPreviewPage extends StatefulWidget {
   final PlanningPreviewBloc? bloc;
   final void Function(String journeyId, String? productId)? onUnlockRequested;
   final ValueChanged<Uri>? onOpenUrl;
+  final VoidCallback? onBack;
+  final DateTime Function()? now;
 
   const PlanningPreviewPage({
     super.key,
@@ -21,6 +26,8 @@ class PlanningPreviewPage extends StatefulWidget {
     this.bloc,
     this.onUnlockRequested,
     this.onOpenUrl,
+    this.onBack,
+    this.now,
   });
 
   @override
@@ -29,6 +36,7 @@ class PlanningPreviewPage extends StatefulWidget {
 
 class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
   late final PlanningPreviewBloc _bloc;
+  bool _dialogVisible = false;
 
   @override
   void initState() {
@@ -44,29 +52,60 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
     _bloc.add(FetchPlanningPreviewEvent(journeyId: widget.journeyId));
   }
 
-  void _showPaywallSheet(
+  Future<void> _showPaywallDialog(
     BuildContext context,
     PlanningPreviewLoadedState state,
-  ) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => PlanningUnlockSheet(
-        offer: state.preview.unlockOffer,
-        onUnlockRequested: () {
-          Navigator.of(sheetContext).pop();
-          _bloc.add(const RequestUnlockEvent());
-        },
-        onDismiss: () {
-          Navigator.of(sheetContext).pop();
-          _bloc.add(const DismissPaywallEvent());
-        },
-      ),
-    ).then((_) {
-      if (!mounted) return;
-      _bloc.add(const DismissPaywallEvent());
-    });
+  ) async {
+    if (_dialogVisible) return;
+    _dialogVisible = true;
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        barrierColor: Colors.black.withValues(alpha: 0.55),
+        builder: (dialogContext) => PlanningUnlockSheet(
+          offer: state.preview.unlockOffer,
+          onUnlockRequested: () {
+            Navigator.of(dialogContext).pop();
+            _bloc.add(const RequestUnlockEvent());
+          },
+          onDismiss: () {
+            Navigator.of(dialogContext).pop();
+            _bloc.add(const DismissPaywallEvent());
+          },
+        ),
+      );
+    } finally {
+      _dialogVisible = false;
+      if (mounted) {
+        _bloc.add(const DismissPaywallEvent());
+      }
+    }
+  }
+
+  void _openMapForDay(PlanningVisibleDay? day) {
+    if (day == null || widget.onOpenUrl == null) return;
+    PlanningVisibleActivity? withCoords;
+    for (final a in day.activities) {
+      if (a.latitude != null && a.longitude != null) {
+        withCoords = a;
+        break;
+      }
+    }
+    final link = PlanningTimelineItem.mapUrl(
+      latitude: withCoords?.latitude,
+      longitude: withCoords?.longitude,
+    );
+    final uri = link == null ? null : Uri.tryParse(link);
+    if (uri != null) widget.onOpenUrl!(uri);
+  }
+
+  String _destinationName(PlanningPreviewSummary summary) {
+    if (summary.destinations.isNotEmpty && summary.destinations[0] is Map) {
+      return (summary.destinations[0] as Map)['name']?.toString() ??
+          'Sua Viagem';
+    }
+    return 'Sua Viagem';
   }
 
   @override
@@ -77,7 +116,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
         listener: (context, state) {
           if (state is PlanningPreviewLoadedState) {
             if (state.isPaywallOpen) {
-              _showPaywallSheet(context, state);
+              _showPaywallDialog(context, state);
             }
           } else if (state is PlanningPreviewUnlockRequestedState) {
             widget.onUnlockRequested?.call(state.journeyId, state.productId);
@@ -128,60 +167,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
           }
 
           if (state is PlanningPreviewLoadedState) {
-            final preview = state.preview;
-            final summary = preview.summary;
-            final selectedDay = state.selectedDayNumber;
-
-            final visibleDayMatch = preview.visibleDays
-                .cast<PlanningVisibleDay?>()
-                .firstWhere(
-                  (d) => d?.dayNumber == selectedDay,
-                  orElse: () => null,
-                );
-
-            final lockedDayMatch = preview.lockedDays
-                .cast<PlanningLockedDay?>()
-                .firstWhere(
-                  (d) => d?.dayNumber == selectedDay,
-                  orElse: () => null,
-                );
-
-            final destinationName =
-                summary.destinations.isNotEmpty &&
-                    summary.destinations[0] is Map
-                ? (summary.destinations[0] as Map)['name']?.toString() ??
-                      'Sua Viagem'
-                : 'Sua Viagem';
-
-            return Scaffold(
-              backgroundColor: TwoGoColors.backgroundPrimary,
-              body: SafeArea(
-                child: Column(
-                  children: [
-                    // Hero Summary Banner
-                    _buildSummaryHero(summary, destinationName),
-
-                    // Day Tabs Header
-                    _buildDayTabs(preview, selectedDay),
-
-                    // Main Content (Timeline or Locked Card)
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(TwoGoSpacing.md),
-                        child: visibleDayMatch != null
-                            ? _buildTimelineList(visibleDayMatch)
-                            : _buildLockedDayCard(lockedDayMatch),
-                      ),
-                    ),
-
-                    // Sticky Bottom Unlock Banner
-                    if (preview.unlockOffer.available &&
-                        preview.lockedDays.isNotEmpty)
-                      _buildBottomUnlockBanner(preview.unlockOffer),
-                  ],
-                ),
-              ),
-            );
+            return _buildLoaded(context, state);
           }
 
           return const Scaffold(
@@ -193,105 +179,95 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
     );
   }
 
-  Widget _buildSummaryHero(
-    PlanningPreviewSummary summary,
-    String destinationName,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(TwoGoSpacing.md),
-      decoration: const BoxDecoration(color: TwoGoColors.neutral900),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildLoaded(BuildContext context, PlanningPreviewLoadedState state) {
+    final preview = state.preview;
+    final summary = preview.summary;
+    final selectedDay = state.selectedDayNumber;
+    final destinationName = _destinationName(summary);
+
+    final visibleDayMatch = preview.visibleDays
+        .cast<PlanningVisibleDay?>()
+        .firstWhere((d) => d?.dayNumber == selectedDay, orElse: () => null);
+
+    final lockedDayMatch = preview.lockedDays
+        .cast<PlanningLockedDay?>()
+        .firstWhere((d) => d?.dayNumber == selectedDay, orElse: () => null);
+
+    return Scaffold(
+      backgroundColor: TwoGoColors.backgroundPrimary,
+      body: Stack(
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.flight_takeoff_rounded,
-                color: TwoGoColors.brandLime,
-                size: 20,
+          CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: _HeroHeader(
+                  coverImageUrl: summary.coverImageUrl,
+                  destinationName: destinationName,
+                  onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
+                  onLockedAction: () {
+                    _bloc.add(const OpenPaywallEvent(source: 'HERO_ACTION'));
+                  },
+                ),
               ),
-              const SizedBox(width: TwoGoSpacing.xs),
-              Text(
-                '2GO PREVIEW',
-                style: TwoGoTypography.labelSmall.copyWith(
-                  color: TwoGoColors.brandLime,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    TwoGoSpacing.md,
+                    TwoGoSpacing.md,
+                    TwoGoSpacing.md,
+                    0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      PlanningPreviewCountdown(
+                        startDate: summary.startDate,
+                        now: widget.now,
+                      ),
+                      const SizedBox(height: TwoGoSpacing.sm),
+                      PlanningPreviewUpsellBanner(
+                        offer: preview.unlockOffer,
+                        onTap: () {
+                          _bloc.add(const OpenPaywallEvent(source: 'BANNER'));
+                        },
+                      ),
+                      const SizedBox(height: TwoGoSpacing.md),
+                      PlanningPreviewDayChips(
+                        preview: preview,
+                        selectedDayNumber: selectedDay,
+                        onSelectDay: (day) {
+                          _bloc.add(SelectPreviewDayEvent(dayNumber: day));
+                        },
+                      ),
+                      const SizedBox(height: TwoGoSpacing.sm),
+                      if (visibleDayMatch != null)
+                        _buildTimelineList(visibleDayMatch)
+                      else
+                        _buildLockedDayCard(lockedDayMatch),
+                      const SizedBox(height: 96),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: TwoGoSpacing.xs),
-          Text(
-            destinationName,
-            style: TwoGoTypography.headlineMedium.copyWith(
-              color: TwoGoColors.neutral0,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: TwoGoSpacing.xs),
-          Text(
-            '${summary.totalDays} dias de roteiro personalizado',
-            style: TwoGoTypography.bodySmall.copyWith(
-              color: TwoGoColors.neutral300,
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 28,
+            child: Center(
+              child: _MapFab(
+                onPressed: () {
+                  if (visibleDayMatch != null) {
+                    _openMapForDay(visibleDayMatch);
+                  } else {
+                    _bloc.add(const OpenPaywallEvent(source: 'MAP'));
+                  }
+                },
+              ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDayTabs(PlanningPreview preview, int selectedDayNumber) {
-    final totalDaysCount =
-        preview.visibleDays.length + preview.lockedDays.length;
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(
-        horizontal: TwoGoSpacing.md,
-        vertical: TwoGoSpacing.sm,
-      ),
-      child: Row(
-        children: List.generate(totalDaysCount, (idx) {
-          final dayNumber = idx + 1;
-          final isSelected = dayNumber == selectedDayNumber;
-          final isLocked = preview.lockedDays.any(
-            (d) => d.dayNumber == dayNumber,
-          );
-
-          return Padding(
-            padding: const EdgeInsets.only(right: TwoGoSpacing.xs),
-            child: ChoiceChip(
-              label: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Dia $dayNumber'),
-                  if (isLocked) ...[
-                    const SizedBox(width: TwoGoSpacing.xxs),
-                    const Icon(
-                      Icons.lock_outline_rounded,
-                      size: 14,
-                      color: TwoGoColors.neutral600,
-                    ),
-                  ],
-                ],
-              ),
-              selected: isSelected,
-              onSelected: (_) {
-                _bloc.add(SelectPreviewDayEvent(dayNumber: dayNumber));
-              },
-              selectedColor: TwoGoColors.neutral800,
-              backgroundColor: TwoGoColors.neutral0,
-              labelStyle: TextStyle(
-                color: isSelected
-                    ? TwoGoColors.brandLime
-                    : TwoGoColors.neutral900,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          );
-        }),
       ),
     );
   }
@@ -300,43 +276,48 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
     final activities = [...day.activities]
       ..sort((a, b) => a.order.compareTo(b.order));
 
+    final children = <Widget>[
+      PlanningLodgingTimelineItem(
+        onTap: () {
+          _bloc.add(const OpenPaywallEvent(source: 'LODGING'));
+        },
+      ),
+    ];
+
+    for (var i = 0; i < activities.length; i++) {
+      final activity = activities[i];
+      final isLast = i == activities.length - 1;
+      children.add(
+        PlanningTimelineItem(
+          activity: activity,
+          isLast: isLast && activity.isTransport,
+          nodeStyle: activity.isMeal
+              ? PlanningTimelineNodeStyle.solid
+              : PlanningTimelineNodeStyle.solid,
+          onOpenUrl: widget.onOpenUrl,
+          onRecommendationsTap: () {
+            _bloc.add(const OpenPaywallEvent(source: 'MEAL_RECS'));
+          },
+          onMenuTap: () {
+            _bloc.add(const OpenPaywallEvent(source: 'ITEM_MENU'));
+          },
+        ),
+      );
+
+      if (!activity.isTransport && i < activities.length - 1) {
+        final next = activities[i + 1];
+        if (!next.isTransport) {
+          final transit = PlanningTimelineItem.transitBetween(activity, next);
+          if (transit != null) {
+            children.add(PlanningTransitLabel(label: transit));
+          }
+        }
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          day.title,
-          style: TwoGoTypography.titleLarge.copyWith(
-            fontWeight: FontWeight.bold,
-            color: TwoGoColors.neutral900,
-          ),
-        ),
-        if (day.date != null && day.date!.trim().isNotEmpty) ...[
-          const SizedBox(height: TwoGoSpacing.xs),
-          Text(
-            day.date!,
-            style: TwoGoTypography.bodySmall.copyWith(
-              color: TwoGoColors.neutral600,
-            ),
-          ),
-        ],
-        if (day.description != null && day.description!.isNotEmpty) ...[
-          const SizedBox(height: TwoGoSpacing.xs),
-          Text(
-            day.description!,
-            style: TwoGoTypography.bodyMedium.copyWith(
-              color: TwoGoColors.neutral700,
-            ),
-          ),
-        ],
-        const SizedBox(height: TwoGoSpacing.md),
-        ...activities.asMap().entries.map(
-          (entry) => PlanningTimelineItem(
-            activity: entry.value,
-            isLast: entry.key == activities.length - 1,
-            onOpenUrl: widget.onOpenUrl,
-          ),
-        ),
-      ],
+      children: children,
     );
   }
 
@@ -344,106 +325,236 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
     final title = lockedDay?.title ?? 'Dia Bloqueado';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: TwoGoSpacing.xl),
-      child: TwoGoCard(
-        child: Padding(
-          padding: const EdgeInsets.all(TwoGoSpacing.xl),
-          child: Column(
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: const BoxDecoration(
-                  color: TwoGoColors.neutral900,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.lock_rounded,
-                  color: TwoGoColors.brandLime,
-                  size: 32,
-                ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: const BoxDecoration(
+              color: TwoGoColors.neutral900,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.lock_rounded,
+              color: TwoGoColors.brandLime,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: TwoGoSpacing.md),
+          Text(
+            title,
+            style: TwoGoTypography.titleLarge.copyWith(
+              fontWeight: FontWeight.bold,
+              color: TwoGoColors.neutral900,
+            ),
+          ),
+          if (lockedDay?.date != null && lockedDay!.date!.trim().isNotEmpty) ...[
+            const SizedBox(height: TwoGoSpacing.xs),
+            Text(
+              PlanningPreviewDayChips.formatDayChipLabel(
+                lockedDay.date,
+                lockedDay.dayNumber,
               ),
-              const SizedBox(height: TwoGoSpacing.md),
-              Text(
-                title,
-                style: TwoGoTypography.titleLarge.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: TwoGoColors.neutral900,
-                ),
+              style: TwoGoTypography.bodySmall.copyWith(
+                color: TwoGoColors.neutral600,
               ),
-              if (lockedDay?.date != null &&
-                  lockedDay!.date!.trim().isNotEmpty) ...[
-                const SizedBox(height: TwoGoSpacing.xs),
-                Text(
-                  lockedDay.date!,
-                  style: TwoGoTypography.bodySmall.copyWith(
-                    color: TwoGoColors.neutral600,
-                  ),
+            ),
+          ],
+          const SizedBox(height: TwoGoSpacing.xs),
+          Text(
+            'Desbloqueie o acesso completo para visualizar as atividades deste dia.',
+            textAlign: TextAlign.center,
+            style: TwoGoTypography.bodyMedium.copyWith(
+              color: TwoGoColors.neutral700,
+            ),
+          ),
+          const SizedBox(height: TwoGoSpacing.lg),
+          TwoGoButton(
+            text: 'Aproveitar',
+            onPressed: () {
+              _bloc.add(const OpenPaywallEvent(source: 'LOCKED_DAY'));
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroHeader extends StatelessWidget {
+  const _HeroHeader({
+    required this.coverImageUrl,
+    required this.destinationName,
+    required this.onBack,
+    required this.onLockedAction,
+  });
+
+  final String? coverImageUrl;
+  final String destinationName;
+  final VoidCallback onBack;
+  final VoidCallback onLockedAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final topPad = MediaQuery.paddingOf(context).top;
+    return SizedBox(
+      height: 220 + topPad,
+      width: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (coverImageUrl != null && coverImageUrl!.isNotEmpty)
+            Image.network(
+              coverImageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _fallbackBg(),
+            )
+          else
+            _fallbackBg(),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0x66000000),
+                  Color(0x00000000),
+                  Color(0x99000000),
+                ],
+                stops: [0, 0.45, 1],
+              ),
+            ),
+          ),
+          Positioned(
+            top: topPad + 8,
+            left: 12,
+            right: 12,
+            child: Row(
+              children: [
+                _RoundIconButton(
+                  icon: Icons.chevron_left_rounded,
+                  onPressed: onBack,
+                ),
+                const Spacer(),
+                _RoundIconButton(
+                  icon: Icons.edit_outlined,
+                  iconColor: const Color(0xFFF5C518),
+                  onPressed: onLockedAction,
+                ),
+                const SizedBox(width: 8),
+                _RoundIconButton(
+                  icon: Icons.picture_as_pdf_outlined,
+                  iconColor: const Color(0xFFE53935),
+                  onPressed: onLockedAction,
+                ),
+                const SizedBox(width: 8),
+                _RoundIconButton(
+                  icon: Icons.ios_share_rounded,
+                  onPressed: onLockedAction,
                 ),
               ],
-              const SizedBox(height: TwoGoSpacing.xs),
-              Text(
-                'Desbloqueie o acesso completo para visualizar as atividades deste dia.',
-                textAlign: TextAlign.center,
-                style: TwoGoTypography.bodyMedium.copyWith(
-                  color: TwoGoColors.neutral700,
-                ),
+            ),
+          ),
+          Positioned(
+            left: 20,
+            bottom: 20,
+            right: 20,
+            child: Text(
+              destinationName,
+              style: TwoGoTypography.headlineLarge.copyWith(
+                color: TwoGoColors.contentInverse,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
               ),
-              const SizedBox(height: TwoGoSpacing.lg),
-              TwoGoButton(
-                text: 'Aproveitar',
-                onPressed: () {
-                  _bloc.add(const OpenPaywallEvent(source: 'LOCKED_DAY'));
-                },
-              ),
-            ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _fallbackBg() {
+    return const ColoredBox(
+      color: TwoGoColors.neutral800,
+      child: Center(
+        child: Icon(
+          Icons.landscape_outlined,
+          size: 64,
+          color: TwoGoColors.neutral500,
+        ),
+      ),
+    );
+  }
+}
+
+class _RoundIconButton extends StatelessWidget {
+  const _RoundIconButton({
+    required this.icon,
+    required this.onPressed,
+    this.iconColor,
+  });
+
+  final IconData icon;
+  final VoidCallback onPressed;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: TwoGoColors.neutral0.withValues(alpha: 0.92),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            icon,
+            size: 18,
+            color: iconColor ?? TwoGoColors.neutral900,
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildBottomUnlockBanner(PlanningUnlockOffer offer) {
-    final currencySymbol = offer.currency == 'BRL' ? 'R\$' : offer.currency;
-    final formattedPrice =
-        '$currencySymbol ${offer.price.toStringAsFixed(2).replaceAll('.', ',')}';
+class _MapFab extends StatelessWidget {
+  const _MapFab({required this.onPressed});
 
-    return Container(
-      padding: const EdgeInsets.all(TwoGoSpacing.md),
-      decoration: const BoxDecoration(
-        color: TwoGoColors.neutral0,
-        border: Border(top: BorderSide(color: TwoGoColors.neutral200)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Roteiro Completo',
-                  style: TwoGoTypography.labelSmall.copyWith(
-                    color: TwoGoColors.neutral600,
-                  ),
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: TwoGoColors.neutral900,
+      borderRadius: BorderRadius.circular(999),
+      elevation: 6,
+      shadowColor: Colors.black45,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.map_outlined,
+                size: 18,
+                color: TwoGoColors.contentInverse,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Mapa',
+                style: TwoGoTypography.labelLarge.copyWith(
+                  color: TwoGoColors.contentInverse,
+                  fontWeight: FontWeight.w700,
                 ),
-                Text(
-                  formattedPrice,
-                  style: TwoGoTypography.titleMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: TwoGoColors.brandLimePressed,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          TwoGoButton(
-            text: 'Aproveitar',
-            fullWidth: false,
-            onPressed: () {
-              _bloc.add(const OpenPaywallEvent(source: 'BANNER'));
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
