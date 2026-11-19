@@ -69,6 +69,18 @@ class PlanningGenerationBloc
         }
       },
       (AppFailure failure) {
+        if (_isClientPayloadFailure(failure)) {
+          _stopPolling();
+          emit(
+            state.copyWith(
+              status: PlanningGenerationPageStatus.failed,
+              errorMessage: failure.message.isNotEmpty
+                  ? failure.message
+                  : 'Não foi possível gerar o roteiro. Revise os dados e tente novamente.',
+            ),
+          );
+          return;
+        }
         emit(
           state.copyWith(
             status: PlanningGenerationPageStatus.temporaryNetworkFailure,
@@ -149,6 +161,16 @@ class PlanningGenerationBloc
     if (genStatus.isPreviewReady || genStatus.isFailed) return false;
     if (genStatus.status == GuestJourneyStatus.expired) return false;
     return true;
+  }
+
+  /// 4xx payload / incomplete answers — stop polling; show friendly failure.
+  static bool _isClientPayloadFailure(AppFailure failure) {
+    final status = failure.statusCode;
+    if (status == 400 || status == 422) return true;
+    final code = failure.code ?? '';
+    return code.startsWith('PLANNING_INVALID') ||
+        code == 'PLANNING_INCOMPLETE' ||
+        code == 'PLANNING_JOURNEY_LOCKED';
   }
 
   void _startPolling(String journeyId) {

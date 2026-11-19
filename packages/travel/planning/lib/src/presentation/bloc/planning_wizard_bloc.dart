@@ -376,6 +376,17 @@ class PlanningWizardBloc
     emit(state.copyWith(status: PlanningWizardStatus.submitting));
 
     try {
+      final payloadError = _validateGeneratePayload(state);
+      if (payloadError != null) {
+        emit(
+          state.copyWith(
+            status: PlanningWizardStatus.failure,
+            errorMessage: payloadError,
+          ),
+        );
+        return;
+      }
+
       await _persistLocalDraft(currentStep: state.currentStep);
 
       var journeyId = state.journey?.id ?? state.draft?.activeJourneyId;
@@ -388,7 +399,7 @@ class PlanningWizardBloc
               status: PlanningWizardStatus.failure,
               errorMessage:
                   createResult.exceptionOrNull()?.message ??
-                  'Falha ao criar jornada',
+                  'Não foi possível criar a jornada. Tente novamente.',
             ),
           );
           return;
@@ -417,7 +428,7 @@ class PlanningWizardBloc
             isDirty: true,
             errorMessage:
                 saveResult.exceptionOrNull()?.message ??
-                'Não foi possível salvar o roteiro',
+                'Não foi possível salvar o roteiro. Revise os dados.',
           ),
         );
         return;
@@ -440,14 +451,45 @@ class PlanningWizardBloc
         ),
       );
     } catch (error) {
-      // Never leave Continuar spinning — surface API/parse failures as toast.
+      // Never leave Continuar spinning — never dump DioException.toString().
       emit(
         state.copyWith(
           status: PlanningWizardStatus.failure,
-          errorMessage: error.toString(),
+          errorMessage:
+              'Não foi possível gerar o roteiro. Revise os dados e tente novamente.',
         ),
       );
     }
+  }
+
+  /// Client-side guard before PATCH/finalize/generate — avoids Core 400 noise.
+  static String? _validateGeneratePayload(PlanningWizardState state) {
+    if (!state.isStep1Valid) {
+      return 'Revise os destinos e as datas da viagem.';
+    }
+    for (final destination in state.destinations) {
+      final placeId = destination.providerPlaceId?.trim() ?? '';
+      if (placeId.isEmpty || placeId.startsWith('catalog:')) {
+        return 'Selecione um destino válido na busca.';
+      }
+      if (destination.arrivalTime.trim().isEmpty ||
+          destination.departureTime.trim().isEmpty) {
+        return 'Informe horário de chegada e partida.';
+      }
+    }
+    if (!state.isStep2Valid) {
+      return 'Informe quem vai viajar.';
+    }
+    if (!state.isStep3Valid) {
+      return 'Selecione ao menos um interesse.';
+    }
+    if (!state.isStep4Valid) {
+      return 'Defina um horário de atividades válido (início antes do fim).';
+    }
+    if (!state.isStep5Valid) {
+      return 'Escolha o estilo da viagem.';
+    }
+    return null;
   }
 
   void _onPreviousStep(

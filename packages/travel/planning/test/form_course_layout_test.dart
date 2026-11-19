@@ -219,6 +219,10 @@ void main() {
     expect(find.text('Continuar'), findsOneWidget);
     expect(find.text('Cancelar'), findsOneWidget);
     expect(find.byType(PlanningCourseSheet), findsOneWidget);
+    final sheet = tester.widget<PlanningCourseSheet>(
+      find.byType(PlanningCourseSheet),
+    );
+    expect(sheet.fullBleed, isTrue);
   });
 
   testWidgets('Onde dates render short dd/MM without truncation', (
@@ -298,5 +302,9 @@ void main() {
     expect(find.text('Fim das atividades'), findsOneWidget);
     expect(find.text('09:00'), findsOneWidget);
     expect(find.text('19:00'), findsOneWidget);
+    expect(find.text('12:00'), findsOneWidget);
+    expect(find.text('22:00'), findsOneWidget);
+    expect(ActivityHoursStepContent.startOptions.last, '12:00');
+    expect(ActivityHoursStepContent.endOptions.last, '22:00');
   });
 }
