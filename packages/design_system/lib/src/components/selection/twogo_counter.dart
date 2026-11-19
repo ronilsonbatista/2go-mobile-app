@@ -85,6 +85,7 @@ class TwoGoCounter extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Course Age steppers: white circle + black − / + (refs e66a8526, b88c4ee4).
+              // Design Age PDF: circles ≈ 31pt, value gap ≈ 12, count width ≈ 28.
               _StepperCircleButton(
                 icon: TwoGoIcons.remove,
                 enabled: canDecrement,
@@ -93,10 +94,10 @@ class TwoGoCounter extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: TwoGoSpacing.md,
+                  horizontal: TwoGoSpacing.sm,
                 ),
                 child: SizedBox(
-                  width: TwoGoSpacing.xl,
+                  width: 28,
                   child: Text(
                     '$value',
                     textAlign: TextAlign.center,
@@ -152,9 +153,10 @@ class _StepperCircleButton extends StatelessWidget {
             customBorder: const CircleBorder(),
             onTap: onPressed,
             child: SizedBox(
-              width: 40,
-              height: 40,
-              child: Icon(icon, size: 22, color: fg),
+              // Design Age PDF measures ≈ 31pt; 32 keeps even logical pixels.
+              width: 32,
+              height: 32,
+              child: Icon(icon, size: 18, color: fg),
             ),
           ),
         ),

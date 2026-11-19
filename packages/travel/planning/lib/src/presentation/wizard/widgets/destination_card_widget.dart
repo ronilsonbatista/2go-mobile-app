@@ -160,7 +160,7 @@ class DestinationCardWidget extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: FormCourseTokens.surface,
-        borderRadius: BorderRadius.circular(TwoGoRadius.large),
+        borderRadius: BorderRadius.circular(FormCourseTokens.cardRadius),
       ),
       child: Column(
         children: [

@@ -40,13 +40,17 @@ class PlanningWizardScaffold extends StatelessWidget {
       backgroundColor: FormCourseTokens.background,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
+        // TwoGoCenteredContent defaults to horizontal lg (24). Combined with
+        // FormCourseTokens.pageGutter that doubled the side inset to ~40pt on
+        // iPhone 16 (live Revisao QA). Own gutters via pageGutter only.
         child: TwoGoCenteredContent(
           maxWidth: 600,
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: TwoGoSpacing.md,
+                  horizontal: FormCourseTokens.pageGutter,
                   vertical: TwoGoSpacing.sm,
                 ),
                 child: PlanningStepHeader(

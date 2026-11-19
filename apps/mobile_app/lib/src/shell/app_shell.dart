@@ -35,9 +35,9 @@ class AppShell extends StatelessWidget {
             semanticLabel: 'Aba Início',
           ),
           TwoGoBottomNavigationItem(
-            // Outlined suitcase (Material card_travel).
-            icon: Icon(Icons.card_travel_outlined),
-            selectedIcon: Icon(Icons.card_travel),
+            // Rolling suitcase (Material luggage) — card_travel reads as basket.
+            icon: Icon(Icons.luggage_outlined),
+            selectedIcon: Icon(Icons.luggage),
             label: 'Viagens',
             semanticLabel: 'Aba Viagens',
           ),

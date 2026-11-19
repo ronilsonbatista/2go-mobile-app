@@ -17,7 +17,9 @@ class BudgetStepContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TwoGoSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: FormCourseTokens.pageGutter,
+      ),
       child: Column(
         children: [
           for (final option in PlanningBudgetOption.options) ...[
@@ -26,7 +28,7 @@ class BudgetStepContent extends StatelessWidget {
               selected: selectedBudgetLevel == option.rawValue,
               onTap: () => onSelectBudgetLevel(option.rawValue),
             ),
-            const SizedBox(height: TwoGoSpacing.sm),
+            const SizedBox(height: FormCourseTokens.interestRowGap),
           ],
           const SizedBox(height: TwoGoSpacing.lg),
         ],
@@ -50,17 +52,17 @@ class _StyleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: FormCourseTokens.surface,
-      borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+      borderRadius: BorderRadius.circular(FormCourseTokens.rowCardRadius),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+        borderRadius: BorderRadius.circular(FormCourseTokens.rowCardRadius),
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: TwoGoSpacing.md,
             vertical: TwoGoSpacing.md,
           ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+            borderRadius: BorderRadius.circular(FormCourseTokens.rowCardRadius),
             border: Border.all(
               color: selected
                   ? FormCourseTokens.lime

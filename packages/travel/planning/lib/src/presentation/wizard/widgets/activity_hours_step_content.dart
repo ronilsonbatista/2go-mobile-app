@@ -31,7 +31,9 @@ class ActivityHoursStepContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TwoGoSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: FormCourseTokens.pageGutter,
+      ),
       child: Column(
         children: [
           _HoursCard(
@@ -80,7 +82,7 @@ class _HoursCard extends StatelessWidget {
       padding: const EdgeInsets.all(TwoGoSpacing.md),
       decoration: BoxDecoration(
         color: FormCourseTokens.surface,
-        borderRadius: BorderRadius.circular(TwoGoRadius.large),
+        borderRadius: BorderRadius.circular(FormCourseTokens.cardRadius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

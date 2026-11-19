@@ -28,8 +28,11 @@ class TravelersStepContent extends StatelessWidget {
             min: 1,
             onChanged: (val) => onChanged(travelers.copyWith(adults: val)),
           ),
-          // Course Age PDF: generous row separation (~24–28).
-          const Divider(color: FormCourseTokens.summaryCard, height: 28),
+          // Course Age PDF: circle-center pitch ≈ 92pt → divider 44 with 48 touch.
+          const Divider(
+            color: FormCourseTokens.summaryCard,
+            height: FormCourseTokens.travelerRowDividerHeight,
+          ),
           _TravelerRow(
             label: 'Crianças',
             subtitle: 'Menos de 12 anos',
@@ -37,7 +40,10 @@ class TravelersStepContent extends StatelessWidget {
             min: 0,
             onChanged: (val) => onChanged(travelers.copyWith(children: val)),
           ),
-          const Divider(color: FormCourseTokens.summaryCard, height: 28),
+          const Divider(
+            color: FormCourseTokens.summaryCard,
+            height: FormCourseTokens.travelerRowDividerHeight,
+          ),
           _TravelerRow(
             label: 'Idosos',
             subtitle: 'Mais de 65 anos',
