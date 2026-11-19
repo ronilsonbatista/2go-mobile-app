@@ -40,8 +40,8 @@ class PlanningStepHeader extends StatelessWidget {
                 customBorder: const CircleBorder(),
                 onTap: onBack,
                 child: const SizedBox(
-                  width: 40,
-                  height: 40,
+                  width: FormCourseTokens.backCircleSize,
+                  height: FormCourseTokens.backCircleSize,
                   child: Icon(
                     Icons.chevron_left,
                     color: FormCourseTokens.ink,

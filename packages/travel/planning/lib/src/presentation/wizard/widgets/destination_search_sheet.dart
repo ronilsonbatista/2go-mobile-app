@@ -147,7 +147,10 @@ class _DestinationSearchSheetState extends State<DestinationSearchSheet> {
         final place = _results[index];
         return ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: PlaceThumb(iconUrl: place.iconUrl),
+          leading: PlaceThumb(
+            iconUrl: place.iconUrl,
+            placeName: place.name,
+          ),
           title: Text(
             place.name,
             style: TwoGoTypography.titleMedium.copyWith(

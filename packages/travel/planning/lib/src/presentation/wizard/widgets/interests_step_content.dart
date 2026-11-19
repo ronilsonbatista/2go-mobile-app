@@ -40,7 +40,9 @@ class InterestsStepContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TwoGoSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: FormCourseTokens.pageGutter,
+      ),
       child: Column(
         children: [
           for (final interest in PlanningInterest.values) ...[
@@ -50,7 +52,7 @@ class InterestsStepContent extends StatelessWidget {
               selected: selectedInterests.contains(interest),
               onTap: () => onToggleInterest(interest),
             ),
-            const SizedBox(height: TwoGoSpacing.sm),
+            const SizedBox(height: FormCourseTokens.interestRowGap),
           ],
           const SizedBox(height: TwoGoSpacing.lg),
         ],
@@ -78,17 +80,17 @@ class _InterestRow extends StatelessWidget {
       color: selected
           ? FormCourseTokens.interestSelectedFill
           : FormCourseTokens.surface,
-      borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+      borderRadius: BorderRadius.circular(FormCourseTokens.rowCardRadius),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+        borderRadius: BorderRadius.circular(FormCourseTokens.rowCardRadius),
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: TwoGoSpacing.md,
             vertical: TwoGoSpacing.md,
           ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+            borderRadius: BorderRadius.circular(FormCourseTokens.rowCardRadius),
             border: Border.all(
               color: selected
                   ? FormCourseTokens.lime

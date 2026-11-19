@@ -23,19 +23,25 @@ class PlanningStepFooter extends StatelessWidget {
       top: false,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: TwoGoSpacing.md,
+          horizontal: FormCourseTokens.pageGutter,
           vertical: TwoGoSpacing.sm,
         ),
         child: SizedBox(
           width: double.infinity,
           height: 56,
+          // Keep lime fill while loading so the spinner never reads as a
+          // broken glyph on the grey disabled surface (iPhone 16 Revisao QA).
           child: FilledButton(
             onPressed: enabled && !loading ? onPressed : null,
             style: FilledButton.styleFrom(
               backgroundColor: FormCourseTokens.lime,
-              disabledBackgroundColor: FormCourseTokens.disabledButton,
+              disabledBackgroundColor: loading
+                  ? FormCourseTokens.lime
+                  : FormCourseTokens.disabledButton,
               foregroundColor: FormCourseTokens.black,
-              disabledForegroundColor: FormCourseTokens.disabledLabel,
+              disabledForegroundColor: loading
+                  ? FormCourseTokens.black
+                  : FormCourseTokens.disabledLabel,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(TwoGoRadius.full),
               ),
@@ -47,7 +53,10 @@ class PlanningStepFooter extends StatelessWidget {
                 ? const SizedBox(
                     width: 22,
                     height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: FormCourseTokens.black,
+                    ),
                   )
                 : Text(buttonText),
           ),

@@ -24,14 +24,19 @@ class DestinationsStepContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TwoGoSpacing.md),
+      // Match course PDF page gutter (Form Onde / Age frames).
+      padding: const EdgeInsets.symmetric(
+        horizontal: FormCourseTokens.pageGutter,
+      ),
       child: Column(
         children: [
           ...destinations.asMap().entries.map((entry) {
             final index = entry.key;
             final dest = entry.value;
             return Padding(
-              padding: const EdgeInsets.only(bottom: TwoGoSpacing.md),
+              padding: const EdgeInsets.only(
+                bottom: FormCourseTokens.sectionGap,
+              ),
               child: DestinationCardWidget(
                 index: index,
                 destination: dest,

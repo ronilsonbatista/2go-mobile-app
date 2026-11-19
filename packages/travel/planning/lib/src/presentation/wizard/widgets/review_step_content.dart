@@ -11,12 +11,12 @@ import 'place_thumb.dart';
 
 /// Course Revisao 6/6 — layout aligned to design PDF/ref (a050f580).
 ///
-/// Spacing / radius notes vs prior sim (799f3fba):
-/// - Card radius 12 (was 16) to match course grey cards
-/// - Label→card gap 8; section gutter 16; side-by-side card gutter 12
+/// Spacing / radius notes vs iPhone 16 live QA + design prints:
+/// - Page gutter 24 (was 16 + CenteredContent 24 ≈ 40 — too tight vs design)
+/// - Card radius 12; label→card 8; section gap 12; side-by-side gutter 12
 /// - Viajantes / Estilo equal-height stretched cards
 /// - Destino thumb via [PlaceThumb] (photo or Core SVG pin — never [?])
-/// - Interests rows: 12px vertical padding
+/// - Interests rows: 12px vertical gap
 class ReviewStepContent extends StatelessWidget {
   final List<PlanningDestination> destinations;
   final PlanningTravelers travelers;
@@ -321,6 +321,7 @@ class _DestinationSummary extends StatelessWidget {
             // Never show broken Material tofu as the Destino thumb.
             PlaceThumb(
               iconUrl: destination.coverImage,
+              placeName: destination.name,
               size: FormCourseTokens.destinoThumbSize,
               borderRadius: FormCourseTokens.thumbRadius,
             ),

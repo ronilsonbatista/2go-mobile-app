@@ -9,36 +9,46 @@ void main() {
     return MaterialApp(home: Scaffold(body: Center(child: child)));
   }
 
-  testWidgets('null iconUrl shows outlined location pin (not empty)', (
+  testWidgets('null iconUrl without name shows outlined location pin', (
     tester,
   ) async {
     await tester.pumpWidget(wrap(const PlaceThumb()));
     expect(find.byIcon(Icons.location_on_outlined), findsOneWidget);
   });
 
-  testWidgets('Core city.svg iconUrl maps to tinted location pin', (
+  testWidgets('Roma placeName uses curated monument asset (not pin)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(const PlaceThumb(placeName: 'Roma')),
+    );
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.byIcon(Icons.location_on_outlined), findsNothing);
+    expect(find.byIcon(Icons.location_on), findsNothing);
+  });
+
+  testWidgets('Core city.svg with Paris name prefers curated photo', (
     tester,
   ) async {
     await tester.pumpWidget(
       wrap(
         const PlaceThumb(
-          iconUrl:
-              'https://core-api.example/static/place-icons/city.svg',
+          iconUrl: 'https://core-api.example/static/place-icons/city.svg',
+          placeName: 'Paris',
         ),
       ),
     );
-    expect(find.byIcon(Icons.location_on), findsOneWidget);
-    expect(find.byIcon(Icons.location_on_outlined), findsNothing);
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.byIcon(Icons.location_on), findsNothing);
   });
 
-  testWidgets('region.svg does not mis-detect as place via place-icons path', (
+  testWidgets('region.svg without name falls back to tinted pin', (
     tester,
   ) async {
     await tester.pumpWidget(
       wrap(
         const PlaceThumb(
-          iconUrl:
-              'http://core-api.example/static/place-icons/region.svg',
+          iconUrl: 'http://core-api.example/static/place-icons/region.svg',
         ),
       ),
     );
