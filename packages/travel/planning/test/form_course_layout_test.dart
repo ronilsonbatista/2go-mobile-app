@@ -169,6 +169,8 @@ void main() {
     expect(find.text('Principais interesses'), findsOneWidget);
     expect(find.text('🍲'), findsOneWidget);
     expect(find.text('Gastronomia'), findsOneWidget);
+    // Destino thumb is PlaceThumb (photo / SVG pin), never a lone broken Icon.
+    expect(find.byType(PlaceThumb), findsOneWidget);
   });
 
   testWidgets('confirm dialog Continuar/Cancelar before finalize', (
