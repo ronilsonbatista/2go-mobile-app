@@ -63,7 +63,7 @@ class PlanningStepHeader extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: TwoGoSpacing.md),
+        const SizedBox(height: FormCourseTokens.headerTitleGap),
         Text(
           title,
           style: TwoGoTypography.headlineMedium.copyWith(

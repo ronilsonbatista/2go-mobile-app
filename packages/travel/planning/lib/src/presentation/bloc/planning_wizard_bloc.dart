@@ -142,10 +142,10 @@ class PlanningWizardBloc
         ? localDraft.destinations!.map(PlanningDestination.fromJson).toList()
         : (journey?.destinations ?? state.destinations);
 
-    final travelers =
-        localDraft != null && matchesJourney && localDraft.travelers != null
-        ? PlanningTravelers.fromJson(localDraft.travelers!)
-        : (journey?.travelers ?? state.travelers);
+    final travelers = _resolveTravelers(
+      localDraft: matchesJourney ? localDraft : null,
+      journey: journey,
+    );
 
     final interests =
         localDraft != null && matchesJourney && localDraft.interests != null
@@ -242,23 +242,14 @@ class PlanningWizardBloc
     Emitter<PlanningWizardState> emit,
   ) async {
     final updated = List<PlanningDestination>.from(state.destinations);
-    final lastDest = updated.isNotEmpty ? updated.last : null;
 
-    DateTime nextArrival = DateTime.now().add(const Duration(days: 7));
-    if (lastDest != null && lastDest.departureDate.isNotEmpty) {
-      final parsedDep = DateTime.tryParse(lastDest.departureDate);
-      if (parsedDep != null) {
-        nextArrival = parsedDep.add(const Duration(days: 1));
-      }
-    }
-    final nextDeparture = nextArrival.add(const Duration(days: 4));
-
+    // Extra destinations also start empty (Selecionar) — user picks dates.
     updated.add(
       PlanningDestination(
         name: '',
-        arrivalDate: nextArrival.toIso8601String().split('T').first,
+        arrivalDate: '',
         arrivalTime: '09:00',
-        departureDate: nextDeparture.toIso8601String().split('T').first,
+        departureDate: '',
         departureTime: '18:00',
         order: updated.length,
       ),
@@ -357,73 +348,106 @@ class PlanningWizardBloc
     );
   }
 
+  PlanningTravelers _resolveTravelers({
+    required PlanningDraft? localDraft,
+    GuestJourney? journey,
+  }) {
+    if (localDraft?.travelers != null) {
+      final parsed = PlanningTravelers.fromJson(localDraft!.travelers!);
+      // Never leave Age at 0 adultos — product default is 1 adult.
+      if (parsed.total == 0) {
+        return const PlanningTravelers(adults: 1);
+      }
+      return parsed;
+    }
+    final fromJourney = journey?.travelers;
+    if (fromJourney != null && fromJourney.total > 0) {
+      return fromJourney;
+    }
+    return state.travelers.total > 0
+        ? state.travelers
+        : const PlanningTravelers(adults: 1);
+  }
+
   Future<void> _onFinalize(
     FinalizeWizardEvent event,
     Emitter<PlanningWizardState> emit,
   ) async {
     emit(state.copyWith(status: PlanningWizardStatus.submitting));
 
-    await _persistLocalDraft(currentStep: state.currentStep);
+    try {
+      await _persistLocalDraft(currentStep: state.currentStep);
 
-    var journeyId = state.journey?.id ?? state.draft?.activeJourneyId;
-    if (journeyId == null || journeyId.isEmpty) {
-      final createResult = await _createUseCase();
-      final created = createResult.getOrNull();
-      if (created == null) {
+      var journeyId = state.journey?.id ?? state.draft?.activeJourneyId;
+      if (journeyId == null || journeyId.isEmpty) {
+        final createResult = await _createUseCase();
+        final created = createResult.getOrNull();
+        if (created == null) {
+          emit(
+            state.copyWith(
+              status: PlanningWizardStatus.failure,
+              errorMessage:
+                  createResult.exceptionOrNull()?.message ??
+                  'Falha ao criar jornada',
+            ),
+          );
+          return;
+        }
+        journeyId = created.id;
+        // createUseCase resets draft metadata — rewrite full local answers.
+        await _persistLocalDraft(currentStep: state.currentStep, isDirty: true);
+        emit(state.copyWith(journey: created));
+      }
+
+      // Single submit path: push full draft, then finalize.
+      final saveResult = await _saveUseCase(
+        journeyId: journeyId,
+        currentStep: state.currentStep,
+        destinations: state.destinations,
+        travelers: state.travelers,
+        interests: state.interests,
+        activityWindow: state.activityWindow,
+        budgetLevel: state.budgetLevel,
+      );
+
+      if (saveResult.isFailure) {
         emit(
           state.copyWith(
             status: PlanningWizardStatus.failure,
+            isDirty: true,
             errorMessage:
-                createResult.exceptionOrNull()?.message ??
-                'Falha ao criar jornada',
+                saveResult.exceptionOrNull()?.message ??
+                'Não foi possível salvar o roteiro',
           ),
         );
         return;
       }
-      journeyId = created.id;
-      // createUseCase resets draft metadata — rewrite full local answers.
-      await _persistLocalDraft(currentStep: state.currentStep, isDirty: true);
-      emit(state.copyWith(journey: created));
-    }
 
-    // Single submit path: push full draft, then finalize.
-    final saveResult = await _saveUseCase(
-      journeyId: journeyId,
-      currentStep: state.currentStep,
-      destinations: state.destinations,
-      travelers: state.travelers,
-      interests: state.interests,
-      activityWindow: state.activityWindow,
-      budgetLevel: state.budgetLevel,
-    );
-
-    if (saveResult.isFailure) {
+      final result = await _finalizeUseCase(journeyId);
+      result.fold(
+        (finalizedJourney) => emit(
+          state.copyWith(
+            status: PlanningWizardStatus.finalized,
+            journey: finalizedJourney,
+            isDirty: false,
+          ),
+        ),
+        (failure) => emit(
+          state.copyWith(
+            status: PlanningWizardStatus.failure,
+            errorMessage: failure.message,
+          ),
+        ),
+      );
+    } catch (error) {
+      // Never leave Continuar spinning — surface API/parse failures as toast.
       emit(
         state.copyWith(
           status: PlanningWizardStatus.failure,
-          isDirty: true,
-          errorMessage: saveResult.exceptionOrNull()?.message,
+          errorMessage: error.toString(),
         ),
       );
-      return;
     }
-
-    final result = await _finalizeUseCase(journeyId);
-    result.fold(
-      (finalizedJourney) => emit(
-        state.copyWith(
-          status: PlanningWizardStatus.finalized,
-          journey: finalizedJourney,
-          isDirty: false,
-        ),
-      ),
-      (failure) => emit(
-        state.copyWith(
-          status: PlanningWizardStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
-    );
   }
 
   void _onPreviousStep(

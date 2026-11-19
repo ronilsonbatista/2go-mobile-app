@@ -30,8 +30,21 @@ abstract final class FormCourseTokens {
   static const double destinoThumbSize = 56;
 
   /// Horizontal page gutter (cards + Continuar). Design prints ≈ 23.4–24.4pt.
-  /// Prior token 16 left content too tight vs Onde / Interesses / Revisao a050.
+  /// Fixed on every phone — do not derive from screen width / maxWidth math.
   static const double pageGutter = 24;
+
+  /// Vertical gap between progress row (back/plane) and step title.
+  /// Design prints leave more air than TwoGoSpacing.md (16).
+  static const double headerTitleGap = 28;
+
+  /// Course confirm / delete sheet corner radius.
+  static const double sheetRadius = 24;
+
+  /// Top padding inside course sheets (below safe area handle zone).
+  static const double sheetTopPadding = 8;
+
+  /// Right inset so the X sits inside the sheet without eating title space.
+  static const double sheetCloseInset = 8;
 
   /// Gap between section label and its card.
   static const double labelToCardGap = 8;

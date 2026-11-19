@@ -29,10 +29,9 @@ class HomePage extends StatelessWidget {
   }
 
   Future<void> _createItinerary(BuildContext context) async {
-    final current = homeCubit.state.currentDestination;
-    if (current != null) {
-      await _persistDestination(current);
-    }
+    // Onde starts EMPTY (no city/dates). Strip taps may still seed a city
+    // without dates; CTA always opens a blank first destination.
+    await seedHomeDestinationDraft.startEmpty();
     if (!context.mounted) return;
     // Push on the root navigator so Q&A covers AppShell (no tab bar).
     context.push('/planning/wizard');

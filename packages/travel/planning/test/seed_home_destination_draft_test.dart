@@ -33,14 +33,29 @@ void main() {
       expect(destination.country, 'Turquia');
       expect(destination.coverImage, 'https://cdn.example/capadocia.jpg');
       expect(destination.providerPlaceId, 'places/ChIJcapadocia');
-      expect(destination.arrivalDate, '2026-11-25');
-      expect(destination.departureDate, '2026-11-29');
+      // Dates stay empty until the user picks them on Onde.
+      expect(destination.arrivalDate, isEmpty);
+      expect(destination.departureDate, isEmpty);
+      expect(draft.travelers?['adults'], 1);
 
       final stored = await draftStorage.readDraft();
       expect(stored?.destinations?.first['name'], 'Capadócia');
       expect(stored?.destinations?.first['providerPlaceId'],
           'places/ChIJcapadocia');
       expect(stored?.activeJourneyId, isNull);
+      expect(stored?.travelers?['adults'], 1);
+    });
+
+    test('startEmpty clears city/dates and defaults 1 adulto', () async {
+      final draft = await useCase.startEmpty();
+      expect(draft.destinations, hasLength(1));
+      final destination =
+          PlanningDestination.fromJson(draft.destinations!.first);
+      expect(destination.name, isEmpty);
+      expect(destination.arrivalDate, isEmpty);
+      expect(destination.departureDate, isEmpty);
+      expect(draft.travelers?['adults'], 1);
+      expect(draft.activeJourneyId, isNull);
     });
 
     test('omits providerPlaceId from draft when Home field is absent', () async {

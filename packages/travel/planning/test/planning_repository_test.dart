@@ -93,12 +93,31 @@ class FakePlanningApiClient implements PlanningApiClient {
     return s;
   }
 
+  bool failUpdateWithListMessage = false;
+
   @override
   Future<PlanningSessionResponseDto> updateProgress(
     String id,
     UpdatePlanningSessionDto dto, {
     required String guestToken,
   }) async {
+    if (failUpdateWithListMessage) {
+      throw DioException(
+        requestOptions: RequestOptions(path: '/planning-sessions/$id'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/planning-sessions/$id'),
+          statusCode: 400,
+          data: {
+            'code': 'PLANNING_INVALID_DESTINATIONS',
+            // Live Core ~16:14–16:17 returned message as List — crashed _mapError.
+            'message': [
+              'destinations.0.providerPlaceId is required',
+              'invalid dates',
+            ],
+          },
+        ),
+      );
+    }
     if (failUpdate) {
       throw DioException(
         requestOptions: RequestOptions(path: '/planning-sessions/$id'),
@@ -385,6 +404,31 @@ void main() {
         expect(
           finalizeRes.getOrNull()!.status,
           GuestJourneyStatus.readyToGenerate,
+        );
+      },
+    );
+
+    test(
+      'updateJourney maps List message without crashing (Continuar spinner bug)',
+      () async {
+        await credentialStorage.saveGuestToken(
+          journeyId: 'journey-123',
+          guestToken: 'secret-token-abc',
+        );
+        await apiClient.createSession(const CreatePlanningSessionDto());
+        apiClient.failUpdateWithListMessage = true;
+
+        final updateRes = await repository.updateJourney(
+          journeyId: 'journey-123',
+          currentStep: 6,
+        );
+
+        expect(updateRes.isFailure, isTrue);
+        final failure = updateRes.exceptionOrNull();
+        expect(failure, isA<InvalidPlanningDataFailure>());
+        expect(
+          failure!.message,
+          contains('destinations.0.providerPlaceId is required'),
         );
       },
     );
