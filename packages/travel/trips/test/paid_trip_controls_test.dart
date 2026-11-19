@@ -361,32 +361,46 @@ void main() {
     expect(find.text('10:00'), findsNothing);
   });
 
-  testWidgets('verified details show only returned fields', (tester) async {
+  testWidgets('Detalhes opens sheet then full page with verified fields', (
+    tester,
+  ) async {
     final repository = _ScriptedTripsRepository([_trip()]);
-    await _pumpHandoff(tester, repository);
-    await tester.tap(find.text('Detalhes'));
-    await _settleSheet(tester);
-    expect(find.text('Sem detalhes verificados'), findsOneWidget);
-    expect(find.textContaining('Avaliação'), findsNothing);
-
-    Navigator.of(tester.element(find.text('Sem detalhes verificados'))).pop();
-    await _settleSheet(tester);
-
     repository.details = const VerifiedPlaceDetails(
       name: 'Castelo de São Jorge',
       rating: 4.6,
       priceLevel: '2',
+      priceLevelDisplay: '\$\$',
       googleMapsUri: 'https://maps.example/castelo',
+      openingHoursText: '09:00-18:00',
+      // No network photoUri / lat-lng in widget tests (HttpClient stubbed 400).
+      reviews: [
+        PlaceReview(
+          authorName: 'Rachel Mendonça',
+          rating: 4,
+          text: 'Experiência incrível',
+        ),
+      ],
     );
+    await _pumpHandoff(tester, repository);
     await tester.tap(find.text('Detalhes'));
     await _settleSheet(tester);
 
-    expect(find.text('Nome: Castelo de São Jorge'), findsOneWidget);
-    expect(find.text('Avaliação: 4.6'), findsOneWidget);
-    expect(find.text('Nível de preço: 2'), findsOneWidget);
-    expect(find.text('https://maps.example/castelo'), findsOneWidget);
-    expect(find.textContaining('Telefone'), findsNothing);
-    expect(find.textContaining('Site'), findsNothing);
+    expect(find.text('Mostrar detalhes'), findsOneWidget);
+    expect(find.text('Ajustar duração'), findsOneWidget);
+    expect(find.text('Castelo de São Jorge'), findsWidgets);
+
+    await tester.tap(find.text('Mostrar detalhes'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Detalhes'), findsWidgets);
+    expect(find.text('Castelo de São Jorge'), findsWidgets);
+    expect(find.text('4.6'), findsOneWidget);
+    expect(find.text('\$\$'), findsWidgets);
+    expect(find.text('09:00-18:00'), findsOneWidget);
+    expect(find.text('Avaliações'), findsOneWidget);
+    expect(find.text('Rachel Mendonça'), findsOneWidget);
+    expect(find.text('Substituir atração'), findsOneWidget);
+    expect(find.text('Excluir'), findsOneWidget);
   });
 
   testWidgets('pin meal sends no invented cost and can filter by item period', (
