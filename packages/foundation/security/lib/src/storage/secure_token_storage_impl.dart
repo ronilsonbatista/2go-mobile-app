@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../contracts/token_storage.dart';
 import '../models/auth_tokens.dart';
+import 'secure_storage_options.dart';
 
 class SecureTokenStorageImpl implements TokenStorage {
   static const String _accessTokenKey = '2go_secure_access_token';
@@ -13,10 +14,8 @@ class SecureTokenStorageImpl implements TokenStorage {
     : _storage =
           storage ??
           const FlutterSecureStorage(
-            aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            iOptions: IOSOptions(
-              accessibility: KeychainAccessibility.first_unlock,
-            ),
+            aOptions: TwogoSecureStorageOptions.android,
+            iOptions: TwogoSecureStorageOptions.ios,
           );
 
   @override

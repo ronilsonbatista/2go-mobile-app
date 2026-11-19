@@ -1,5 +1,6 @@
 import 'package:twogo_core/twogo_core.dart';
 import 'package:twogo_security/twogo_security.dart';
+import '../domain/failures/planning_failures.dart';
 import '../domain/models/guest_journey.dart';
 import '../domain/models/planning_draft.dart';
 import '../domain/repositories/planning_draft_storage.dart';
@@ -28,10 +29,20 @@ class CreatePlanningJourneyUseCase {
     );
 
     return result.fold((created) async {
-      await _credentialStorage.saveGuestToken(
-        journeyId: created.journey.id,
-        guestToken: created.guestToken,
-      );
+      try {
+        await _credentialStorage.saveGuestToken(
+          journeyId: created.journey.id,
+          guestToken: created.guestToken,
+        );
+      } catch (error) {
+        // GuestJourneyCredentialStorageImpl already absorbs Keychain -34018 into
+        // an in-memory session cache; any remaining throw must not crash finalize.
+        return Result.failure(
+          UnknownPlanningFailure(
+            'Falha ao persistir credencial da jornada: $error',
+          ),
+        );
+      }
 
       // Preserve local Q&A answers (e.g. Home → users-defaults destination)
       // instead of wiping the draft when a guest session is created.

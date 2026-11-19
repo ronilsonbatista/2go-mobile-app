@@ -30,6 +30,14 @@ Device/Archive (iphoneos) keep normal Xcode signing and entitlements.
 `SecureTokenStorageImpl` also tolerates missing keychain entitlements on Simulator
 unsigned builds so bootstrap never dies on PlatformException -34018.
 
+`GuestJourneyCredentialStorageImpl` keeps an in-process memory fallback for the same
+-34018 case so Revisao → Continuar (CreatePlanningJourney) can still persist the
+guest token for the session. Keychain Sharing is enabled via
+`apps/mobile_app/ios/Runner/Runner.entitlements` (`CODE_SIGN_ENTITLEMENTS` on
+Debug/Profile/Release). The Xcode phase **Sign Simulator Keychain Entitlements**
+and `ios_sim_resign.sh` ad-hoc sign Simulator `Runner.app` with that entitlements
+file so FlutterSecureStorage Keychain writes succeed when signing is restored.
+
 ## Components
 - `tools/bin/codesign` — local shim that strips xattrs then calls `/usr/bin/codesign`
 - `tools/scripts/flutter_ios_sim.sh` — opt-in Simulator runner (requires env flag)
