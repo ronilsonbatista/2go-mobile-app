@@ -66,6 +66,7 @@ export 'src/presentation/wizard/widgets/form_asset_placeholder.dart';
 export 'src/presentation/wizard/widgets/form_course_icons.dart';
 export 'src/presentation/wizard/widgets/interests_step_content.dart';
 export 'src/presentation/wizard/widgets/planning_confirmation_sheet.dart';
+export 'src/presentation/wizard/widgets/planning_course_sheet.dart';
 export 'src/presentation/wizard/widgets/planning_step_footer.dart';
 export 'src/presentation/wizard/widgets/planning_step_header.dart';
 export 'src/presentation/wizard/widgets/review_step_content.dart';

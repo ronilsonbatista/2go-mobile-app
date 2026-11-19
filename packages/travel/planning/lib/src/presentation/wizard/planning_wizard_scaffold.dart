@@ -42,9 +42,10 @@ class PlanningWizardScaffold extends StatelessWidget {
       // Product rule: Form Course has no app tab bar (Início/Viagens/…).
       bottomNavigationBar: null,
       body: SafeArea(
-        // TwoGoCenteredContent defaults to horizontal lg (24). Combined with
-        // FormCourseTokens.pageGutter that doubled the side inset to ~40pt on
-        // iPhone 16 (live Revisao QA). Own gutters via pageGutter only.
+        // Fixed ~24pt gutters via FormCourseTokens.pageGutter only.
+        // padding: EdgeInsets.zero avoids doubling with TwoGoCenteredContent's
+        // default horizontal lg. maxWidth is a soft cap — phones stay full-bleed
+        // with fixed gutters (no dynamic expansion).
         child: TwoGoCenteredContent(
           maxWidth: 600,
           padding: EdgeInsets.zero,

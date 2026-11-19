@@ -277,6 +277,21 @@ void main() {
       expect(bloc.state.currentStep, 5);
     });
 
+    test('step 1 valid when dest name + dates set (placeId optional)', () {
+      final state = PlanningWizardState(
+        destinations: const [
+          PlanningDestination(
+            name: 'Roma',
+            arrivalDate: '2026-07-25',
+            arrivalTime: '09:00',
+            departureDate: '2026-07-28',
+            departureTime: '23:00',
+          ),
+        ],
+      );
+      expect(state.isStep1Valid, isTrue);
+    });
+
     test('step 1 valid when Home seeded real providerPlaceId', () {
       final state = PlanningWizardState(
         destinations: const [
@@ -302,6 +317,22 @@ void main() {
             arrivalDate: '2026-07-25',
             arrivalTime: '09:00',
             departureDate: '2026-07-28',
+            departureTime: '23:00',
+          ),
+        ],
+      );
+      expect(state.isStep1Valid, isFalse);
+    });
+
+    test('step 1 invalid when dates missing even with name', () {
+      final state = PlanningWizardState(
+        destinations: const [
+          PlanningDestination(
+            providerPlaceId: 'ChIJu46S-ZZhLxMROG5lkwZ3D7k',
+            name: 'Roma',
+            arrivalDate: '',
+            arrivalTime: '09:00',
+            departureDate: '',
             departureTime: '23:00',
           ),
         ],

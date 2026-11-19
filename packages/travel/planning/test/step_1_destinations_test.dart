@@ -103,13 +103,17 @@ void main() {
       expect(bloc.state.isStep1Valid, isFalse);
     });
 
-    test('adds destination and re-indexes order 0..N', () async {
+    test('adds destination empty (no city/dates) and re-indexes order 0..N',
+        () async {
       bloc.add(const AddDestinationEvent());
       await Future<void>.delayed(Duration.zero);
 
       expect(bloc.state.destinations.length, 2);
       expect(bloc.state.destinations[0].order, 0);
       expect(bloc.state.destinations[1].order, 1);
+      expect(bloc.state.destinations[1].name, isEmpty);
+      expect(bloc.state.destinations[1].arrivalDate, isEmpty);
+      expect(bloc.state.destinations[1].departureDate, isEmpty);
     });
 
     test(

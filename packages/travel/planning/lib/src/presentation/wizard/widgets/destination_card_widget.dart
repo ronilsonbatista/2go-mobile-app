@@ -5,6 +5,7 @@ import '../../../domain/models/planning_destination.dart';
 import '../form_course_tokens.dart';
 import 'destination_search_sheet.dart';
 import 'place_thumb.dart';
+import 'planning_course_sheet.dart';
 
 class DestinationCardWidget extends StatelessWidget {
   final int index;
@@ -113,27 +114,30 @@ class DestinationCardWidget extends StatelessWidget {
     }
   }
 
-  String _formatPtDateTime(String isoDate, String time) {
+  Future<void> _confirmRemove(BuildContext context) async {
+    if (onRemove == null) return;
+    final confirmed = await PlanningCourseSheet.show(
+      context,
+      title: 'Deseja realmente excluir?',
+      body: 'Este destino será removido do roteiro.',
+      confirmLabel: 'Excluir',
+      cancelLabel: 'Cancelar',
+    );
+    if (confirmed == true) {
+      onRemove!();
+    }
+  }
+
+  /// Short course date: `26/11` (+ optional compact time).
+  String _formatShortDateTime(String isoDate, String time) {
     if (isoDate.isEmpty) return 'Selecionar';
     final dt = DateTime.tryParse(isoDate);
     if (dt == null) return 'Selecionar';
-    const months = [
-      'janeiro',
-      'fevereiro',
-      'março',
-      'abril',
-      'maio',
-      'junho',
-      'julho',
-      'agosto',
-      'setembro',
-      'outubro',
-      'novembro',
-      'dezembro',
-    ];
-    final month = months[dt.month - 1];
-    final t = time.isEmpty ? '' : ' - ${_formatTimeDisplay(time)}';
-    return '${dt.day} de $month$t';
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final datePart = '$day/$month';
+    if (time.trim().isEmpty) return datePart;
+    return '$datePart - ${_formatTimeDisplay(time)}';
   }
 
   String _formatTimeDisplay(String time) {
@@ -148,11 +152,11 @@ class DestinationCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasName = destination.name.trim().isNotEmpty;
-    final arrivalLabel = _formatPtDateTime(
+    final arrivalLabel = _formatShortDateTime(
       destination.arrivalDate,
       destination.arrivalTime,
     );
-    final departureLabel = _formatPtDateTime(
+    final departureLabel = _formatShortDateTime(
       destination.departureDate,
       destination.departureTime,
     );
@@ -167,9 +171,8 @@ class DestinationCardWidget extends StatelessWidget {
           _DestinationRow(
             label: 'Onde',
             trailing: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Flexible(
+                Expanded(
                   child: Text(
                     hasName ? destination.name : 'Selecionar',
                     maxLines: 1,
@@ -181,17 +184,20 @@ class DestinationCardWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: TwoGoSpacing.sm),
-                PlaceThumb(
-                  iconUrl: destination.coverImage,
-                  placeName: destination.name,
-                  size: 36,
-                ),
+                if (hasName) ...[
+                  const SizedBox(width: TwoGoSpacing.sm),
+                  PlaceThumb(
+                    iconUrl: destination.coverImage,
+                    placeName: destination.name,
+                    size: 36,
+                  ),
+                ],
+                // Trash only when ≥2 destinations (never on the sole first row).
                 if (canRemove) ...[
                   const SizedBox(width: TwoGoSpacing.xs),
                   TwoGoIconButton(
                     icon: TwoGoIcons.trash,
-                    onPressed: onRemove,
+                    onPressed: () => _confirmRemove(context),
                     variant: TwoGoIconButtonVariant.ghost,
                   ),
                 ],
@@ -277,12 +283,12 @@ class _DestinationRow extends StatelessWidget {
                 color: FormCourseTokens.label,
               ),
             ),
-            const Spacer(),
-            Flexible(child: trailing),
+            const SizedBox(width: TwoGoSpacing.sm),
+            // Thumb / dates occupy the remaining width and sit flush right.
+            Expanded(child: trailing),
           ],
         ),
       ),
     );
   }
 }
-

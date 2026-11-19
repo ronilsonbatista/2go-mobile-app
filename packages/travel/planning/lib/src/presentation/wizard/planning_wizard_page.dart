@@ -89,14 +89,16 @@ class _PlanningWizardView extends StatelessWidget {
 
         if (state.status == PlanningWizardStatus.finalized) {
           final journeyId = state.journey?.id ?? state.draft?.activeJourneyId;
-          if (journeyId != null && onReadyToGenerate != null) {
-            onReadyToGenerate!(journeyId);
-          } else {
+          if (journeyId != null && journeyId.isNotEmpty) {
+            // confirm → Gerando (animate) → preview/pay. Never toast success.
+            if (onReadyToGenerate != null) {
+              onReadyToGenerate!(journeyId);
+            }
+          } else if (state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Jornada finalizada com sucesso! Pronta para geração por IA.',
-                ),
+              SnackBar(
+                content: Text(state.errorMessage!),
+                backgroundColor: TwoGoColors.feedbackError,
               ),
             );
           }
@@ -104,6 +106,7 @@ class _PlanningWizardView extends StatelessWidget {
 
         if (state.status == PlanningWizardStatus.failure &&
             state.errorMessage != null) {
+          // Show API error toast if POST fails — never leave spinner stuck.
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage!),

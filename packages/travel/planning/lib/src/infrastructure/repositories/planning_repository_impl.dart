@@ -201,9 +201,10 @@ class PlanningRepositoryImpl implements PlanningRepository {
   AppFailure _mapError(Object error) {
     if (error is DioException) {
       final data = error.response?.data;
-      if (data is Map<String, dynamic>) {
-        final code = data['code'] as String?;
-        final message = data['message'] as String? ?? 'Erro na requisição';
+      if (data is Map) {
+        final code = _asPlainString(data['code']);
+        final message =
+            _asPlainString(data['message']) ?? 'Erro na requisição';
 
         switch (code) {
           case 'PLANNING_JOURNEY_NOT_FOUND':
@@ -228,5 +229,25 @@ class PlanningRepositoryImpl implements PlanningRepository {
       );
     }
     return UnknownPlanningFailure(error.toString());
+  }
+
+  /// Core sometimes returns `message` as a List of validation strings.
+  /// Casting that to `String?` crashed finalize and left Continuar spinning.
+  static String? _asPlainString(Object? value) {
+    if (value == null) return null;
+    if (value is String) {
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? null : trimmed;
+    }
+    if (value is List) {
+      final parts = value
+          .map((e) => e?.toString().trim() ?? '')
+          .where((e) => e.isNotEmpty)
+          .toList();
+      if (parts.isEmpty) return null;
+      return parts.join(' ');
+    }
+    final fallback = value.toString().trim();
+    return fallback.isEmpty ? null : fallback;
   }
 }

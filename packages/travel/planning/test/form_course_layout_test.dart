@@ -218,6 +218,64 @@ void main() {
     );
     expect(find.text('Continuar'), findsOneWidget);
     expect(find.text('Cancelar'), findsOneWidget);
+    expect(find.byType(PlanningCourseSheet), findsOneWidget);
+  });
+
+  testWidgets('Onde dates render short dd/MM without truncation', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TwoGoTheme.light,
+        home: Scaffold(
+          body: DestinationCardWidget(
+            index: 0,
+            destination: const PlanningDestination(
+              providerPlaceId: 'ChIJu46S-ZZhLxMROG5lkwZ3D7k',
+              name: 'Roma',
+              arrivalDate: '2026-11-26',
+              arrivalTime: '09:00',
+              departureDate: '2026-11-30',
+              departureTime: '18:00',
+            ),
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('26/11 - 9:00'), findsOneWidget);
+    expect(find.text('30/11 - 18:00'), findsOneWidget);
+    expect(find.textContaining('novembro'), findsNothing);
+  });
+
+  testWidgets('delete sheet asks realmente excluir', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TwoGoTheme.light,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: TextButton(
+                onPressed: () => PlanningCourseSheet.show(
+                  context,
+                  title: 'Deseja realmente excluir?',
+                  body: 'Este destino será removido do roteiro.',
+                  confirmLabel: 'Excluir',
+                ),
+                child: const Text('open-delete'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open-delete'));
+    await tester.pumpAndSettle();
+    expect(find.text('Deseja realmente excluir?'), findsOneWidget);
+    expect(find.text('Excluir'), findsOneWidget);
+    expect(find.text('Cancelar'), findsOneWidget);
   });
 
   testWidgets('activity hours shows start/end chips', (tester) async {
