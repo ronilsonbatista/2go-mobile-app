@@ -1,5 +1,8 @@
+import '../entities/card_intent_result.dart';
 import '../entities/checkout_payment_result.dart';
 import '../entities/checkout_summary.dart';
+import '../entities/coupon_validation_result.dart';
+import '../entities/expire_purchase_result.dart';
 import '../entities/product_entity.dart';
 import '../entities/purchase_entity.dart';
 import '../entities/purchase_status_result.dart';
@@ -9,6 +12,10 @@ abstract class PaymentsRepository {
   Future<List<PurchaseEntity>> getMyPurchases();
   Future<CheckoutSummary> getCheckoutSummary(String tripId);
   Future<CheckoutSummary> getCheckoutQuote(String tripId, {String? couponCode});
+  Future<CouponValidationResult> validateCoupon(
+    String tripId, {
+    required String couponCode,
+  });
   Future<CheckoutPaymentResult> processCheckoutPayment({
     required String tripId,
     required String paymentMethod,
@@ -17,6 +24,12 @@ abstract class PaymentsRepository {
     int? installments,
     String? idempotencyKey,
   });
+  Future<CardIntentResult> createCardIntent({
+    required String tripId,
+    String? couponCode,
+    int? installments,
+  });
+  Future<ExpirePurchaseResult> expirePurchase(String purchaseId);
   Future<PurchaseStatusResult> getPurchaseStatus(String purchaseId);
   Future<PurchaseEntity> createMockPurchase({
     required String productId,

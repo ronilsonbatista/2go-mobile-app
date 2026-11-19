@@ -2,6 +2,22 @@ import 'package:app_roteiros_api/app_roteiros_api.dart';
 import '../../domain/entities/applied_coupon.dart';
 import '../../domain/entities/checkout_pricing.dart';
 import '../../domain/entities/checkout_summary.dart';
+import '../../domain/entities/payment_method_availability.dart';
+
+List<PaymentMethodAvailability> _mapAvailability(
+  List<PaymentMethodAvailabilityDto> items,
+) {
+  return items
+      .map(
+        (m) => PaymentMethodAvailability(
+          method: m.method,
+          available: m.available,
+          status: m.status,
+          reason: m.reason,
+        ),
+      )
+      .toList(growable: false);
+}
 
 extension CheckoutSummaryResponseDtoMapper on CheckoutSummaryResponseDto {
   CheckoutSummary toEntity() {
@@ -28,6 +44,7 @@ extension CheckoutSummaryResponseDtoMapper on CheckoutSummaryResponseDto {
             )
           : null,
       supportedPaymentMethods: supportedPaymentMethods,
+      paymentMethodAvailability: _mapAvailability(paymentMethodAvailability),
       existingPurchaseId: existingPurchaseId,
       existingPurchaseStatus: existingPurchaseStatus,
     );
@@ -59,6 +76,7 @@ extension CheckoutQuoteResponseDtoMapper on CheckoutQuoteResponseDto {
             )
           : null,
       supportedPaymentMethods: supportedPaymentMethods,
+      paymentMethodAvailability: _mapAvailability(paymentMethodAvailability),
       existingPurchaseId: existingPurchaseId,
       existingPurchaseStatus: existingPurchaseStatus,
     );

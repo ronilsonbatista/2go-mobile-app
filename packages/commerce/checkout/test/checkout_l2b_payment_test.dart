@@ -77,6 +77,62 @@ class MockPaymentsRepoForL2B implements PaymentsRepository {
     );
   }
 
+
+  @override
+  Future<CouponValidationResult> validateCoupon(
+    String tripId, {
+    required String couponCode,
+  }) async {
+    if (couponCode.toUpperCase() == 'INVALID' || couponCode.toUpperCase() == 'NOPE') {
+      return CouponValidationResult(
+        valid: false,
+        code: couponCode.toUpperCase(),
+        reason: 'Cupom inválido',
+        pricing: summary.pricing,
+      );
+    }
+    if (couponCode.trim().isEmpty) {
+      return CouponValidationResult(valid: false, reason: 'Informe um código de cupom', pricing: summary.pricing);
+    }
+    return CouponValidationResult(
+      valid: true,
+      code: couponCode.toUpperCase(),
+      pricing: CheckoutPricing(
+        originalAmount: summary.pricing.originalAmount,
+        discountAmount: 2.0,
+        finalAmount: summary.pricing.originalAmount - 2.0,
+        currency: summary.pricing.currency,
+      ),
+      coupon: AppliedCoupon(
+        code: couponCode.toUpperCase(),
+        applied: true,
+        discountType: 'FIXED',
+        discountValue: 2.0,
+      ),
+    );
+  }
+
+  @override
+  Future<CardIntentResult> createCardIntent({
+    required String tripId,
+    String? couponCode,
+    int? installments,
+  }) async {
+    return CardIntentResult(
+      intentId: 'card_intent_test',
+      tripId: tripId,
+      status: 'READY',
+      amount: summary.pricing.finalAmount,
+      currency: summary.pricing.currency,
+      clientSecret: 'stub',
+    );
+  }
+
+  @override
+  Future<ExpirePurchaseResult> expirePurchase(String purchaseId) async {
+    return ExpirePurchaseResult(purchaseId: purchaseId, status: 'EXPIRED');
+  }
+
   @override
   Future<List<ProductEntity>> getActiveProducts() async => [];
 

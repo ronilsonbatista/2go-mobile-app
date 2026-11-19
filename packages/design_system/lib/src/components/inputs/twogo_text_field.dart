@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radius.dart';
 import '../../tokens/spacing.dart';
@@ -24,6 +25,7 @@ class TwoGoTextField extends StatefulWidget {
   final int maxLines;
   final bool autofocus;
   final bool isSuccess;
+  final List<TextInputFormatter>? inputFormatters;
 
   TwoGoTextField({
     super.key,
@@ -47,6 +49,7 @@ class TwoGoTextField extends StatefulWidget {
     this.maxLines = 1,
     this.autofocus = false,
     this.isSuccess = false,
+    this.inputFormatters,
   }) : hint = hint ?? hintText,
        prefix =
            prefix ??
@@ -142,6 +145,7 @@ class _TwoGoTextFieldState extends State<TwoGoTextField> {
             autofocus: widget.autofocus,
             onChanged: widget.onChanged,
             onSubmitted: widget.onSubmitted,
+            inputFormatters: widget.inputFormatters,
             style: TwoGoTypography.bodyMedium.copyWith(
               color: widget.enabled
                   ? TwoGoColors.contentPrimary

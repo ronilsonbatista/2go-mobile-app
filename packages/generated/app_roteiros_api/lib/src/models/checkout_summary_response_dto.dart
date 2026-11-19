@@ -1,6 +1,7 @@
 import 'checkout_coupon_dto.dart';
 import 'checkout_pricing_dto.dart';
 import 'checkout_product_dto.dart';
+import 'payment_method_availability_dto.dart';
 
 class CheckoutSummaryResponseDto {
   final String tripId;
@@ -9,6 +10,7 @@ class CheckoutSummaryResponseDto {
   final CheckoutPricingDto pricing;
   final CheckoutCouponDto? coupon;
   final List<String> supportedPaymentMethods;
+  final List<PaymentMethodAvailabilityDto> paymentMethodAvailability;
   final String? existingPurchaseId;
   final String? existingPurchaseStatus;
 
@@ -19,6 +21,7 @@ class CheckoutSummaryResponseDto {
     required this.pricing,
     this.coupon,
     required this.supportedPaymentMethods,
+    this.paymentMethodAvailability = const [],
     this.existingPurchaseId,
     this.existingPurchaseStatus,
   });
@@ -41,6 +44,12 @@ class CheckoutSummaryResponseDto {
               ?.map((e) => e as String)
               .toList() ??
           ['PIX', 'CARD'],
+      paymentMethodAvailability:
+          (json['paymentMethodAvailability'] as List<dynamic>?)
+              ?.whereType<Map<String, dynamic>>()
+              .map(PaymentMethodAvailabilityDto.fromJson)
+              .toList() ??
+          const [],
       existingPurchaseId: json['existingPurchaseId'] as String?,
       existingPurchaseStatus: json['existingPurchaseStatus'] as String?,
     );

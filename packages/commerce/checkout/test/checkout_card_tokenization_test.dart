@@ -23,6 +23,62 @@ class MockPaymentsRepoForCardTests implements PaymentsRepository {
     return summary;
   }
 
+
+  @override
+  Future<CouponValidationResult> validateCoupon(
+    String tripId, {
+    required String couponCode,
+  }) async {
+    if (couponCode.toUpperCase() == 'INVALID' || couponCode.toUpperCase() == 'NOPE') {
+      return CouponValidationResult(
+        valid: false,
+        code: couponCode.toUpperCase(),
+        reason: 'Cupom inválido',
+        pricing: summary.pricing,
+      );
+    }
+    if (couponCode.trim().isEmpty) {
+      return CouponValidationResult(valid: false, reason: 'Informe um código de cupom', pricing: summary.pricing);
+    }
+    return CouponValidationResult(
+      valid: true,
+      code: couponCode.toUpperCase(),
+      pricing: CheckoutPricing(
+        originalAmount: summary.pricing.originalAmount,
+        discountAmount: 2.0,
+        finalAmount: summary.pricing.originalAmount - 2.0,
+        currency: summary.pricing.currency,
+      ),
+      coupon: AppliedCoupon(
+        code: couponCode.toUpperCase(),
+        applied: true,
+        discountType: 'FIXED',
+        discountValue: 2.0,
+      ),
+    );
+  }
+
+  @override
+  Future<CardIntentResult> createCardIntent({
+    required String tripId,
+    String? couponCode,
+    int? installments,
+  }) async {
+    return CardIntentResult(
+      intentId: 'card_intent_test',
+      tripId: tripId,
+      status: 'READY',
+      amount: summary.pricing.finalAmount,
+      currency: summary.pricing.currency,
+      clientSecret: 'stub',
+    );
+  }
+
+  @override
+  Future<ExpirePurchaseResult> expirePurchase(String purchaseId) async {
+    return ExpirePurchaseResult(purchaseId: purchaseId, status: 'EXPIRED');
+  }
+
   @override
   Future<List<ProductEntity>> getActiveProducts() async => [];
 
@@ -239,11 +295,14 @@ void main() {
     });
 
     testWidgets('golden checkout_card_entry_390x844', (tester) async {
+      // Returning buyer skips dados/termos gate for layout navigation.
       await tester.pumpWidget(
         buildTestableWidget(
           child: CheckoutPage(
             tripId: 'trip_card_123',
-            paymentsRepository: MockPaymentsRepoForCardTests(defaultSummaryWithCard),
+            buyerMode: CheckoutBuyerMode.returning,
+            paymentsRepository:
+                MockPaymentsRepoForCardTests(defaultSummaryWithCard),
             intentStorage: intentStorage,
             storage: TwoGoStorage(),
             cardTokenizer: FakeCardTokenizer(),
@@ -252,13 +311,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final cardTileFinder = find.text('Cartão de Crédito');
+      final cardTileFinder = find.text('Cartão de crédito');
       await tester.ensureVisible(cardTileFinder);
       await tester.pumpAndSettle();
       await tester.tap(cardTileFinder);
       await tester.pumpAndSettle();
 
-      expect(find.text('Continuar com Cartão de Crédito'), findsOneWidget);
+      expect(find.text('Dados do cartão'), findsOneWidget);
+      expect(find.textContaining('Pagar'), findsOneWidget);
     });
 
     testWidgets('golden checkout_card_error_390x844', (tester) async {
@@ -266,7 +326,9 @@ void main() {
         buildTestableWidget(
           child: CheckoutPage(
             tripId: 'trip_card_123',
-            paymentsRepository: MockPaymentsRepoForCardTests(defaultSummaryWithCard),
+            buyerMode: CheckoutBuyerMode.returning,
+            paymentsRepository:
+                MockPaymentsRepoForCardTests(defaultSummaryWithCard),
             intentStorage: intentStorage,
             storage: TwoGoStorage(),
             cardTokenizer: FakeCardTokenizer(
@@ -277,16 +339,18 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final cardTileFinder = find.text('Cartão de Crédito');
-      await tester.ensureVisible(cardTileFinder);
-      await tester.pumpAndSettle();
-      await tester.tap(cardTileFinder);
+      await tester.tap(find.text('Cartão de crédito'));
       await tester.pumpAndSettle();
 
-      final ctaFinder = find.text('Continuar com Cartão de Crédito');
-      await tester.ensureVisible(ctaFinder);
+      // Fill card form so Pagar enables, then submit with failing tokenizer.
+      final fields = find.byType(TwoGoTextField);
+      await tester.enterText(fields.at(0), '4111111111111111');
+      await tester.enterText(fields.at(1), 'Jonas Fabricio');
+      await tester.enterText(fields.at(2), '09 / 2033');
+      await tester.enterText(fields.at(3), '123');
       await tester.pumpAndSettle();
-      await tester.tap(ctaFinder);
+
+      await tester.tap(find.textContaining('Pagar'));
       await tester.pumpAndSettle();
 
       expect(find.text('Número do cartão inválido.'), findsOneWidget);

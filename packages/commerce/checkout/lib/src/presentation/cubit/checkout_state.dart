@@ -24,6 +24,8 @@ class CheckoutReadyState extends CheckoutState {
   final String? quoteError;
   final String? cardTokenError;
   final String? cardToken;
+  final bool couponJustApplied;
+  final CardIntentResult? cardIntent;
 
   const CheckoutReadyState({
     required this.summary,
@@ -33,6 +35,8 @@ class CheckoutReadyState extends CheckoutState {
     this.quoteError,
     this.cardTokenError,
     this.cardToken,
+    this.couponJustApplied = false,
+    this.cardIntent,
   });
 
   CheckoutReadyState copyWith({
@@ -43,9 +47,12 @@ class CheckoutReadyState extends CheckoutState {
     String? quoteError,
     String? cardTokenError,
     String? cardToken,
+    bool? couponJustApplied,
+    CardIntentResult? cardIntent,
     bool clearQuoteError = false,
     bool clearCardTokenError = false,
     bool clearCardToken = false,
+    bool clearCardIntent = false,
   }) {
     return CheckoutReadyState(
       summary: summary ?? this.summary,
@@ -57,6 +64,8 @@ class CheckoutReadyState extends CheckoutState {
       cardTokenError:
           clearCardTokenError ? null : (cardTokenError ?? this.cardTokenError),
       cardToken: clearCardToken ? null : (cardToken ?? this.cardToken),
+      couponJustApplied: couponJustApplied ?? false,
+      cardIntent: clearCardIntent ? null : (cardIntent ?? this.cardIntent),
     );
   }
 
@@ -69,6 +78,8 @@ class CheckoutReadyState extends CheckoutState {
         quoteError,
         cardTokenError,
         cardToken,
+        couponJustApplied,
+        cardIntent,
       ];
 }
 

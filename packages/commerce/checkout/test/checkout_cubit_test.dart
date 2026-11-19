@@ -87,6 +87,79 @@ class FakePaymentsRepository implements PaymentsRepository {
     );
   }
 
+
+  @override
+  Future<CouponValidationResult> validateCoupon(
+    String tripId, {
+    required String couponCode,
+  }) async {
+    lastQuoteCouponCode = couponCode;
+    if (shouldThrowQuote ||
+        couponCode.toUpperCase() == 'INVALID' ||
+        couponCode.toUpperCase() == 'NOPE') {
+      return CouponValidationResult(
+        valid: false,
+        code: couponCode.toUpperCase(),
+        reason: 'Cupom inválido',
+        pricing: const CheckoutPricing(
+          originalAmount: 100.0,
+          discountAmount: 0,
+          finalAmount: 100.0,
+          currency: 'BRL',
+        ),
+      );
+    }
+    if (couponCode.trim().isEmpty) {
+      return const CouponValidationResult(
+        valid: false,
+        reason: 'Informe um código de cupom',
+        pricing: CheckoutPricing(
+          originalAmount: 100.0,
+          discountAmount: 0,
+          finalAmount: 100.0,
+          currency: 'BRL',
+        ),
+      );
+    }
+    return CouponValidationResult(
+      valid: true,
+      code: couponCode.toUpperCase(),
+      pricing: const CheckoutPricing(
+        originalAmount: 100.0,
+        discountAmount: 10.0,
+        finalAmount: 90.0,
+        currency: 'BRL',
+      ),
+      coupon: AppliedCoupon(
+        code: couponCode.toUpperCase(),
+        applied: true,
+        discountType: 'FIXED',
+        discountValue: 10.0,
+      ),
+    );
+  }
+
+  @override
+  Future<CardIntentResult> createCardIntent({
+    required String tripId,
+    String? couponCode,
+    int? installments,
+  }) async {
+    return CardIntentResult(
+      intentId: 'card_intent_test',
+      tripId: tripId,
+      status: 'READY',
+      amount: 21.99,
+      currency: 'BRL',
+      clientSecret: 'stub',
+    );
+  }
+
+  @override
+  Future<ExpirePurchaseResult> expirePurchase(String purchaseId) async {
+    return ExpirePurchaseResult(purchaseId: purchaseId, status: 'EXPIRED');
+  }
+
   @override
   Future<List<ProductEntity>> getActiveProducts() async => [];
 
@@ -181,7 +254,7 @@ void main() {
 
       expect(cubit.state, isA<CheckoutReadyState>());
       final ready = cubit.state as CheckoutReadyState;
-      expect(ready.quoteError, 'Cupom inválido ou expirado.');
+      expect(ready.quoteError, 'Cupom inválido');
     });
 
     test('removeCoupon calls quote with null code and resets price', () async {

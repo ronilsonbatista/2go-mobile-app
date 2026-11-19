@@ -14,7 +14,9 @@ export 'src/models/checkout_quote_dto.dart';
 export 'src/models/checkout_quote_response_dto.dart';
 export 'src/models/checkout_response_dto.dart';
 export 'src/models/checkout_summary_response_dto.dart';
+export 'src/models/payment_method_availability_dto.dart';
 export 'src/models/claim_guest_journey_response_dto.dart';
+
 export 'src/models/create_planning_session_dto.dart';
 export 'src/models/forgot_password_dto.dart';
 export 'src/models/generation_status_response_dto.dart';
