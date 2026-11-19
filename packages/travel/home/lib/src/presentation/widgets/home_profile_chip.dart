@@ -64,8 +64,9 @@ class _Avatar extends StatelessWidget {
           color: TwoGoColors.neutral900,
           shape: BoxShape.circle,
         ),
+        // Guest silhouette — Material person (needs uses-material-design).
         child: const Icon(
-          TwoGoIcons.profile,
+          Icons.person,
           size: 22,
           color: TwoGoColors.neutral0,
         ),

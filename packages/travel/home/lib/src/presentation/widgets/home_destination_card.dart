@@ -36,6 +36,9 @@ class HomeDestinationCard extends StatelessWidget {
               children: [
                 HomeDestinationImage(
                   imageUrl: destination.resolvedCardUrl,
+                  assetPath: destination.hasLocalCard
+                      ? destination.cardAssetPath
+                      : destination.heroAssetPath,
                 ),
                 const DecoratedBox(
                   decoration: BoxDecoration(

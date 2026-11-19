@@ -135,8 +135,14 @@ class _InterestCheckbox extends StatelessWidget {
           width: 1.5,
         ),
       ),
+      // Material check — requires app `uses-material-design: true`.
+      // Without the font this rendered as a broken green storefront-like glyph.
       child: selected
-          ? const Icon(Icons.check, size: 16, color: FormCourseTokens.black)
+          ? const Icon(
+              Icons.check,
+              size: 16,
+              color: FormCourseTokens.black,
+            )
           : null,
     );
   }

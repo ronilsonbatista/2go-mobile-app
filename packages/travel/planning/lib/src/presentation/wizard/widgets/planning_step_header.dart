@@ -29,8 +29,10 @@ class PlanningStepHeader extends StatelessWidget {
       children: [
         Row(
           children: [
+            // Course back: white circle + dark left chevron (ref asset 716686ac).
+            // MaterialIcons must be bundled via app `uses-material-design: true`.
             Material(
-              color: FormCourseTokens.surface,
+              color: Colors.white,
               shape: const CircleBorder(),
               elevation: 1,
               shadowColor: Colors.black26,
@@ -41,9 +43,9 @@ class PlanningStepHeader extends StatelessWidget {
                   width: 40,
                   height: 40,
                   child: Icon(
-                    TwoGoIcons.back,
+                    Icons.chevron_left,
                     color: FormCourseTokens.ink,
-                    size: 22,
+                    size: 28,
                   ),
                 ),
               ),

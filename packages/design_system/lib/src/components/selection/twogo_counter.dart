@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../buttons/twogo_icon_button.dart';
+import '../../accessibility/twogo_touch_target.dart';
 import '../../icons/twogo_icons.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/spacing.dart';
@@ -84,10 +84,12 @@ class TwoGoCounter extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TwoGoIconButton(
+              // Course Age steppers: white circle + black − / + (refs e66a8526, b88c4ee4).
+              _StepperCircleButton(
                 icon: TwoGoIcons.remove,
+                enabled: canDecrement,
                 onPressed: canDecrement ? _handleDecrement : null,
-                variant: TwoGoIconButtonVariant.secondary,
+                semanticLabel: 'Diminuir',
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -104,14 +106,58 @@ class TwoGoCounter extends StatelessWidget {
                   ),
                 ),
               ),
-              TwoGoIconButton(
+              _StepperCircleButton(
                 icon: TwoGoIcons.add,
+                enabled: canIncrement,
                 onPressed: canIncrement ? _handleIncrement : null,
-                variant: TwoGoIconButtonVariant.secondary,
+                semanticLabel: 'Aumentar',
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// White circle + black +/− control used by Age (and other) count steppers.
+class _StepperCircleButton extends StatelessWidget {
+  const _StepperCircleButton({
+    required this.icon,
+    required this.enabled,
+    required this.onPressed,
+    required this.semanticLabel,
+  });
+
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback? onPressed;
+  final String semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = enabled ? TwoGoColors.neutral900 : TwoGoColors.contentDisabled;
+
+    return TwoGoTouchTarget(
+      child: Semantics(
+        button: true,
+        enabled: enabled,
+        label: semanticLabel,
+        child: Material(
+          color: TwoGoColors.neutral0,
+          shape: const CircleBorder(),
+          elevation: enabled ? 1 : 0,
+          shadowColor: Colors.black26,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onPressed,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Icon(icon, size: 22, color: fg),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -7,7 +7,16 @@ import '../../../domain/models/planning_interest.dart';
 import '../../../domain/models/planning_travelers.dart';
 import '../form_course_tokens.dart';
 import 'form_course_icons.dart';
+import 'place_thumb.dart';
 
+/// Course Revisao 6/6 — layout aligned to design PDF/ref (a050f580).
+///
+/// Spacing / radius notes vs prior sim (799f3fba):
+/// - Card radius 12 (was 16) to match course grey cards
+/// - Label→card gap 8; section gutter 16; side-by-side card gutter 12
+/// - Viajantes / Estilo equal-height stretched cards
+/// - Destino thumb via [PlaceThumb] (photo or Core SVG pin — never [?])
+/// - Interests rows: 12px vertical padding
 class ReviewStepContent extends StatelessWidget {
   final List<PlanningDestination> destinations;
   final PlanningTravelers travelers;
@@ -85,17 +94,14 @@ class ReviewStepContent extends StatelessWidget {
     final showEditHint = destinations.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TwoGoSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: FormCourseTokens.pageGutter),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          _SectionLabel(
             destinations.length > 1 ? 'Destinos' : 'Destino',
-            style: TwoGoTypography.labelMedium.copyWith(
-              color: FormCourseTokens.label,
-            ),
           ),
-          const SizedBox(height: TwoGoSpacing.xs),
+          const SizedBox(height: FormCourseTokens.labelToCardGap),
           _SummaryCard(
             onTap: () => onEditSection(1),
             child: Column(
@@ -104,6 +110,7 @@ class ReviewStepContent extends StatelessWidget {
                   if (i > 0)
                     const Divider(
                       height: 24,
+                      thickness: 1,
                       color: FormCourseTokens.background,
                     ),
                   _DestinationSummary(
@@ -116,129 +123,122 @@ class ReviewStepContent extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: TwoGoSpacing.md),
+          const SizedBox(height: FormCourseTokens.sectionGap),
+          // Labels row + equal-height cards (design: Viajantes | Estilo).
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Viajantes',
-                      style: TwoGoTypography.labelMedium.copyWith(
-                        color: FormCourseTokens.label,
-                      ),
-                    ),
-                    const SizedBox(height: TwoGoSpacing.xs),
-                    _SummaryCard(
-                      onTap: () => onEditSection(2),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (travelers.adults > 0)
-                            Text(
-                              '${travelers.adults} adulto${travelers.adults == 1 ? '' : 's'}',
-                              style: TwoGoTypography.titleMedium.copyWith(
-                                color: FormCourseTokens.black,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          if (travelers.children > 0)
-                            Text(
-                              '${travelers.children} criança${travelers.children == 1 ? '' : 's'}',
-                              style: TwoGoTypography.titleMedium.copyWith(
-                                color: FormCourseTokens.black,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          if (travelers.elders > 0)
-                            Text(
-                              '${travelers.elders} idoso${travelers.elders == 1 ? '' : 's'}',
-                              style: TwoGoTypography.titleMedium.copyWith(
-                                color: FormCourseTokens.black,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                child: _SectionLabel('Viajantes'),
               ),
-              const SizedBox(width: TwoGoSpacing.sm),
+              const SizedBox(width: FormCourseTokens.cardGutter),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Estilo de viagem',
-                      style: TwoGoTypography.labelMedium.copyWith(
-                        color: FormCourseTokens.label,
-                      ),
-                    ),
-                    const SizedBox(height: TwoGoSpacing.xs),
-                    _SummaryCard(
-                      onTap: () => onEditSection(5),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (budget != null) ...[
-                            FormEstiloDollarGlyph(count: budget.symbol.length),
-                            const SizedBox(height: TwoGoSpacing.xxs),
-                            Text(
-                              budget.label,
-                              style: TwoGoTypography.bodyMedium.copyWith(
-                                color: FormCourseTokens.black,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ] else
-                            Text(
-                              '—',
-                              style: TwoGoTypography.bodyMedium.copyWith(
-                                color: FormCourseTokens.label,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                child: _SectionLabel('Estilo de viagem'),
               ),
             ],
           ),
-          const SizedBox(height: TwoGoSpacing.md),
-          Text(
-            'Principais interesses',
-            style: TwoGoTypography.labelMedium.copyWith(
-              color: FormCourseTokens.label,
+          const SizedBox(height: FormCourseTokens.labelToCardGap),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _SummaryCard(
+                    onTap: () => onEditSection(2),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (travelers.adults > 0)
+                          Text(
+                            '${travelers.adults} adulto${travelers.adults == 1 ? '' : 's'}',
+                            style: TwoGoTypography.titleMedium.copyWith(
+                              color: FormCourseTokens.black,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        if (travelers.children > 0) ...[
+                          const SizedBox(height: TwoGoSpacing.xxs),
+                          Text(
+                            '${travelers.children} criança${travelers.children == 1 ? '' : 's'}',
+                            style: TwoGoTypography.titleMedium.copyWith(
+                              color: FormCourseTokens.black,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                        if (travelers.elders > 0) ...[
+                          const SizedBox(height: TwoGoSpacing.xxs),
+                          Text(
+                            '${travelers.elders} idoso${travelers.elders == 1 ? '' : 's'}',
+                            style: TwoGoTypography.titleMedium.copyWith(
+                              color: FormCourseTokens.black,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: FormCourseTokens.cardGutter),
+                Expanded(
+                  child: _SummaryCard(
+                    onTap: () => onEditSection(5),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (budget != null) ...[
+                          FormEstiloDollarGlyph(count: budget.symbol.length),
+                          const SizedBox(height: TwoGoSpacing.xxs),
+                          Text(
+                            budget.label,
+                            style: TwoGoTypography.bodyMedium.copyWith(
+                              color: FormCourseTokens.black,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ] else
+                          Text(
+                            '—',
+                            style: TwoGoTypography.bodyMedium.copyWith(
+                              color: FormCourseTokens.label,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: TwoGoSpacing.xs),
+          const SizedBox(height: FormCourseTokens.sectionGap),
+          const _SectionLabel('Principais interesses'),
+          const SizedBox(height: FormCourseTokens.labelToCardGap),
           _SummaryCard(
             onTap: () => onEditSection(3),
             child: Column(
               children: [
-                for (final interest in interests)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: [
-                        Text(_emoji(interest), style: const TextStyle(fontSize: 22)),
-                        const SizedBox(width: TwoGoSpacing.md),
-                        Expanded(
-                          child: Text(
-                            interest.label,
-                            style: TwoGoTypography.titleMedium.copyWith(
-                              color: FormCourseTokens.black,
-                              fontWeight: FontWeight.w500,
-                            ),
+                for (var i = 0; i < interests.length; i++) ...[
+                  if (i > 0)
+                    const SizedBox(height: FormCourseTokens.interestRowGap),
+                  Row(
+                    children: [
+                      Text(
+                        _emoji(interests[i]),
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                      const SizedBox(width: TwoGoSpacing.md),
+                      Expanded(
+                        child: Text(
+                          interests[i].label,
+                          style: TwoGoTypography.titleMedium.copyWith(
+                            color: FormCourseTokens.black,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ],
                 if (interests.isEmpty)
                   Text(
                     'Nenhum interesse selecionado',
@@ -249,10 +249,24 @@ class ReviewStepContent extends StatelessWidget {
               ],
             ),
           ),
-          // Activity window is step 4 — keep accessible via edit from interesse/estilo
-          // but course Revisao screenshots omit it; still editable via destinations/estilo cards.
           const SizedBox(height: TwoGoSpacing.lg),
         ],
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TwoGoTypography.labelMedium.copyWith(
+        color: FormCourseTokens.label,
       ),
     );
   }
@@ -268,12 +282,12 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: FormCourseTokens.summaryCard,
-      borderRadius: BorderRadius.circular(TwoGoRadius.large),
+      borderRadius: BorderRadius.circular(FormCourseTokens.cardRadius),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(TwoGoRadius.large),
+        borderRadius: BorderRadius.circular(FormCourseTokens.cardRadius),
         child: Padding(
-          padding: const EdgeInsets.all(TwoGoSpacing.md),
+          padding: const EdgeInsets.all(FormCourseTokens.cardPadding),
           child: child,
         ),
       ),
@@ -303,26 +317,12 @@ class _DestinationSummary extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(TwoGoRadius.small),
-              child: SizedBox(
-                width: 56,
-                height: 56,
-                child: destination.coverImage != null &&
-                        destination.coverImage!.startsWith('http')
-                    ? Image.network(
-                        destination.coverImage!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const ColoredBox(
-                          color: FormCourseTokens.background,
-                          child: Icon(Icons.place_outlined),
-                        ),
-                      )
-                    : const ColoredBox(
-                        color: FormCourseTokens.background,
-                        child: Icon(Icons.place_outlined),
-                      ),
-              ),
+            // Photo when Core/Home supplied a raster URL; SVG pin otherwise.
+            // Never show broken Material tofu as the Destino thumb.
+            PlaceThumb(
+              iconUrl: destination.coverImage,
+              size: FormCourseTokens.destinoThumbSize,
+              borderRadius: FormCourseTokens.thumbRadius,
             ),
             const SizedBox(width: TwoGoSpacing.md),
             Expanded(
@@ -352,7 +352,8 @@ class _DestinationSummary extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: FormCourseTokens.ink,
-                        borderRadius: BorderRadius.circular(TwoGoRadius.full),
+                        borderRadius:
+                            BorderRadius.circular(TwoGoRadius.full),
                       ),
                       child: Text(
                         '💡 Toque para editar',
@@ -367,7 +368,13 @@ class _DestinationSummary extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: TwoGoSpacing.md),
+        const SizedBox(height: TwoGoSpacing.sm),
+        const Divider(
+          height: 1,
+          thickness: 1,
+          color: FormCourseTokens.background,
+        ),
+        const SizedBox(height: TwoGoSpacing.sm),
         Row(
           children: [
             Expanded(
