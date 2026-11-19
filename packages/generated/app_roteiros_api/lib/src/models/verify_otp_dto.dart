@@ -1,12 +1,14 @@
 class VerifyOtpDto {
   final String email;
   final String code;
+
+  /// Optional; omitted from JSON when null so body is `{ "email", "code" }`.
   final String? purpose;
 
   const VerifyOtpDto({
     required this.email,
     required this.code,
-    this.purpose = 'LOGIN',
+    this.purpose,
   });
 
   Map<String, dynamic> toJson() {

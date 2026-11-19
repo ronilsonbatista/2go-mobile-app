@@ -99,9 +99,9 @@ class PlanningUnlockSheet extends StatelessWidget {
             ),
             const SizedBox(height: TwoGoSpacing.xl),
 
-            // CTA Button
+            // CTA → Login/OTP (Upsell Aproveitar).
             TwoGoButton(
-              text: 'Desbloquear Roteiro',
+              text: 'Aproveitar',
               onPressed: offer.available ? onUnlockRequested : null,
             ),
           ],

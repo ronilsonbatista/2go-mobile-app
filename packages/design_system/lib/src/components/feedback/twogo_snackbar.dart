@@ -9,13 +9,15 @@ enum TwoGoSnackbarVariant { success, error, warning, info }
 
 /// Floating Toast / Snackbar for 2GO Mobile Design System.
 ///
-/// Matches dark feedback bar visual style shown in product references.
+/// Dark bar + colored leading icon + bottom progress line that drains over
+/// [duration] (matches login OTP invalid / resend toasts).
 class TwoGoSnackbar extends StatelessWidget {
   final String message;
   final TwoGoSnackbarVariant variant;
   final Widget? icon;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final Duration? progressDuration;
 
   const TwoGoSnackbar({
     super.key,
@@ -24,6 +26,7 @@ class TwoGoSnackbar extends StatelessWidget {
     this.icon,
     this.actionLabel,
     this.onAction,
+    this.progressDuration,
   });
 
   /// Displays the snackbar using [ScaffoldMessenger].
@@ -35,16 +38,23 @@ class TwoGoSnackbar extends StatelessWidget {
     String? actionLabel,
     VoidCallback? onAction,
     Duration duration = const Duration(seconds: 4),
+    bool showProgress = true,
   }) {
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
 
     return messenger.showSnackBar(
       SnackBar(
-        elevation: 4,
+        elevation: 0,
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.transparent,
         padding: EdgeInsets.zero,
+        margin: const EdgeInsets.fromLTRB(
+          TwoGoSpacing.md,
+          0,
+          TwoGoSpacing.md,
+          TwoGoSpacing.md,
+        ),
         duration: duration,
         content: TwoGoSnackbar(
           message: message,
@@ -52,6 +62,7 @@ class TwoGoSnackbar extends StatelessWidget {
           icon: icon,
           actionLabel: actionLabel,
           onAction: onAction,
+          progressDuration: showProgress ? duration : null,
         ),
       ),
     );
@@ -84,52 +95,108 @@ class TwoGoSnackbar extends StatelessWidget {
     final leadingWidget =
         icon ??
         Container(
-          padding: const EdgeInsets.all(2),
+          width: 22,
+          height: 22,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: indicatorColor,
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(4),
           ),
-          child: Icon(defaultIconData, size: 16, color: TwoGoColors.neutral0),
+          child: Icon(defaultIconData, size: 14, color: TwoGoColors.neutral0),
         );
 
-    return Container(
-      margin: const EdgeInsets.all(TwoGoSpacing.xs),
-      padding: const EdgeInsets.symmetric(
-        horizontal: TwoGoSpacing.md,
-        vertical: TwoGoSpacing.sm,
-      ),
-      decoration: const BoxDecoration(
+    return ClipRRect(
+      borderRadius: TwoGoRadius.borderMedium,
+      child: ColoredBox(
         color: TwoGoColors.toastBackground,
-        borderRadius: TwoGoRadius.borderMedium,
-      ),
-      child: Row(
-        children: [
-          leadingWidget,
-          const SizedBox(width: TwoGoSpacing.sm),
-          Expanded(
-            child: Text(
-              message,
-              style: TwoGoTypography.bodyMedium.copyWith(
-                color: TwoGoColors.contentInverse,
-                fontWeight: FontWeight.w500,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: TwoGoSpacing.md,
+                vertical: TwoGoSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  leadingWidget,
+                  const SizedBox(width: TwoGoSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      message,
+                      style: TwoGoTypography.bodyMedium.copyWith(
+                        color: TwoGoColors.contentInverse,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  if (actionLabel != null && onAction != null) ...[
+                    const SizedBox(width: TwoGoSpacing.sm),
+                    GestureDetector(
+                      onTap: onAction,
+                      child: Text(
+                        actionLabel!,
+                        style: TwoGoTypography.labelMedium.copyWith(
+                          color: TwoGoColors.brandLime,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-          ),
-          if (actionLabel != null && onAction != null) ...[
-            const SizedBox(width: TwoGoSpacing.sm),
-            GestureDetector(
-              onTap: onAction,
-              child: Text(
-                actionLabel!,
-                style: TwoGoTypography.labelMedium.copyWith(
-                  color: TwoGoColors.brandLime,
-                  fontWeight: FontWeight.bold,
-                ),
+            if (progressDuration != null)
+              _ToastProgressBar(
+                color: indicatorColor,
+                duration: progressDuration!,
               ),
-            ),
           ],
-        ],
+        ),
       ),
+    );
+  }
+}
+
+class _ToastProgressBar extends StatefulWidget {
+  const _ToastProgressBar({required this.color, required this.duration});
+
+  final Color color;
+  final Duration duration;
+
+  @override
+  State<_ToastProgressBar> createState() => _ToastProgressBarState();
+}
+
+class _ToastProgressBarState extends State<_ToastProgressBar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration)
+      ..forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return LinearProgressIndicator(
+          value: 1.0 - _controller.value,
+          minHeight: 3,
+          backgroundColor: Colors.transparent,
+          valueColor: AlwaysStoppedAnimation<Color>(widget.color),
+        );
+      },
     );
   }
 }
