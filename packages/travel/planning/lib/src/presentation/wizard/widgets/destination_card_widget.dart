@@ -4,6 +4,7 @@ import 'package:twogo_places/places.dart';
 import '../../../domain/models/planning_destination.dart';
 import '../form_course_tokens.dart';
 import 'destination_search_sheet.dart';
+import 'place_thumb.dart';
 
 class DestinationCardWidget extends StatelessWidget {
   final int index;
@@ -181,7 +182,7 @@ class DestinationCardWidget extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: TwoGoSpacing.sm),
-                _DestinationThumb(coverImage: destination.coverImage),
+                PlaceThumb(iconUrl: destination.coverImage, size: 36),
                 if (canRemove) ...[
                   const SizedBox(width: TwoGoSpacing.xs),
                   TwoGoIconButton(
@@ -281,43 +282,3 @@ class _DestinationRow extends StatelessWidget {
   }
 }
 
-class _DestinationThumb extends StatelessWidget {
-  const _DestinationThumb({this.coverImage});
-
-  final String? coverImage;
-
-  @override
-  Widget build(BuildContext context) {
-    final url = coverImage;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(TwoGoRadius.small),
-      child: SizedBox(
-        width: 36,
-        height: 36,
-        child: url != null && url.startsWith('http')
-            ? Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _ThumbFallback(),
-              )
-            : const _ThumbFallback(),
-      ),
-    );
-  }
-}
-
-class _ThumbFallback extends StatelessWidget {
-  const _ThumbFallback();
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: FormCourseTokens.summaryCard,
-      child: const Icon(
-        Icons.location_on_outlined,
-        size: 18,
-        color: FormCourseTokens.label,
-      ),
-    );
-  }
-}

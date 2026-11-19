@@ -40,3 +40,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
+flutter:
+  # Bundles MaterialIcons so Icon(Icons.*) / TwoGoIcons render on iOS & Android.
+  # Without this, glyphs show as tofu / [?] / wrong storefront-like boxes.
+  uses-material-design: true

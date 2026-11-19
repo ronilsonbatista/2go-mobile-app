@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// Wraps standard Material/SF icons with semantic names corresponding
 /// to the visual patterns in the reference prints.
 abstract class TwoGoIcons {
-  static const IconData back = Icons.chevron_left_rounded;
+  static const IconData back = Icons.chevron_left;
   static const IconData close = Icons.close_rounded;
   static const IconData check = Icons.check_rounded;
   static const IconData checkCircle = Icons.check_circle_rounded;
@@ -26,19 +26,20 @@ abstract class TwoGoIcons {
   static const IconData visibility = Icons.visibility_outlined;
   static const IconData visibilityOff = Icons.visibility_off_outlined;
 
-  // Navigation / Shell primitives
+  // Navigation / Shell primitives (Material Icons — requires app
+  // `uses-material-design: true` or glyphs render as tofu / [?]).
   static const IconData home = Icons.home_rounded;
   static const IconData homeOutlined = Icons.home_outlined;
-  static const IconData travel = Icons.card_travel_rounded;
-  static const IconData travelOutlined = Icons.card_travel_outlined;
+  static const IconData travel = Icons.luggage_rounded;
+  static const IconData travelOutlined = Icons.luggage_outlined;
   static const IconData notifications = Icons.notifications_rounded;
   static const IconData notificationsOutlined = Icons.notifications_outlined;
-  static const IconData profile = Icons.person_rounded;
-  static const IconData profileOutlined = Icons.person_outline_rounded;
+  static const IconData profile = Icons.person;
+  static const IconData profileOutlined = Icons.person_outline;
 
-  // Counter & Wizard primitives
-  static const IconData add = Icons.add_rounded;
-  static const IconData remove = Icons.remove_rounded;
+  // Counter & Wizard primitives (Age steppers: white circle + black +/−)
+  static const IconData add = Icons.add;
+  static const IconData remove = Icons.remove;
   static const IconData flight = Icons.flight_takeoff_rounded;
   static const IconData search = Icons.search_rounded;
   static const IconData calendar = Icons.calendar_today_rounded;

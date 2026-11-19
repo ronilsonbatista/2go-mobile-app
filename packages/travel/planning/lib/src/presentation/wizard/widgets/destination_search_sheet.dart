@@ -4,6 +4,7 @@ import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_places/places.dart';
 
 import '../form_course_tokens.dart';
+import 'place_thumb.dart';
 
 /// Facilitated locality search (type "Roma" → autocomplete rows with thumb).
 class DestinationSearchSheet extends StatefulWidget {
@@ -146,7 +147,7 @@ class _DestinationSearchSheetState extends State<DestinationSearchSheet> {
         final place = _results[index];
         return ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: _PlaceThumb(iconUrl: place.iconUrl),
+          leading: PlaceThumb(iconUrl: place.iconUrl),
           title: Text(
             place.name,
             style: TwoGoTypography.titleMedium.copyWith(
@@ -163,46 +164,6 @@ class _DestinationSearchSheetState extends State<DestinationSearchSheet> {
           onTap: () => Navigator.of(context).pop(place),
         );
       },
-    );
-  }
-}
-
-class _PlaceThumb extends StatelessWidget {
-  const _PlaceThumb({this.iconUrl});
-
-  final String? iconUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final url = iconUrl;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(TwoGoRadius.small),
-      child: SizedBox(
-        width: 40,
-        height: 40,
-        child: url != null && url.startsWith('http')
-            ? Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _PlaceThumbFallback(),
-              )
-            : const _PlaceThumbFallback(),
-      ),
-    );
-  }
-}
-
-/// Fallback until Core Places returns predefined `iconUrl`.
-class _PlaceThumbFallback extends StatelessWidget {
-  const _PlaceThumbFallback();
-
-  @override
-  Widget build(BuildContext context) {
-    return const ColoredBox(
-      color: FormCourseTokens.summaryCard,
-      child: Center(
-        child: Text('📍', style: TextStyle(fontSize: 20)),
-      ),
     );
   }
 }

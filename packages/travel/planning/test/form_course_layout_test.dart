@@ -52,6 +52,8 @@ void main() {
     expect(find.text('Cultura Geek'), findsOneWidget);
     expect(find.text('👾'), findsOneWidget);
     expect(find.text('Atividades ao ar livre'), findsOneWidget);
+    // Selected row uses Material check (not a broken storefront glyph).
+    expect(find.byIcon(Icons.check), findsOneWidget);
   });
 
   testWidgets('Estilo step shows dollar rows and course title labels', (
@@ -95,8 +97,32 @@ void main() {
 
     expect(find.byType(BottomNavigationBar), findsNothing);
     expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(TwoGoBottomNavigation), findsNothing);
     expect(find.text('2 de 6'), findsOneWidget);
     expect(find.text('Continuar'), findsOneWidget);
+    // Q&A back: white circle + dark left chevron (ref 716686ac).
+    expect(find.byIcon(Icons.chevron_left), findsOneWidget);
+  });
+
+  testWidgets('Age steppers use white-circle black +/− icons', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TwoGoTheme.light,
+        home: Scaffold(
+          body: TravelersStepContent(
+            travelers: const PlanningTravelers(
+              adults: 2,
+              children: 1,
+              elders: 0,
+            ),
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(TwoGoIcons.add), findsNWidgets(3));
+    expect(find.byIcon(TwoGoIcons.remove), findsNWidgets(3));
   });
 
   testWidgets('Revisao step 6 shows destino and interesses emoji rows', (

@@ -56,6 +56,7 @@ export 'src/presentation/wizard/widgets/budget_step_content.dart';
 export 'src/presentation/wizard/widgets/destination_card_widget.dart';
 export 'src/presentation/wizard/widgets/destination_search_sheet.dart';
 export 'src/presentation/wizard/widgets/destinations_step_content.dart';
+export 'src/presentation/wizard/widgets/place_thumb.dart';
 export 'src/presentation/wizard/widgets/form_asset_placeholder.dart';
 export 'src/presentation/wizard/widgets/form_course_icons.dart';
 export 'src/presentation/wizard/widgets/interests_step_content.dart';
