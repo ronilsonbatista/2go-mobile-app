@@ -18,4 +18,5 @@ export 'src/presentation/pages/authentication_page.dart';
 export 'src/presentation/views/email_step_view.dart';
 export 'src/presentation/views/otp_step_view.dart';
 export 'src/presentation/widgets/auth_social_login_row.dart';
+export 'src/presentation/widgets/login_suitcase_illustration.dart';
 export 'src/presentation/layout/auth_layout.dart';
