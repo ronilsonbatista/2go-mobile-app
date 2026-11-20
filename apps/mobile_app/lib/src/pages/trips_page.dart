@@ -9,6 +9,7 @@ class TripsPage extends StatelessWidget {
   final String? tripId;
   final SearchHotelsUseCase? searchHotels;
   final GetPlaceDetailsUseCase? getPlaceDetails;
+  final SearchPlacesUseCase? searchPlaces;
   final ValueChanged<TripEntity>? onShare;
   final bool showInviteAcceptedToast;
 
@@ -18,6 +19,7 @@ class TripsPage extends StatelessWidget {
     this.tripId,
     this.searchHotels,
     this.getPlaceDetails,
+    this.searchPlaces,
     this.onShare,
     this.showInviteAcceptedToast = false,
   });
@@ -39,6 +41,7 @@ class TripsPage extends StatelessWidget {
         tripId: tripId,
         searchHotels: searchHotels,
         getPlaceDetails: getPlaceDetails,
+        searchPlaces: searchPlaces,
         onShare: onShare,
         showInviteAcceptedToast: showInviteAcceptedToast,
       ),

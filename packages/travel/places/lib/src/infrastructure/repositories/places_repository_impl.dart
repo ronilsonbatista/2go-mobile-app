@@ -81,6 +81,8 @@ class PlacesRepositoryImpl implements PlacesRepository {
       longitude: dto.longitude,
       types: dto.types,
       iconUrl: dto.resolvedIconUrl,
+      rating: dto.rating,
+      priceLevelDisplay: dto.priceLevelDisplay,
     );
   }
 

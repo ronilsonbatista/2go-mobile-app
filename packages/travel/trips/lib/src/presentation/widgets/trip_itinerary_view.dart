@@ -6,6 +6,7 @@ import '../../domain/entities/trip_accommodation.dart';
 import '../../domain/entities/trip_day_entity.dart';
 import '../../domain/entities/trip_entity.dart';
 import '../../domain/place_details_view_data.dart';
+import '../insert/insert_activity_page.dart';
 import '../place_details/lodging_details_sheet.dart';
 import '../place_details/place_details_sheet.dart';
 import 'accommodation/add_accommodation_flow.dart';
@@ -208,6 +209,25 @@ class TripItineraryView extends StatelessWidget {
             ),
           ],
           const SizedBox(height: TwoGoSpacing.sm),
+          if (controls != null && !locked) ...[
+            _DayEditActions(
+              onReorder: () => _toast(
+                context,
+                'Arraste as atividades pelo menu em breve. Use Substituir por agora.',
+              ),
+              onInsert: () => InsertActivityPage.open(
+                context,
+                controls: controls!,
+                dayId: day.id,
+                nextOrder: items.isEmpty
+                    ? 1
+                    : items.map((i) => i.order).reduce((a, b) => a > b ? a : b) +
+                        1,
+                destinationHint: trip.destination,
+              ),
+            ),
+            const SizedBox(height: TwoGoSpacing.sm),
+          ],
           if (locked)
             TwoGoCard(
               child: Text(
@@ -231,6 +251,12 @@ class TripItineraryView extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+
+  void _toast(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -434,6 +460,63 @@ class TripItineraryView extends StatelessWidget {
         ),
       );
     }
+    final card = TwoGoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            item.title,
+            style: TwoGoTypography.titleSmall.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (_filled(item.timeLabel)) _line(item.timeLabel!),
+          if (item.duration != null) _line('${item.duration} min'),
+          if (item.cost != null && _filled(item.currency))
+            _line('${item.currency} ${item.cost}'),
+          if (_filled(item.notes)) _line(item.notes!),
+          if (ticket != null) _line(ticket),
+          if (mapLink != null) ...[
+            const SizedBox(height: TwoGoSpacing.xs),
+            _mapLink(mapLink),
+          ],
+          if (controls != null)
+            Wrap(
+              spacing: TwoGoSpacing.xs,
+              children: [
+                TextButton(
+                  onPressed: () => showAlternativesSheet(
+                    context,
+                    controls: controls!,
+                    itemId: item.id,
+                    destinationHint: trip.destination,
+                  ),
+                  child: const Text('Substituir'),
+                ),
+                TextButton(
+                  onPressed: () => showDurationEditor(
+                    context,
+                    controls: controls!,
+                    itemId: item.id,
+                    currentDuration: item.duration,
+                  ),
+                  child: const Text('Duração'),
+                ),
+                TextButton(
+                  onPressed: () => showPlaceDetailsFlow(
+                    context,
+                    item: item,
+                    controls: controls!,
+                    onOpenUrl: onOpenUrl,
+                  ),
+                  child: const Text('Detalhes'),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.only(bottom: TwoGoSpacing.sm),
       child: Column(
@@ -448,64 +531,43 @@ class TripItineraryView extends StatelessWidget {
             ),
             const SizedBox(height: TwoGoSpacing.xs),
           ],
-          TwoGoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  style: TwoGoTypography.titleSmall.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (_filled(item.timeLabel)) _line(item.timeLabel!),
-                if (item.duration != null) _line('${item.duration} min'),
-                if (item.cost != null && _filled(item.currency))
-                  _line('${item.currency} ${item.cost}'),
-                if (_filled(item.notes)) _line(item.notes!),
-                if (ticket != null) _line(ticket),
-                if (mapLink != null) ...[
-                  const SizedBox(height: TwoGoSpacing.xs),
-                  _mapLink(mapLink),
-                ],
-                if (controls != null)
-                  Wrap(
-                    spacing: TwoGoSpacing.xs,
-                    children: [
-                      TextButton(
-                        onPressed: () => showAlternativesSheet(
-                          context,
-                          controls: controls!,
-                          itemId: item.id,
-                        ),
-                        child: const Text('Substituir'),
-                      ),
-                      TextButton(
-                        onPressed: () => showDurationEditor(
-                          context,
-                          controls: controls!,
-                          itemId: item.id,
-                          currentDuration: item.duration,
-                        ),
-                        child: const Text('Duração'),
-                      ),
-                      TextButton(
-                        onPressed: () => showPlaceDetailsFlow(
-                          context,
-                          item: item,
-                          controls: controls!,
-                          onOpenUrl: onOpenUrl,
-                        ),
-                        child: const Text('Detalhes'),
-                      ),
-                    ],
-                  ),
-              ],
+          if (controls == null)
+            card
+          else
+            _SwipeDeleteItem(
+              itemId: item.id,
+              onDelete: () => _deleteItem(context, item),
+              child: card,
             ),
-          ),
         ],
       ),
     );
+  }
+
+  Future<void> _deleteItem(
+    BuildContext context,
+    ItineraryItemEntity item,
+  ) async {
+    final c = controls;
+    if (c == null) return;
+    try {
+      await c.repository.deleteItineraryItem(item.id);
+      await c.reloadTrip();
+    } catch (error) {
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          content: Text(apiErrorMessage(error)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Fechar'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Widget _line(String text) {
@@ -577,5 +639,122 @@ class TripItineraryView extends StatelessWidget {
     if (date == null) return null;
     final iso = date.toIso8601String();
     return iso.split('T').first;
+  }
+}
+class _DayEditActions extends StatelessWidget {
+  final VoidCallback onReorder;
+  final VoidCallback onInsert;
+
+  const _DayEditActions({
+    required this.onReorder,
+    required this.onInsert,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: onReorder,
+            icon: const Icon(Icons.sync_rounded, size: 18),
+            label: const Text('Reorganizar roteiro'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: TwoGoColors.contentPrimary,
+              side: const BorderSide(color: TwoGoColors.neutral300),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: onInsert,
+            icon: const Icon(Icons.place_outlined, size: 18),
+            label: const Text('Inserir nova atividade'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: TwoGoColors.contentPrimary,
+              side: const BorderSide(color: TwoGoColors.neutral300),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Swipe left → trash; confirm → DELETE immediately; brief "Excluído" flash.
+class _SwipeDeleteItem extends StatefulWidget {
+  final Widget child;
+  final String itemId;
+  final Future<void> Function() onDelete;
+
+  const _SwipeDeleteItem({
+    required this.child,
+    required this.itemId,
+    required this.onDelete,
+  });
+
+  @override
+  State<_SwipeDeleteItem> createState() => _SwipeDeleteItemState();
+}
+
+class _SwipeDeleteItemState extends State<_SwipeDeleteItem> {
+  var _deletedLabel = false;
+  var _busy = false;
+
+  Future<void> _confirmAndDelete() async {
+    if (_busy) return;
+    setState(() {
+      _deletedLabel = true;
+      _busy = true;
+    });
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+    if (!mounted) return;
+    try {
+      await widget.onDelete();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _deletedLabel = false;
+          _busy = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: ValueKey('swipe-delete-${widget.itemId}'),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (_) async {
+        await _confirmAndDelete();
+        return false;
+      },
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE85A5A),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: _deletedLabel
+            ? Text(
+                'Excluído',
+                style: TwoGoTypography.titleSmall.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              )
+            : const Icon(Icons.delete_outline_rounded, color: Colors.white),
+      ),
+      child: widget.child,
+    );
   }
 }

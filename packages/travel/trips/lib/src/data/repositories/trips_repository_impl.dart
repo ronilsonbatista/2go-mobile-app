@@ -75,17 +75,33 @@ class TripsRepositoryImpl implements TripsRepository {
     String dayId,
     ItineraryItemEntity item,
   ) async {
-    final dto = await _remoteDataSource.addItineraryItem(dayId, {
+    final body = <String, dynamic>{
       'title': item.title,
-      'description': item.description,
       'category': item.category.name.toUpperCase(),
-      'location': item.location,
-      'period': item.period,
-      'duration': item.duration,
-      'cost': item.cost,
-      'currency': item.currency,
       'order': item.order,
-    });
+    };
+    final description = item.description?.trim();
+    if (description != null && description.isNotEmpty) {
+      body['description'] = description;
+    }
+    final location = item.location?.trim();
+    if (location != null && location.isNotEmpty) body['location'] = location;
+    final period = item.period?.trim();
+    if (period != null && period.isNotEmpty) body['period'] = period;
+    if (item.duration != null) body['duration'] = item.duration;
+    if (item.cost != null) body['cost'] = item.cost;
+    final currency = item.currency?.trim();
+    if (currency != null && currency.isNotEmpty) body['currency'] = currency;
+    final placeId = item.providerPlaceId?.trim();
+    if (placeId != null && placeId.isNotEmpty) {
+      body['providerPlaceId'] = placeId;
+      body['placeProvider'] = 'GOOGLE';
+    }
+    if (item.latitude != null) body['latitude'] = item.latitude;
+    if (item.longitude != null) body['longitude'] = item.longitude;
+    final maps = item.googleMapsLink?.trim();
+    if (maps != null && maps.isNotEmpty) body['googleMapsLink'] = maps;
+    final dto = await _remoteDataSource.addItineraryItem(dayId, body);
     return dto.toEntity();
   }
 

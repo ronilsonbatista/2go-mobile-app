@@ -17,6 +17,7 @@ class HandoffTripsView extends StatefulWidget {
   final ValueChanged<Uri>? onOpenUrl;
   final SearchHotelsUseCase? searchHotels;
   final GetPlaceDetailsUseCase? getPlaceDetails;
+  final SearchPlacesUseCase? searchPlaces;
   final ValueChanged<TripEntity>? onShare;
   final bool showInviteAcceptedToast;
 
@@ -27,6 +28,7 @@ class HandoffTripsView extends StatefulWidget {
     this.onOpenUrl,
     this.searchHotels,
     this.getPlaceDetails,
+    this.searchPlaces,
     this.onShare,
     this.showInviteAcceptedToast = false,
   });
@@ -108,6 +110,7 @@ class _HandoffTripsViewState extends State<HandoffTripsView> {
                 reloadTrip: () => _cubit.loadTrip(widget.tripId),
                 searchHotels: widget.searchHotels,
                 getPlaceDetails: widget.getPlaceDetails,
+                searchPlaces: widget.searchPlaces,
               ),
             );
         }

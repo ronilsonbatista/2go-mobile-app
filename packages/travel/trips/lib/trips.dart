@@ -34,4 +34,6 @@ export 'src/presentation/widgets/handoff_trips_view.dart';
 export 'src/presentation/widgets/meal_timeline_cards.dart';
 export 'src/presentation/widgets/trip_control_sheets.dart';
 export 'src/presentation/widgets/trip_itinerary_view.dart';
+export 'src/presentation/substitute/substitute_attraction_page.dart';
+export 'src/presentation/insert/insert_activity_page.dart';
 export 'src/trips_module.dart';
