@@ -78,7 +78,7 @@ void main() {
     expect(missing.resolvedCoverImageUrl, isNull);
   });
 
-  testWidgets('countdown digit tiles match design 12x16', (tester) async {
+  testWidgets('countdown digit tiles fill card at 28x36', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -106,13 +106,13 @@ void main() {
         .evaluate()) {
       final size = element.size;
       if (size != null &&
-          (size.width - 12).abs() < 0.5 &&
-          (size.height - 16).abs() < 0.5) {
+          (size.width - 28).abs() < 0.5 &&
+          (size.height - 36).abs() < 0.5) {
         foundDigit = true;
         break;
       }
     }
-    expect(foundDigit, isTrue, reason: 'expected 12×16 digit tiles');
+    expect(foundDigit, isTrue, reason: 'expected 28×36 digit tiles');
 
     await tester.pumpWidget(const SizedBox());
   });

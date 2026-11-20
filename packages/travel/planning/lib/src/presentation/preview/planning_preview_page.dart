@@ -20,6 +20,9 @@ class PlanningPreviewPage extends StatefulWidget {
   final VoidCallback? onBack;
   final DateTime Function()? now;
 
+  /// Optional override for hero [Image] (widget tests / offline screenshots).
+  final ImageProvider Function(String url)? coverImageProviderBuilder;
+
   const PlanningPreviewPage({
     super.key,
     required this.journeyId,
@@ -28,6 +31,7 @@ class PlanningPreviewPage extends StatefulWidget {
     this.onOpenUrl,
     this.onBack,
     this.now,
+    this.coverImageProviderBuilder,
   });
 
   @override
@@ -207,16 +211,17 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                   onLockedAction: () {
                     _bloc.add(const OpenPaywallEvent(source: 'HERO_ACTION'));
                   },
+                  coverImageProviderBuilder: widget.coverImageProviderBuilder,
                 ),
               ),
-              // Gutters measured vs design-preview-roma.png:
-              // hero→countdown flush; countdown→upsell ~4; upsell→chips ~16;
-              // chips→timeline ~8; horizontal content inset 16 (TwoGoSpacing.md).
+              // Gutters vs design: keep readable breathing room (not sparse).
+              // h-margin 16; hero→countdown 12; countdown→upsell 12;
+              // upsell→chips 16; chips→timeline 12.
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
                     TwoGoSpacing.md,
-                    TwoGoSpacing.xxs,
+                    TwoGoSpacing.sm,
                     TwoGoSpacing.md,
                     0,
                   ),
@@ -227,7 +232,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                         startDate: summary.startDate,
                         now: widget.now,
                       ),
-                      const SizedBox(height: TwoGoSpacing.xxs),
+                      const SizedBox(height: TwoGoSpacing.sm),
                       PlanningPreviewUpsellBanner(
                         offer: preview.unlockOffer,
                         onTap: () {
@@ -242,7 +247,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                           _bloc.add(SelectPreviewDayEvent(dayNumber: day));
                         },
                       ),
-                      const SizedBox(height: TwoGoSpacing.xs),
+                      const SizedBox(height: TwoGoSpacing.sm),
                       if (visibleDayMatch != null)
                         _buildTimelineList(visibleDayMatch)
                       else
@@ -390,26 +395,29 @@ class _HeroHeader extends StatelessWidget {
     required this.destinationName,
     required this.onBack,
     required this.onLockedAction,
+    this.coverImageProviderBuilder,
   });
 
   final String? coverImageUrl;
   final String destinationName;
   final VoidCallback onBack;
   final VoidCallback onLockedAction;
+  final ImageProvider Function(String url)? coverImageProviderBuilder;
 
   @override
   Widget build(BuildContext context) {
     final topPad = MediaQuery.paddingOf(context).top;
-    // Design hero content ~182pt below status; keep ~200 + safe area.
+    // Design hero content ~182–220pt below status.
     return SizedBox(
-      height: 200 + topPad,
+      height: 220 + topPad,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
         children: [
           if (coverImageUrl != null && coverImageUrl!.isNotEmpty)
-            Image.network(
-              coverImageUrl!,
+            Image(
+              image: coverImageProviderBuilder?.call(coverImageUrl!) ??
+                  NetworkImage(coverImageUrl!),
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => _fallbackBg(),
             )

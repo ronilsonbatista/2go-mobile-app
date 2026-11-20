@@ -84,8 +84,9 @@ class _PlanningPreviewCountdownState extends State<PlanningPreviewCountdown> {
     final hours = _remaining.inHours.remainder(24);
     final minutes = _remaining.inMinutes.remainder(60);
 
-    // Measured vs design-preview-roma.png (digit tiles 12×16, pair gap 4,
-    // card padding ~8 vertical / 16 horizontal; digits right-aligned).
+    // Digits must dominate / fill the white card (Ronilson 2026-11-20).
+    // Tiles 28×36 with xs vertical pad ≈ digit stack ~70% of card height.
+    // No FittedBox (it was shrinking tiles below the intended size).
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
@@ -98,33 +99,27 @@ class _PlanningPreviewCountdownState extends State<PlanningPreviewCountdown> {
       ),
       child: Row(
         children: [
-          Text(
-            'Faltam apenas',
-            maxLines: 1,
-            style: TwoGoTypography.bodySmall.copyWith(
-              color: TwoGoColors.contentPrimary,
-              fontWeight: FontWeight.w600,
+          Flexible(
+            child: Text(
+              'Faltam apenas',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TwoGoTypography.bodyMedium.copyWith(
+                color: TwoGoColors.contentPrimary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           const SizedBox(width: TwoGoSpacing.xs),
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _DigitPair(value: days, label: 'dias'),
-                    const SizedBox(width: TwoGoSpacing.xxs),
-                    _DigitPair(value: hours, label: 'horas'),
-                    const SizedBox(width: TwoGoSpacing.xxs),
-                    _DigitPair(value: minutes, label: 'minutos'),
-                  ],
-                ),
-              ),
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _DigitPair(value: days, label: 'dias'),
+              const SizedBox(width: 6),
+              _DigitPair(value: hours, label: 'horas'),
+              const SizedBox(width: 6),
+              _DigitPair(value: minutes, label: 'minutos'),
+            ],
           ),
         ],
       ),
@@ -148,16 +143,16 @@ class _DigitPair extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _DigitBox(padded[0]),
-            const SizedBox(width: 1),
+            const SizedBox(width: 2),
             _DigitBox(padded[1]),
           ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           label,
           style: TwoGoTypography.labelSmall.copyWith(
             color: TwoGoColors.contentSecondary,
-            fontSize: 8,
+            fontSize: 9,
             height: 1.1,
           ),
         ),
@@ -171,9 +166,9 @@ class _DigitBox extends StatelessWidget {
 
   final String digit;
 
-  /// Design-measured lime tile (design-preview-roma.png).
-  static const double sizeW = 12;
-  static const double sizeH = 16;
+  /// Lime tile sized to fill the countdown card (~28×36).
+  static const double sizeW = 28;
+  static const double sizeH = 36;
 
   @override
   Widget build(BuildContext context) {
@@ -183,13 +178,13 @@ class _DigitBox extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: TwoGoColors.brandLime,
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(5),
       ),
       child: Text(
         digit,
-        style: TwoGoTypography.labelSmall.copyWith(
+        style: TwoGoTypography.labelMedium.copyWith(
           fontWeight: FontWeight.w800,
-          fontSize: 10,
+          fontSize: 18,
           color: TwoGoColors.neutral900,
           height: 1,
         ),
