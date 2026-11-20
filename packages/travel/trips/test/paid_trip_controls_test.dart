@@ -124,6 +124,14 @@ void main() {
     final alternatives = await api.getItemAlternatives('item 1');
     expect(alternatives.quota.label, 'Trocas: 1 de 4');
     expect(alternatives.items.single.title, 'Galeria');
+    await api.getItemAlternatives(
+      'item 1',
+      filter: const AlternativesFilter(
+        category: 'MUSEUM',
+        free: true,
+        goodForKids: true,
+      ),
+    );
     final quota = await api.substituteItem('item 1', {'title': 'Galeria'});
     expect(quota.remainingSwaps, 2);
 
@@ -145,6 +153,7 @@ void main() {
       'POST /trips/trip%201/accommodation',
       'DELETE /trips/trip%201/accommodation',
       'GET /itinerary-items/item%201/alternatives',
+      'GET /itinerary-items/item%201/alternatives',
       'POST /itinerary-items/item%201/substitute',
       'GET /trip-days/day%201/meal-recommendations',
       'GET /trip-days/day%201/meal-recommendations',
@@ -154,13 +163,18 @@ void main() {
       'GET /itinerary-items/item-details',
     ]);
     expect(calls[1].data, {'name': 'Hotel', 'latitude': 38.71});
-    expect(calls[4].data, {'title': 'Galeria'});
-    expect(calls[5].query, isEmpty);
-    expect(calls[6].query, {'period': 'TARDE'});
-    expect(calls[7].data, {'title': 'Trattoria'});
-    expect(calls[8].data, {'duration': 90});
+    expect(calls[3].query, isEmpty);
+    expect(calls[4].query, {
+      'category': 'MUSEUM',
+      'free': true,
+      'goodForKids': true,
+    });
+    expect(calls[5].data, {'title': 'Galeria'});
+    expect(calls[6].query, isEmpty);
+    expect(calls[7].query, {'period': 'TARDE'});
+    expect(calls[8].data, {'title': 'Trattoria'});
+    expect(calls[9].data, {'duration': 90});
 
-    expect(api.getMyTrips(), throwsA(isA<UnsupportedError>()));
     expect(
       api.updateItineraryItem('item 1', {'title': 'não'}),
       throwsA(isA<UnsupportedError>()),
@@ -277,7 +291,7 @@ void main() {
     await tester.tap(find.text('Substituir'));
     await _settleSheet(tester);
 
-    expect(find.text('Trocas: 4 de 4'), findsWidgets);
+    expect(find.text('Alterações disponíveis  0 de 4'), findsWidgets);
     expect(find.text('Cota de trocas esgotada'), findsOneWidget);
     expect(find.text('Galeria'), findsOneWidget);
     expect(find.text('Usar esta'), findsNothing);
@@ -313,8 +327,10 @@ void main() {
     await _pumpHandoff(tester, repository);
     await tester.tap(find.text('Substituir'));
     await _settleSheet(tester);
-    expect(find.text('Trocas: 1 de 4'), findsWidgets);
-    expect(find.text('Avaliação: 4.8'), findsOneWidget);
+    expect(find.text('Substituir por'), findsOneWidget);
+    expect(find.text('Alterações disponíveis  3 de 4'), findsWidgets);
+    expect(find.text('4.8'), findsOneWidget);
+    expect(find.text('Filtrar'), findsOneWidget);
     await tester.tap(find.text('Usar esta'));
     await _settleSheet(tester);
 
@@ -459,6 +475,54 @@ void main() {
       'googleMapsLink': 'https://maps.example/meal',
     });
     expect(find.text('13:00'), findsOneWidget);
+  });
+
+  testWidgets('Filtrar por sheet applies Core query filters', (tester) async {
+    final repository = _ScriptedTripsRepository([_trip()]);
+    repository.alternatives = AlternativesResult(
+      quota: const SwapQuota(
+        allowedSwapsCount: 4,
+        usedSwapsCount: 1,
+        remainingSwaps: 3,
+      ),
+      facets: const AlternativesFacets(
+        categories: [
+          AlternativesFacetOption(value: 'MUSEUM', label: 'Museu', count: 1),
+        ],
+        durations: [
+          AlternativesFacetOption(
+            value: 'UNDER_60',
+            label: 'Até 1 hora',
+            count: 1,
+          ),
+        ],
+        locations: [
+          AlternativesFacetOption(value: 'Vaticano', label: 'Vaticano', count: 1),
+        ],
+      ),
+      items: [
+        ItemAlternative.fromJson({'title': 'Galeria'}),
+      ],
+    );
+    await _pumpHandoff(tester, repository);
+    await tester.tap(find.text('Substituir'));
+    await _settleSheet(tester);
+    await tester.tap(find.byKey(const Key('alternatives-open-filter')));
+    await _settleSheet(tester);
+
+    expect(find.text('Filtrar por'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('filter-free')));
+    await tester.ensureVisible(find.byKey(const Key('filter-kids')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('filter-kids')));
+    await tester.ensureVisible(find.byKey(const Key('filter-apply')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('filter-apply')));
+    await _settleSheet(tester);
+
+    expect(repository.lastAlternativesFilter?.free, isTrue);
+    expect(repository.lastAlternativesFilter?.goodForKids, isTrue);
+    expect(find.text('Filtrar ·'), findsOneWidget);
   });
 
   testWidgets('substitute surfaces the server quota error', (tester) async {
@@ -677,9 +741,16 @@ class _ScriptedTripsRepository implements TripsRepository {
   @override
   Future<void> deleteAccommodation(String tripId) async {}
 
+  AlternativesFilter? lastAlternativesFilter;
+
   @override
-  Future<AlternativesResult> getItemAlternatives(String itemId) async =>
-      alternatives;
+  Future<AlternativesResult> getItemAlternatives(
+    String itemId, {
+    AlternativesFilter filter = AlternativesFilter.empty,
+  }) async {
+    lastAlternativesFilter = filter;
+    return alternatives;
+  }
 
   @override
   Future<SwapQuota> substituteItem(

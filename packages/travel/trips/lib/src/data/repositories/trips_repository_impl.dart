@@ -144,8 +144,11 @@ class TripsRepositoryImpl implements TripsRepository {
   }
 
   @override
-  Future<AlternativesResult> getItemAlternatives(String itemId) {
-    return _remoteDataSource.getItemAlternatives(itemId);
+  Future<AlternativesResult> getItemAlternatives(
+    String itemId, {
+    AlternativesFilter filter = AlternativesFilter.empty,
+  }) {
+    return _remoteDataSource.getItemAlternatives(itemId, filter: filter);
   }
 
   @override
