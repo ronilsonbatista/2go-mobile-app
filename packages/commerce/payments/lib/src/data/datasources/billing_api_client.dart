@@ -59,8 +59,8 @@ class BillingApiClient {
           : AppliedCoupon(
               code: couponJson['code'] as String? ?? '',
               applied: couponJson['applied'] as bool? ?? true,
-              discountType: couponJson['discountType'] as String?,
-              discountValue: (couponJson['discountValue'] as num?)?.toDouble(),
+              discountType: couponJson['discountType'] as String? ?? '',
+              discountValue: (couponJson['discountValue'] as num?)?.toDouble() ?? 0,
               description: couponJson['description'] as String?,
             ),
     );
