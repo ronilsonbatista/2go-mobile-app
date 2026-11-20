@@ -28,9 +28,19 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  Future<void> _openOndeWithDestination(
+    BuildContext context,
+    HomeDestination destination,
+  ) async {
+    // Persist into users-defaults draft only — no Core trip/session POST.
+    await _persistDestination(destination);
+    if (!context.mounted) return;
+    // Push on the root navigator so Q&A covers AppShell (no tab bar).
+    context.push('/planning/wizard');
+  }
+
   Future<void> _createItinerary(BuildContext context) async {
-    // Onde starts EMPTY (no city/dates). Strip taps may still seed a city
-    // without dates; CTA always opens a blank first destination.
+    // CTA keeps Onde empty (no city/dates). Hero / strip taps seed a city.
     await seedHomeDestinationDraft.startEmpty();
     if (!context.mounted) return;
     // Push on the root navigator so Q&A covers AppShell (no tab bar).
@@ -53,8 +63,7 @@ class HomePage extends StatelessWidget {
           }
         },
         onDestinationSelected: (destination) {
-          // Persist into users-defaults draft only — no Core trip/session POST.
-          _persistDestination(destination);
+          _openOndeWithDestination(context, destination);
         },
       ),
     );
