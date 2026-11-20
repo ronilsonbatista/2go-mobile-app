@@ -9,6 +9,7 @@ import '../../domain/place_details_view_data.dart';
 import '../place_details/lodging_details_sheet.dart';
 import '../place_details/place_details_sheet.dart';
 import 'accommodation/add_accommodation_flow.dart';
+import 'meal_timeline_cards.dart';
 import 'trip_control_sheets.dart';
 
 /// Roteiro devolvido por `GET /trips/:id`.
@@ -207,16 +208,6 @@ class TripItineraryView extends StatelessWidget {
             ),
           ],
           const SizedBox(height: TwoGoSpacing.sm),
-          if (controls != null && !locked && items.isNotEmpty)
-            TextButton(
-              onPressed: () => showMealRecommendationsSheet(
-                context,
-                controls: controls!,
-                dayId: day.id,
-                items: items,
-              ),
-              child: const Text('Sugestões de refeição'),
-            ),
           if (locked)
             TwoGoCard(
               child: Text(
@@ -396,6 +387,53 @@ class TripItineraryView extends StatelessWidget {
       mode: item.transitMode,
     );
     final ticket = ticketStatusLabel(item.ticketStatus);
+    if (isMealItineraryItem(item)) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: TwoGoSpacing.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (transit != null) ...[
+              Text(
+                transit,
+                style: TwoGoTypography.labelSmall.copyWith(
+                  color: TwoGoColors.contentSecondary,
+                ),
+              ),
+              const SizedBox(height: TwoGoSpacing.xs),
+            ],
+            MealTimelineCard.fromItineraryItem(
+              item,
+              onRecommendationsTap: controls == null
+                  ? null
+                  : () => showMealRecommendationsSheet(
+                      context,
+                      controls: controls!,
+                      dayId: item.tripDayId,
+                      items: [item],
+                      initialPeriod: item.period ?? item.title,
+                    ),
+              onTap: controls == null
+                  ? null
+                  : () => showPlaceDetailsFlow(
+                      context,
+                      item: item,
+                      controls: controls!,
+                      onOpenUrl: onOpenUrl,
+                    ),
+              onMenuTap: controls == null
+                  ? null
+                  : () => showPlaceDetailsFlow(
+                      context,
+                      item: item,
+                      controls: controls!,
+                      onOpenUrl: onOpenUrl,
+                    ),
+            ),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: TwoGoSpacing.sm),
       child: Column(

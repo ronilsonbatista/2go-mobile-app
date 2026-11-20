@@ -305,6 +305,9 @@ class _RecordingTripsRepository implements TripsRepository {
       throw UnimplementedError();
 
   @override
+  Future<void> unpinMeal(String itemId) => throw UnimplementedError();
+
+  @override
   Future<void> updateItemDuration(String itemId, int duration) =>
       throw UnimplementedError();
 

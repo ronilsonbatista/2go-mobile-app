@@ -31,6 +31,7 @@ export 'src/presentation/widgets/accommodation/add_accommodation_search_page.dar
 export 'src/presentation/widgets/accommodation/confirm_accommodation_page.dart';
 export 'src/presentation/widgets/accommodation/manual_address_sheet.dart';
 export 'src/presentation/widgets/handoff_trips_view.dart';
+export 'src/presentation/widgets/meal_timeline_cards.dart';
 export 'src/presentation/widgets/trip_control_sheets.dart';
 export 'src/presentation/widgets/trip_itinerary_view.dart';
 export 'src/trips_module.dart';

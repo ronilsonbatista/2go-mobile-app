@@ -224,6 +224,9 @@ class MockTripsRepoForPhaseM implements TripsRepository {
       throw UnimplementedError();
 
   @override
+  Future<void> unpinMeal(String itemId) async => throw UnimplementedError();
+
+  @override
   Future<void> updateItemDuration(String itemId, int duration) async =>
       throw UnimplementedError();
 

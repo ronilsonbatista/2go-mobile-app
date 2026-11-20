@@ -44,7 +44,6 @@ void main() {
     expect(find.text('08:30 - 10:00'), findsOneWidget);
     expect(find.text('Grátis'), findsOneWidget);
     expect(find.text('Mapa'), findsWidgets);
-    expect(find.byIcon(Icons.local_cafe_outlined), findsWidgets);
     expect(find.byIcon(Icons.lock_rounded), findsWidgets);
 
     // Infinite countdown timer — tear down without pumpAndSettle.

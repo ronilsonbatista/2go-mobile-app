@@ -170,6 +170,11 @@ class TripsRepositoryImpl implements TripsRepository {
   }
 
   @override
+  Future<void> unpinMeal(String itemId) {
+    return _remoteDataSource.unpinMeal(itemId);
+  }
+
+  @override
   Future<void> updateItemDuration(String itemId, int duration) {
     return _remoteDataSource.updateItemDuration(itemId, duration);
   }

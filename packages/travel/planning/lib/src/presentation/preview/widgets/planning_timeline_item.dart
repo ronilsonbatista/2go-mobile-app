@@ -86,15 +86,13 @@ class PlanningTimelineItem extends StatelessWidget {
 
   static double _rad(double deg) => deg * math.pi / 180.0;
 
-  IconData _mealIcon() {
-    switch (activity.category.toUpperCase()) {
-      case 'CAFE':
-        return Icons.local_cafe_outlined;
-      case 'BAR':
-        return Icons.local_bar_outlined;
-      default:
-        return Icons.restaurant_outlined;
-    }
+  bool get _mealSelected {
+    if (!activity.isMeal) return false;
+    final hasPlace = activity.providerPlaceId?.trim().isNotEmpty ?? false;
+    if (hasPlace) return true;
+    return !MealTypeAssets.isGenericMealTitle(activity.title) &&
+        (activity.latitude != null ||
+            (activity.imageUrl?.trim().isNotEmpty ?? false));
   }
 
   @override
@@ -110,6 +108,7 @@ class PlanningTimelineItem extends StatelessWidget {
       );
     }
 
+    final mealSelected = _mealSelected;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,8 +117,15 @@ class PlanningTimelineItem extends StatelessWidget {
             style: nodeStyle,
             isLast: isLast,
             child: activity.isMeal
-                ? Icon(_mealIcon(), size: 14, color: TwoGoColors.neutral700)
+                ? (mealSelected
+                    ? const Icon(
+                        Icons.check,
+                        size: 14,
+                        color: TwoGoColors.neutral0,
+                      )
+                    : null)
                 : null,
+            filled: activity.isMeal && mealSelected,
           ),
           const SizedBox(width: TwoGoSpacing.sm),
           Expanded(
@@ -127,8 +133,9 @@ class PlanningTimelineItem extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: TwoGoSpacing.md),
               child: activity.isMeal
                   ? _MealCard(
-                      title: activity.title,
-                      icon: _mealIcon(),
+                      activity: activity,
+                      selected: mealSelected,
+                      imageProviderBuilder: imageProviderBuilder,
                       onTap: onTap,
                       onRecommendationsTap: onRecommendationsTap,
                       onMenuTap: onMenuTap,
@@ -221,11 +228,13 @@ class _TimelineRail extends StatelessWidget {
     required this.style,
     required this.isLast,
     this.child,
+    this.filled = false,
   });
 
   final PlanningTimelineNodeStyle style;
   final bool isLast;
   final Widget? child;
+  final bool filled;
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +247,7 @@ class _TimelineRail extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: TwoGoColors.neutral0,
+            color: filled ? TwoGoColors.neutral900 : TwoGoColors.neutral0,
             border: Border.all(
               color: TwoGoColors.neutral800,
               width: 1.5,
@@ -302,21 +311,53 @@ class _RailPainter extends CustomPainter {
 
 class _MealCard extends StatelessWidget {
   const _MealCard({
-    required this.title,
-    required this.icon,
+    required this.activity,
+    required this.selected,
+    this.imageProviderBuilder,
     this.onTap,
     this.onRecommendationsTap,
     this.onMenuTap,
   });
 
-  final String title;
-  final IconData icon;
+  final PlanningVisibleActivity activity;
+  final bool selected;
+  final ImageProvider Function(String url)? imageProviderBuilder;
   final VoidCallback? onTap;
   final VoidCallback? onRecommendationsTap;
   final VoidCallback? onMenuTap;
 
   @override
   Widget build(BuildContext context) {
+    final asset = MealTypeAssets.resolve(
+      category: activity.category,
+      title: activity.title,
+      period: activity.period,
+    );
+    final remote = activity.imageUrl?.trim();
+    final thumb = ClipRRect(
+      borderRadius: BorderRadius.circular(TwoGoRadius.small),
+      child: SizedBox(
+        width: 56,
+        height: 56,
+        child: remote != null && remote.isNotEmpty
+            ? Image(
+                image:
+                    imageProviderBuilder?.call(remote) ?? NetworkImage(remote),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  MealTypeAssets.pathFor(asset),
+                  package: MealTypeAssets.package,
+                  fit: BoxFit.cover,
+                ),
+              )
+            : Image.asset(
+                MealTypeAssets.pathFor(asset),
+                package: MealTypeAssets.package,
+                fit: BoxFit.cover,
+              ),
+      ),
+    );
+
     return Material(
       color: TwoGoColors.neutral100,
       borderRadius: BorderRadius.circular(TwoGoRadius.medium),
@@ -329,34 +370,64 @@ class _MealCard extends StatelessWidget {
             vertical: TwoGoSpacing.sm + 2,
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 20, color: TwoGoColors.neutral800),
+              thumb,
               const SizedBox(width: TwoGoSpacing.sm),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TwoGoTypography.titleSmall.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: TwoGoColors.contentPrimary,
+                child: selected
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (activity.timeLabel != null &&
+                              activity.timeLabel!.trim().isNotEmpty)
+                            Text(
+                              activity.timeLabel!,
+                              style: TwoGoTypography.labelSmall.copyWith(
+                                color: TwoGoColors.contentSecondary,
+                              ),
+                            ),
+                          Text(
+                            activity.title,
+                            style: TwoGoTypography.titleSmall.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: TwoGoColors.contentPrimary,
+                            ),
+                          ),
+                          if (activity.cost > 0)
+                            Text(
+                              PlanningTimelineItem.costLabel(activity.cost),
+                              style: TwoGoTypography.labelSmall.copyWith(
+                                color: TwoGoColors.info,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            activity.title,
+                            style: TwoGoTypography.titleSmall.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: TwoGoColors.contentPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          GestureDetector(
+                            onTap: onRecommendationsTap,
+                            child: Text(
+                              'Ver recomendações',
+                              style: TwoGoTypography.labelSmall.copyWith(
+                                color: TwoGoColors.contentSecondary,
+                                decoration: TextDecoration.underline,
+                                decorationColor: TwoGoColors.contentSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    GestureDetector(
-                      onTap: onRecommendationsTap,
-                      child: Text(
-                        'Ver recomendações',
-                        style: TwoGoTypography.labelSmall.copyWith(
-                          color: TwoGoColors.contentSecondary,
-                          decoration: TextDecoration.underline,
-                          decorationColor: TwoGoColors.contentSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
               GestureDetector(
                 onTap: onMenuTap,

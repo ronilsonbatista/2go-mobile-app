@@ -238,6 +238,9 @@ class MockTripsDataSource implements TripsRemoteDataSource {
       Future<void>.error(_phase3);
 
   @override
+  Future<void> unpinMeal(String itemId) => Future<void>.error(_phase3);
+
+  @override
   Future<void> updateItemDuration(String itemId, int duration) =>
       Future<void>.error(_phase3);
 
