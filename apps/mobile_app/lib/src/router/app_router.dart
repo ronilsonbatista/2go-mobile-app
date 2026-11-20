@@ -32,6 +32,7 @@ class AppRouter {
     '/auth',
     '/app',
     '/planning',
+    '/trips',
   ];
 
   static bool isFullScreenPath(String location) {
@@ -42,6 +43,7 @@ class AppRouter {
         location.startsWith('/checkout') ||
         location == '/paid-handoff' ||
         location.startsWith('/paid-handoff') ||
+        location.startsWith('/trips/') ||
         location == '/launch' ||
         location.startsWith('/debug/');
   }
@@ -248,6 +250,11 @@ class AppRouter {
                     activity: activity,
                   );
                 },
+                onShare: () {
+                  context.push(
+                    '/trips/debug-preview/share?name=${Uri.encodeComponent('Roma')}',
+                  );
+                },
                 onUnlockRequested: (id, productId) {
                   context.go('/auth');
                 },
@@ -338,6 +345,33 @@ class AppRouter {
                   activity: activity,
                 );
               },
+              onShare: () {
+                final current = bloc.state;
+                final preview = current is PlanningPreviewLoadedState
+                    ? current.preview
+                    : null;
+                final name = preview == null
+                    ? 'Viagem'
+                    : _destinationNameFromPreview(preview);
+                final q = <String, String>{
+                  'name': name,
+                  if (preview?.summary.resolvedCoverImageUrl != null)
+                    'cover': preview!.summary.resolvedCoverImageUrl!,
+                  if (preview?.summary.startDate != null)
+                    'start': preview!.summary.startDate!,
+                  if (preview?.summary.endDate != null)
+                    'end': preview!.summary.endDate!,
+                };
+                final query = q.entries
+                    .map(
+                      (e) =>
+                          '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+                    )
+                    .join('&');
+                // Day-1 uses journey id; Core participants need a trip id
+                // (post-claim). Same route works for paid trips.
+                context.push('/trips/$journeyId/share?$query');
+              },
               onUnlockRequested: (id, productId) async {
                 await dependencies.intentStorage.saveIntent(
                   PostAuthIntent(
@@ -351,6 +385,23 @@ class AppRouter {
                   context.go('/auth');
                 }
               },
+            );
+          },
+        ),
+        GoRoute(
+          path: '/trips/:tripId/share',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) {
+            final tripId = state.pathParameters['tripId']!;
+            final q = state.uri.queryParameters;
+            return TripSharePage(
+              tripId: tripId,
+              apiClient: dependencies.tripShareApiClient,
+              destinationName: q['name'] ?? 'Viagem',
+              coverImageUrl: q['cover'],
+              startDate: DateTime.tryParse(q['start'] ?? ''),
+              endDate: DateTime.tryParse(q['end'] ?? ''),
+              onBack: () => context.pop(),
             );
           },
         ),
@@ -434,6 +485,7 @@ class AppRouter {
                     homeCubit: dependencies.createHomeCubit(),
                     seedHomeDestinationDraft:
                         dependencies.seedHomeDestinationDraftUseCase,
+                    tripShareApiClient: dependencies.tripShareApiClient,
                   ),
                 ),
               ],
@@ -442,12 +494,37 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: '/app/trips',
-                  builder: (context, state) => TripsPage(
-                    tripsRepository: dependencies.tripsRepository,
-                    tripId: state.uri.queryParameters['tripId'],
-                    searchHotels: dependencies.searchHotelsUseCase,
-                    getPlaceDetails: dependencies.getPlaceDetailsUseCase,
-                  ),
+                  builder: (context, state) {
+                    final tripId = state.uri.queryParameters['tripId'];
+                    final inviteAccepted =
+                        state.uri.queryParameters['inviteAccepted'] == '1';
+                    return TripsPage(
+                      tripsRepository: dependencies.tripsRepository,
+                      tripId: tripId,
+                      searchHotels: dependencies.searchHotelsUseCase,
+                      getPlaceDetails: dependencies.getPlaceDetailsUseCase,
+                      showInviteAcceptedToast: inviteAccepted,
+                      onShare: (trip) {
+                        final q = <String, String>{
+                          'name': trip.destination.isNotEmpty
+                              ? trip.destination
+                              : trip.title,
+                          if (trip.coverImage != null) 'cover': trip.coverImage!,
+                          if (trip.startDate != null)
+                            'start': trip.startDate!.toIso8601String(),
+                          if (trip.endDate != null)
+                            'end': trip.endDate!.toIso8601String(),
+                        };
+                        final query = q.entries
+                            .map(
+                              (e) =>
+                                  '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+                            )
+                            .join('&');
+                        context.push('/trips/${trip.id}/share?$query');
+                      },
+                    );
+                  },
                 ),
               ],
             ),
@@ -530,6 +607,14 @@ class AppRouter {
       case SessionStatus.expired:
         return '/app/home';
     }
+  }
+
+  static String _destinationNameFromPreview(PlanningPreview preview) {
+    final destinations = preview.summary.destinations;
+    if (destinations.isNotEmpty && destinations[0] is Map) {
+      return (destinations[0] as Map)['name']?.toString() ?? 'Viagem';
+    }
+    return 'Viagem';
   }
 }
 

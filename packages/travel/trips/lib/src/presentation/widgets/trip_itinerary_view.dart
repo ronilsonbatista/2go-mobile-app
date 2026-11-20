@@ -16,12 +16,14 @@ class TripItineraryView extends StatelessWidget {
   final TripEntity trip;
   final ValueChanged<Uri>? onOpenUrl;
   final TripControls? controls;
+  final VoidCallback? onShare;
 
   const TripItineraryView({
     super.key,
     required this.trip,
     this.onOpenUrl,
     this.controls,
+    this.onShare,
   });
 
   static const paywallMessage =
@@ -98,6 +100,17 @@ class TripItineraryView extends StatelessWidget {
               color: TwoGoColors.contentSecondary,
             ),
           ),
+          if (onShare != null) ...[
+            const SizedBox(height: TwoGoSpacing.sm),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: onShare,
+                icon: const Icon(Icons.ios_share_rounded, size: 18),
+                label: const Text('Compartilhar'),
+              ),
+            ),
+          ],
           if (trip.arrivalDateTime != null)
             _line('Chegada: ${formatDateTime(trip.arrivalDateTime!)}'),
           if (trip.departureDateTime != null)

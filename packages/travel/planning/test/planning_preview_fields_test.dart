@@ -153,7 +153,8 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('header edit/pdf/share stay non-interactive', (tester) async {
+  testWidgets('header edit/pdf stay non-interactive; share blocked without onShare',
+      (tester) async {
     final bloc = PlanningPreviewBloc(
       getPreviewUseCase: GetPlanningPreviewUseCase(_PreviewRepository()),
     );
@@ -183,6 +184,37 @@ void main() {
     await tester.pump();
 
     expect(find.text('Aproveitar'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('header share calls onShare when unlocked', (tester) async {
+    final bloc = PlanningPreviewBloc(
+      getPreviewUseCase: GetPlanningPreviewUseCase(_PreviewRepository()),
+    );
+    addTearDown(bloc.close);
+
+    var shareTaps = 0;
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlanningPreviewPage(
+          journeyId: 'journey-1',
+          bloc: bloc,
+          now: () => DateTime(2026, 7, 1, 12, 0),
+          onShare: () => shareTaps++,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byIcon(Icons.ios_share_rounded));
+    await tester.pump();
+    expect(shareTaps, 1);
 
     await tester.pumpWidget(const SizedBox());
   });

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_places/places.dart';
 
+import '../../domain/entities/trip_entity.dart';
 import '../../domain/repositories/trips_repository.dart';
 import '../bloc/trips_cubit.dart';
 import 'trip_control_sheets.dart';
@@ -16,6 +17,8 @@ class HandoffTripsView extends StatefulWidget {
   final ValueChanged<Uri>? onOpenUrl;
   final SearchHotelsUseCase? searchHotels;
   final GetPlaceDetailsUseCase? getPlaceDetails;
+  final ValueChanged<TripEntity>? onShare;
+  final bool showInviteAcceptedToast;
 
   const HandoffTripsView({
     super.key,
@@ -24,6 +27,8 @@ class HandoffTripsView extends StatefulWidget {
     this.onOpenUrl,
     this.searchHotels,
     this.getPlaceDetails,
+    this.onShare,
+    this.showInviteAcceptedToast = false,
   });
 
   @override
@@ -32,12 +37,26 @@ class HandoffTripsView extends StatefulWidget {
 
 class _HandoffTripsViewState extends State<HandoffTripsView> {
   late final TripsCubit _cubit;
+  bool _inviteToastShown = false;
 
   @override
   void initState() {
     super.initState();
     _cubit = TripsCubit(tripsRepository: widget.tripsRepository);
     _cubit.loadTrip(widget.tripId);
+  }
+
+  void _maybeShowInviteToast() {
+    if (!widget.showInviteAcceptedToast || _inviteToastShown) return;
+    _inviteToastShown = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      TwoGoSnackbar.show(
+        context,
+        message: 'Convite aceito',
+        variant: TwoGoSnackbarVariant.success,
+      );
+    });
   }
 
   @override
@@ -76,9 +95,14 @@ class _HandoffTripsViewState extends State<HandoffTripsView> {
                     'Seus roteiros e itinerários detalhados aparecerão nesta aba.',
               );
             }
+            final trip = state.trips.first;
+            _maybeShowInviteToast();
             return TripItineraryView(
-              trip: state.trips.first,
+              trip: trip,
               onOpenUrl: widget.onOpenUrl,
+              onShare: widget.onShare == null
+                  ? null
+                  : () => widget.onShare!(trip),
               controls: TripControls(
                 repository: widget.tripsRepository,
                 reloadTrip: () => _cubit.loadTrip(widget.tripId),

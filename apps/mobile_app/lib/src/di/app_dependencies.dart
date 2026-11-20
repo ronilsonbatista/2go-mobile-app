@@ -26,6 +26,7 @@ class AppDependencies {
     required this.intentStorage,
     required this.paymentsRepository,
     required this.tripsRepository,
+    required this.tripShareApiClient,
     required this.searchPlacesUseCase,
     required this.searchHotelsUseCase,
     required this.getPlaceDetailsUseCase,
@@ -54,6 +55,7 @@ class AppDependencies {
   final PostAuthIntentStorage intentStorage;
   final PaymentsRepository paymentsRepository;
   final TripsRepository tripsRepository;
+  final TripShareApiClient tripShareApiClient;
   final SearchPlacesUseCase searchPlacesUseCase;
   final SearchHotelsUseCase searchHotelsUseCase;
   final GetPlaceDetailsUseCase getPlaceDetailsUseCase;
@@ -138,6 +140,7 @@ class AppDependencies {
     final tripsRepository = TripsRepositoryImpl(
       remoteDataSource: ApiTripsDataSource(dio),
     );
+    final tripShareApiClient = TripShareApiClient(dio);
 
     // Prefer Core when ApiConfig.baseUrl is set (all flavors); fall back to
     // local stub until staging migrate+seed is live (TG-88).
@@ -160,6 +163,7 @@ class AppDependencies {
       intentStorage: intentStorage,
       paymentsRepository: paymentsRepository,
       tripsRepository: tripsRepository,
+      tripShareApiClient: tripShareApiClient,
       searchPlacesUseCase: searchPlacesUseCase,
       searchHotelsUseCase: searchHotelsUseCase,
       getPlaceDetailsUseCase: getPlaceDetailsUseCase,
