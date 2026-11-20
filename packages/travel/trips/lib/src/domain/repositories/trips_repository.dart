@@ -47,6 +47,7 @@ abstract class TripsRepository {
     String? period,
   });
   Future<void> pinMeal(String itemId, Map<String, dynamic> body);
+  Future<void> unpinMeal(String itemId);
   Future<void> updateItemDuration(String itemId, int duration);
   Future<VerifiedPlaceDetails?> getVerifiedDetails(String itemId);
 }

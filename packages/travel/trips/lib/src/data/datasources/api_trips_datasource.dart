@@ -197,6 +197,13 @@ class ApiTripsDataSource implements TripsRemoteDataSource {
   }
 
   @override
+  Future<void> unpinMeal(String itemId) async {
+    await _dio.patch<dynamic>(
+      '/itinerary-items/${_id(itemId)}/unpin-meal',
+    );
+  }
+
+  @override
   Future<void> updateItemDuration(String itemId, int duration) async {
     await _dio.patch<dynamic>(
       '/itinerary-items/${_id(itemId)}',

@@ -16,6 +16,7 @@ export 'src/themes/twogo_theme.dart';
 
 // Icons & Accessibility
 export 'src/accessibility/twogo_touch_target.dart';
+export 'src/assets/meal_type_assets.dart';
 export 'src/icons/twogo_icons.dart';
 
 // Components

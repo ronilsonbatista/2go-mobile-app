@@ -33,13 +33,18 @@ void main() {
       'name': 'Trattoria',
       'address': 'Rua A',
       'priceLevel': 2,
-      'priceRange': '€€',
+      'priceRange': '\$\$',
       'recommendedDish': 'Carbonara',
       'providerPlaceId': 'place-1',
       'latitude': 1.2,
       'longitude': 3.4,
       'googleMapsUri': 'https://maps.example/meal',
+      'imageUrl': 'https://cdn.example/meal.jpg',
+      'openingHours': '12:00-23:00',
+      'rating': 4.7,
     });
+    expect(meal.imageUrl, 'https://cdn.example/meal.jpg');
+    expect(meal.openingHours, '12:00-23:00');
     expect(meal.toPinBody(), {
       'title': 'Trattoria',
       'location': 'Rua A',
@@ -48,6 +53,9 @@ void main() {
       'latitude': 1.2,
       'longitude': 3.4,
       'googleMapsLink': 'https://maps.example/meal',
+      'imageUrl': 'https://cdn.example/meal.jpg',
+      'priceRange': '\$\$',
+      'rating': 4.7,
     });
     expect(meal.toPinBody()!.containsKey('cost'), isFalse);
     expect(meal.toPinBody()!.containsKey('priceLevel'), isFalse);
@@ -140,6 +148,7 @@ void main() {
     expect(meals.recommendations.single.priceLevel, '2');
     await api.getMealRecommendations('day 1', period: 'TARDE');
     await api.pinMeal('item 1', {'title': 'Trattoria'});
+    await api.unpinMeal('item 1');
     await api.updateItemDuration('item 1', 90);
 
     expect(await api.getVerifiedDetails('item 1'), isNull);
@@ -158,6 +167,7 @@ void main() {
       'GET /trip-days/day%201/meal-recommendations',
       'GET /trip-days/day%201/meal-recommendations',
       'PATCH /itinerary-items/item%201/pin-meal',
+      'PATCH /itinerary-items/item%201/unpin-meal',
       'PATCH /itinerary-items/item%201',
       'GET /itinerary-items/item%201',
       'GET /itinerary-items/item-details',
@@ -173,7 +183,7 @@ void main() {
     expect(calls[6].query, isEmpty);
     expect(calls[7].query, {'period': 'TARDE'});
     expect(calls[8].data, {'title': 'Trattoria'});
-    expect(calls[9].data, {'duration': 90});
+    expect(calls[10].data, {'duration': 90});
 
     expect(
       api.updateItineraryItem('item 1', {'title': 'não'}),
@@ -212,7 +222,13 @@ void main() {
             id: 'day-1',
             tripId: 'trip-1',
             dayNumber: 1,
-            items: [_item(id: 'cafe', title: 'Café')],
+            items: [
+              _item(
+                id: 'cafe',
+                title: 'Café da manhã',
+                category: ItineraryCategory.cafe,
+              ),
+            ],
           ),
           const TripDayEntity(
             id: 'day-2',
@@ -226,8 +242,7 @@ void main() {
     await _pumpHandoff(tester, repository);
 
     expect(find.text(TripItineraryView.paywallMessage), findsOneWidget);
-    expect(find.text('Substituir'), findsOneWidget);
-    expect(find.text('Sugestões de refeição'), findsOneWidget);
+    expect(find.text('Ver recomendações'), findsOneWidget);
   });
 
   testWidgets('accommodation form resends loaded fields and reloads the trip', (
@@ -424,45 +439,65 @@ void main() {
   ) async {
     final repository = _ScriptedTripsRepository([
       _trip(
-        items: [_item(id: 'lunch', title: 'Almoço', period: 'TARDE')],
+        items: [
+          _item(
+            id: 'lunch',
+            title: 'Almoço',
+            period: 'Almoço',
+            category: ItineraryCategory.restaurant,
+          ),
+        ],
       ),
       _trip(
-        items: [_item(id: 'lunch', title: 'Trattoria', timeLabel: '13:00')],
+        items: [
+          _item(
+            id: 'lunch',
+            title: 'Trattoria',
+            timeLabel: '13:00',
+            category: ItineraryCategory.restaurant,
+            providerPlaceId: 'place-1',
+            notes: '2go-meal-pin:{"dish":"Carbonara","priceRange":"\$\$"}',
+          ),
+        ],
       ),
     ]);
     repository.meals = MealRecommendationsResult(
       destination: 'Lisboa',
-      period: 'Geral',
+      period: 'Almoço',
       recommendations: [
         MealRecommendation.fromJson({
           'name': 'Trattoria',
           'address': 'Rua A',
           'priceLevel': 2,
+          'priceRange': '\$\$',
           'recommendedDish': 'Carbonara',
           'providerPlaceId': 'place-1',
           'latitude': 1.2,
           'longitude': 3.4,
           'googleMapsUri': 'https://maps.example/meal',
+          'cuisineType': 'Italiana',
+          'openingHours': '12:00-23:00',
         }),
       ],
     );
     await _pumpHandoff(tester, repository);
-    await tester.tap(find.text('Sugestões de refeição'));
-    await _settleSheet(tester);
+    await tester.tap(find.text('Ver recomendações'));
+    await tester.pumpAndSettle();
 
-    expect(repository.mealPeriods, [null]);
+    expect(repository.mealPeriods, ['Almoço']);
     expect(find.text('Trattoria'), findsOneWidget);
-    expect(find.text('Nível de preço: 2'), findsOneWidget);
-    expect(find.text('Carbonara'), findsOneWidget);
+    expect(find.text('Italiana'), findsOneWidget);
+    expect(find.text('12:00-23:00'), findsOneWidget);
     expect(find.textContaining('€'), findsNothing);
 
-    await tester.tap(find.text('TARDE'));
-    await tester.pump();
-    await tester.pump();
-    expect(repository.mealPeriods, [null, 'TARDE']);
+    await tester.tap(find.text('Filtrar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Jantar'));
+    await tester.pumpAndSettle();
+    expect(repository.mealPeriods, ['Almoço', 'Jantar']);
 
-    await tester.tap(find.text('Fixar'));
-    await _settleSheet(tester);
+    await tester.tap(find.text('Trattoria'));
+    await tester.pumpAndSettle();
 
     expect(repository.pins.single.id, 'lunch');
     expect(repository.pins.single.body, {
@@ -473,6 +508,7 @@ void main() {
       'latitude': 1.2,
       'longitude': 3.4,
       'googleMapsLink': 'https://maps.example/meal',
+      'priceRange': '\$\$',
     });
     expect(find.text('13:00'), findsOneWidget);
   });
@@ -615,6 +651,9 @@ ItineraryItemEntity _item({
   int? duration,
   int order = 1,
   String? period,
+  ItineraryCategory category = ItineraryCategory.touristAttraction,
+  String? providerPlaceId,
+  String? notes,
 }) {
   return ItineraryItemEntity(
     id: id,
@@ -624,6 +663,9 @@ ItineraryItemEntity _item({
     timeLabel: timeLabel,
     duration: duration,
     period: period,
+    category: category,
+    providerPlaceId: providerPlaceId,
+    notes: notes,
   );
 }
 
@@ -674,6 +716,9 @@ dynamic _payload(String method, String path) {
         {'name': 'Trattoria', 'priceLevel': 2},
       ],
     };
+  }
+  if (path.endsWith('/unpin-meal')) {
+    return {'message': 'Recomendação removida; slot de refeição restaurado'};
   }
   if (path.endsWith('/pin-meal')) {
     return {'message': 'Refeição fixada com sucesso'};
@@ -776,6 +821,9 @@ class _ScriptedTripsRepository implements TripsRepository {
   Future<void> pinMeal(String itemId, Map<String, dynamic> body) async {
     pins.add((id: itemId, body: body));
   }
+
+  @override
+  Future<void> unpinMeal(String itemId) async {}
 
   @override
   Future<void> updateItemDuration(String itemId, int duration) async {

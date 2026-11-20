@@ -116,13 +116,31 @@ Future<void> showMealRecommendationsSheet(
   required TripControls controls,
   required String dayId,
   required List<ItineraryItemEntity> items,
+  String? initialPeriod,
+  ImageProvider Function(String url)? imageProviderBuilder,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    builder: (context) {
-      return _MealSheet(controls: controls, dayId: dayId, items: items);
-    },
+  final mealItems = items
+      .where(
+        (item) =>
+            item.category == ItineraryCategory.cafe ||
+            item.category == ItineraryCategory.restaurant ||
+            item.category == ItineraryCategory.bar,
+      )
+      .toList();
+  final targets = mealItems.isNotEmpty ? mealItems : items;
+  return Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      fullscreenDialog: true,
+      builder: (context) {
+        return MealRecommendationsPage(
+          controls: controls,
+          dayId: dayId,
+          items: targets,
+          initialPeriod: initialPeriod,
+          imageProviderBuilder: imageProviderBuilder,
+        );
+      },
+    ),
   );
 }
 
@@ -760,58 +778,109 @@ class _AlternativeCard extends StatelessWidget {
   }
 }
 
-class _MealSheet extends StatefulWidget {
+/// Full-screen meal recommendations (design: Recomendações — restaurante).
+class MealRecommendationsPage extends StatefulWidget {
   final TripControls controls;
   final String dayId;
   final List<ItineraryItemEntity> items;
+  final String? initialPeriod;
+  final ImageProvider Function(String url)? imageProviderBuilder;
 
-  const _MealSheet({
+  const MealRecommendationsPage({
+    super.key,
     required this.controls,
     required this.dayId,
     required this.items,
+    this.initialPeriod,
+    this.imageProviderBuilder,
   });
 
   @override
-  State<_MealSheet> createState() => _MealSheetState();
+  State<MealRecommendationsPage> createState() =>
+      _MealRecommendationsPageState();
 }
 
-class _MealSheetState extends State<_MealSheet> {
+class _MealRecommendationsPageState extends State<MealRecommendationsPage> {
   MealRecommendationsResult? _result;
   var _loading = true;
   String? _error;
-  String? _period;
+  late String _periodLabel;
   late String? _targetId;
-  var _pinning = false;
+  var _busy = false;
+  String? _selectedPlaceId;
+
+  static const _periodOptions = ['Café', 'Almoço', 'Jantar'];
 
   @override
   void initState() {
     super.initState();
-    _targetId = widget.items.length == 1 ? widget.items.first.id : null;
-    _load(null, initial: true);
+    _periodLabel = _resolveInitialPeriod();
+    _targetId = _pickTargetId(_periodLabel);
+    final target = widget.items.cast<ItineraryItemEntity?>().firstWhere(
+          (item) => item?.id == _targetId,
+          orElse: () => widget.items.isEmpty ? null : widget.items.first,
+        );
+    _selectedPlaceId = target?.providerPlaceId;
+    _load(_periodLabel);
   }
 
-  List<String> get _periods {
-    final periods = <String>[];
-    for (final item in widget.items) {
-      final period = item.period?.trim();
-      if (period == null || period.isEmpty || periods.contains(period)) {
-        continue;
+  String _resolveInitialPeriod() {
+    final fromArg = widget.initialPeriod?.trim();
+    if (fromArg != null && fromArg.isNotEmpty) {
+      return _normalizePeriod(fromArg);
+    }
+    if (widget.items.length == 1) {
+      return _normalizePeriod(
+        widget.items.first.period ?? widget.items.first.title,
+      );
+    }
+    return 'Jantar';
+  }
+
+  String _normalizePeriod(String raw) {
+    final lower = raw.toLowerCase();
+    if (lower.contains('café') ||
+        lower.contains('cafe') ||
+        lower.contains('manhã') ||
+        lower.contains('manha') ||
+        lower.contains('breakfast')) {
+      return 'Café';
+    }
+    if (lower.contains('jantar') ||
+        lower.contains('dinner') ||
+        lower.contains('noite')) {
+      return 'Jantar';
+    }
+    return 'Almoço';
+  }
+
+  String? _pickTargetId(String period) {
+    if (widget.items.isEmpty) return null;
+    if (widget.items.length == 1) return widget.items.first.id;
+    final match = widget.items.where((item) {
+      final blob = '${item.period ?? ''} ${item.title}'.toLowerCase();
+      switch (period) {
+        case 'Café':
+          return blob.contains('café') ||
+              blob.contains('cafe') ||
+              blob.contains('manhã') ||
+              blob.contains('manha');
+        case 'Jantar':
+          return blob.contains('jantar') || blob.contains('noite');
+        default:
+          return blob.contains('almoço') || blob.contains('almoco');
       }
-      periods.add(period);
-    }
-    return periods;
+    });
+    return (match.isNotEmpty ? match.first : widget.items.first).id;
   }
 
-  Future<void> _load(String? period, {bool initial = false}) async {
-    if (initial) {
-      _period = period;
-    } else {
-      setState(() {
-        _loading = true;
-        _error = null;
-        _period = period;
-      });
-    }
+  Future<void> _load(String period) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+      _periodLabel = period;
+      _targetId = _pickTargetId(period);
+    });
     try {
       final result = await widget.controls.repository.getMealRecommendations(
         widget.dayId,
@@ -831,11 +900,11 @@ class _MealSheetState extends State<_MealSheet> {
     }
   }
 
-  Future<void> _pin(MealRecommendation meal) async {
+  Future<void> _select(MealRecommendation meal) async {
     final body = meal.toPinBody();
     final targetId = _targetId;
     if (body == null || targetId == null) return;
-    setState(() => _pinning = true);
+    setState(() => _busy = true);
     try {
       await widget.controls.repository.pinMeal(targetId, body);
       if (!mounted) return;
@@ -844,7 +913,25 @@ class _MealSheetState extends State<_MealSheet> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _pinning = false;
+        _busy = false;
+        _error = apiErrorMessage(error);
+      });
+    }
+  }
+
+  Future<void> _unselect() async {
+    final targetId = _targetId;
+    if (targetId == null) return;
+    setState(() => _busy = true);
+    try {
+      await widget.controls.repository.unpinMeal(targetId);
+      if (!mounted) return;
+      Navigator.pop(context);
+      await widget.controls.reloadTrip();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
         _error = apiErrorMessage(error);
       });
     }
@@ -853,76 +940,314 @@ class _MealSheetState extends State<_MealSheet> {
   @override
   Widget build(BuildContext context) {
     final result = _result;
-    return _SheetFrame(
-      title: 'Sugestões de refeição',
-      child: ListView(
+    final asset = MealTypeAssets.resolve(title: _periodLabel);
+    return Scaffold(
+      backgroundColor: TwoGoColors.backgroundSecondary,
+      appBar: AppBar(
+        backgroundColor: TwoGoColors.backgroundSecondary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          _periodLabel,
+          style: TwoGoTypography.titleMedium.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // Map surface deferred — list remains primary select path.
+        },
+        backgroundColor: TwoGoColors.neutral900,
+        foregroundColor: TwoGoColors.neutral0,
+        icon: const Icon(Icons.map_outlined, size: 18),
+        label: const Text('Mapa'),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_periods.isNotEmpty)
-            Wrap(
-              spacing: TwoGoSpacing.xs,
-              children: [
-                for (final period in _periods)
-                  FilterChip(
-                    label: Text(period),
-                    selected: _period == period,
-                    onSelected: (selected) {
-                      _load(selected ? period : null);
-                    },
-                  ),
-              ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              TwoGoSpacing.lg,
+              TwoGoSpacing.sm,
+              TwoGoSpacing.lg,
+              0,
             ),
-          if (widget.items.length > 1) ...[
-            const SizedBox(height: TwoGoSpacing.sm),
-            const Text('Fixar no item'),
-            // Classic RadioListTile API (Flutter 3.32.x). RadioGroup lands in newer SDKs.
-            Column(
+            child: Row(
               children: [
-                for (final item in widget.items)
-                  RadioListTile<String>(
-                    value: item.id,
-                    groupValue: _targetId,
-                    onChanged: (value) => setState(() => _targetId = value),
-                    title: Text(item.title),
+                Expanded(
+                  child: Text(
+                    'Recomendações',
+                    style: TwoGoTypography.titleLarge.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-              ],
-            ),
-          ],
-          if (_loading)
-            const Padding(
-              padding: EdgeInsets.only(top: TwoGoSpacing.md),
-              child: Text('Carregando'),
-            )
-          else if (result != null) ...[
-            if (result.destination != null) Text(result.destination!),
-            if (result.period != null) Text(result.period!),
-            if (result.recommendations.isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(top: TwoGoSpacing.md),
-                child: Text('Nenhuma sugestão nesta resposta.'),
-              ),
-            for (final meal in result.recommendations)
-              Padding(
-                padding: const EdgeInsets.only(top: TwoGoSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ..._mealLines(meal),
-                    if (meal.toPinBody() != null &&
-                        _targetId != null &&
-                        !_pinning)
-                      TextButton(
-                        onPressed: () => _pin(meal),
-                        child: const Text('Fixar'),
-                      ),
-                  ],
                 ),
+                TextButton(
+                  onPressed: () async {
+                    final next = await showModalBottomSheet<String>(
+                      context: context,
+                      builder: (ctx) {
+                        return SafeArea(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (final period in _periodOptions)
+                                ListTile(
+                                  title: Text(period),
+                                  trailing: period == _periodLabel
+                                      ? const Icon(Icons.check)
+                                      : null,
+                                  onTap: () => Navigator.pop(ctx, period),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                    if (next != null && next != _periodLabel) {
+                      await _load(next);
+                    }
+                  },
+                  child: const Text('Filtrar'),
+                ),
+              ],
+            ),
+          ),
+          if (_selectedPlaceId != null && !_busy)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: TwoGoSpacing.lg),
+              child: TextButton(
+                onPressed: _unselect,
+                child: const Text('Remover seleção atual'),
               ),
-          ],
-          if (_error != null) ...[
-            const SizedBox(height: TwoGoSpacing.sm),
-            Text(_error!),
-          ],
+            ),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(
+                      TwoGoSpacing.lg,
+                      TwoGoSpacing.sm,
+                      TwoGoSpacing.lg,
+                      96,
+                    ),
+                    children: [
+                      if (_error != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: TwoGoSpacing.md),
+                          child: Text(
+                            _error!,
+                            style: TwoGoTypography.bodySmall.copyWith(
+                              color: TwoGoColors.feedbackError,
+                            ),
+                          ),
+                        ),
+                      if (result == null || result.recommendations.isEmpty)
+                        const Text('Nenhuma sugestão nesta resposta.')
+                      else
+                        for (final meal in result.recommendations)
+                          _RecommendationCard(
+                            meal: meal,
+                            asset: asset,
+                            selected:
+                                meal.providerPlaceId != null &&
+                                meal.providerPlaceId == _selectedPlaceId,
+                            busy: _busy,
+                            imageProviderBuilder: widget.imageProviderBuilder,
+                            onSelect: () => _select(meal),
+                            onOpenMaps: meal.googleMapsUri == null
+                                ? null
+                                : () {
+                                    // URL open handled by host when needed.
+                                  },
+                          ),
+                    ],
+                  ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _RecommendationCard extends StatelessWidget {
+  const _RecommendationCard({
+    required this.meal,
+    required this.asset,
+    required this.selected,
+    required this.busy,
+    required this.onSelect,
+    this.onOpenMaps,
+    this.imageProviderBuilder,
+  });
+
+  final MealRecommendation meal;
+  final MealTypeAsset asset;
+  final bool selected;
+  final bool busy;
+  final VoidCallback onSelect;
+  final VoidCallback? onOpenMaps;
+  final ImageProvider Function(String url)? imageProviderBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = meal.name?.trim() ?? '';
+    final price = meal.priceRange?.trim();
+    final cuisine = meal.cuisineType?.trim();
+    final hours = meal.openingHours?.trim();
+    final image = meal.imageUrl?.trim();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: TwoGoSpacing.sm),
+      child: Material(
+        color: TwoGoColors.neutral0,
+        borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+        child: InkWell(
+          onTap: busy || name.isEmpty ? null : onSelect,
+          borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+          child: Padding(
+            padding: const EdgeInsets.all(TwoGoSpacing.md),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(TwoGoRadius.small),
+                  child: SizedBox(
+                    width: 64,
+                    height: 64,
+                    child: image != null && image.isNotEmpty
+                        ? Image(
+                            image: imageProviderBuilder?.call(image) ??
+                                NetworkImage(image),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Image.asset(
+                              MealTypeAssets.pathFor(asset),
+                              package: MealTypeAssets.package,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Image.asset(
+                            MealTypeAssets.pathFor(asset),
+                            package: MealTypeAssets.package,
+                            fit: BoxFit.cover,
+                          ),
+                  ),
+                ),
+                const SizedBox(width: TwoGoSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              name,
+                              style: TwoGoTypography.titleSmall.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          if (onOpenMaps != null)
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              onPressed: onOpenMaps,
+                              icon: const Icon(
+                                Icons.north_east_rounded,
+                                size: 18,
+                              ),
+                            ),
+                          if (selected)
+                            const Icon(
+                              Icons.check_circle,
+                              color: TwoGoColors.success,
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          if (meal.rating != null) ...[
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 16,
+                              color: Color(0xFFF5C518),
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              meal.rating!.toStringAsFixed(1),
+                              style: TwoGoTypography.labelSmall.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: TwoGoSpacing.sm),
+                          ],
+                          if (price != null && price.isNotEmpty)
+                            Text(
+                              price,
+                              style: TwoGoTypography.labelSmall.copyWith(
+                                color: TwoGoColors.info,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                        ],
+                      ),
+                      if (cuisine != null && cuisine.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.restaurant_outlined,
+                              size: 14,
+                              color: TwoGoColors.contentSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                cuisine,
+                                style: TwoGoTypography.labelSmall.copyWith(
+                                  color: TwoGoColors.contentSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (hours != null && hours.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.schedule,
+                              size: 14,
+                              color: TwoGoColors.feedbackError,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                hours,
+                                style: TwoGoTypography.labelSmall.copyWith(
+                                  color: TwoGoColors.contentSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1107,33 +1432,6 @@ class _VerifiedDetailsSheetState extends State<_VerifiedDetailsSheet> {
             ),
     );
   }
-}
-
-List<Widget> _mealLines(MealRecommendation meal) {
-  final lines = <Widget>[];
-  void add(String? text) {
-    if (text == null || text.isEmpty) return;
-    lines.add(Text(text));
-  }
-
-  add(meal.name);
-  add(meal.cuisineType);
-  add(meal.priceRange);
-  add(meal.priceLevel == null ? null : 'Nível de preço: ${meal.priceLevel}');
-  add(meal.recommendedDish);
-  add(meal.address);
-  add(meal.description);
-  add(meal.rating == null ? null : 'Avaliação: ${meal.rating}');
-  add(
-    meal.userRatingsTotal == null
-        ? null
-        : 'Avaliações: ${meal.userRatingsTotal}',
-  );
-  add(meal.source);
-  if (meal.googleMapsUri != null) {
-    lines.add(SelectableText(meal.googleMapsUri!));
-  }
-  return lines;
 }
 
 String _coord(double? value) => value == null ? '' : value.toString();

@@ -327,6 +327,8 @@ class MealRecommendation {
   final String? googleMapsUri;
   final String? source;
   final String? description;
+  final String? imageUrl;
+  final String? openingHours;
 
   const MealRecommendation({
     this.name,
@@ -343,6 +345,8 @@ class MealRecommendation {
     this.googleMapsUri,
     this.source,
     this.description,
+    this.imageUrl,
+    this.openingHours,
   });
 
   factory MealRecommendation.fromJson(Map<String, dynamic> json) {
@@ -361,6 +365,10 @@ class MealRecommendation {
       googleMapsUri: _readText(json['googleMapsUri']),
       source: _readText(json['source']),
       description: _readText(json['description']),
+      imageUrl: _readText(json['imageUrl']) ?? _readText(json['image']),
+      openingHours:
+          _readText(json['openingHours']) ??
+          _readText(json['openingHoursText']),
     );
   }
 
@@ -378,6 +386,9 @@ class MealRecommendation {
     _put(body, 'longitude', longitude);
     _put(body, 'notes', recommendedDish);
     _put(body, 'googleMapsLink', googleMapsUri);
+    _put(body, 'imageUrl', imageUrl);
+    _put(body, 'priceRange', priceRange);
+    if (rating != null) body['rating'] = rating;
     return body;
   }
 }
