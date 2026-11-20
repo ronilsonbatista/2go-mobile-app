@@ -17,6 +17,7 @@ import '../pages/launch_page.dart';
 import '../pages/notifications_page.dart';
 import '../pages/profile_page.dart';
 import '../pages/trips_page.dart';
+import '../planning/preview_day1_interactions.dart';
 import '../shell/app_shell.dart';
 
 class AppRouter {
@@ -211,6 +212,7 @@ class AppRouter {
             path: '/debug/preview',
             parentNavigatorKey: rootNavigatorKey,
             builder: (context, state) {
+              final interactions = PreviewDay1Interactions(dependencies);
               final bloc = PlanningPreviewBloc(
                 getPreviewUseCase: GetPlanningPreviewUseCase(
                   DebugPreviewRepository(),
@@ -221,6 +223,31 @@ class AppRouter {
                 bloc: bloc,
                 now: () => DateTime(2026, 6, 30, 12, 0),
                 onBack: () => context.go('/app/home'),
+                loadCoverCatalog: interactions.loadCoverCatalog,
+                onAddLodging: () {
+                  // Fixture preview — lodging still opens existing search UI.
+                  showAddAccommodationFlow(
+                    context,
+                    controls: TripControls(
+                      repository: dependencies.tripsRepository,
+                      reloadTrip: () async {},
+                      searchHotels: dependencies.searchHotelsUseCase,
+                      getPlaceDetails: dependencies.getPlaceDetailsUseCase,
+                    ),
+                    tripId: 'debug-preview',
+                    searchHotels: dependencies.searchHotelsUseCase,
+                    getPlaceDetails: dependencies.getPlaceDetailsUseCase,
+                    biasLatitude: 41.9028,
+                    biasLongitude: 12.4964,
+                    previewOnly: true,
+                  );
+                },
+                onActivityTap: (activity) {
+                  interactions.openActivityDetails(
+                    context,
+                    activity: activity,
+                  );
+                },
                 onUnlockRequested: (id, productId) {
                   context.go('/auth');
                 },
@@ -291,9 +318,26 @@ class AppRouter {
           parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
             final journeyId = state.pathParameters['journeyId']!;
+            final interactions = PreviewDay1Interactions(dependencies);
+            final bloc = dependencies.createPlanningPreviewBloc();
             return PlanningPreviewPage(
               journeyId: journeyId,
-              bloc: dependencies.createPlanningPreviewBloc(),
+              bloc: bloc,
+              loadCoverCatalog: interactions.loadCoverCatalog,
+              onAddLodging: () {
+                final current = bloc.state;
+                if (current is! PlanningPreviewLoadedState) return;
+                interactions.openAddLodging(
+                  context,
+                  preview: current.preview,
+                );
+              },
+              onActivityTap: (activity) {
+                interactions.openActivityDetails(
+                  context,
+                  activity: activity,
+                );
+              },
               onUnlockRequested: (id, productId) async {
                 await dependencies.intentStorage.saveIntent(
                   PostAuthIntent(

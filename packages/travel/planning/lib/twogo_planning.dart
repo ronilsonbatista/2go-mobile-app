@@ -21,6 +21,7 @@ export 'src/domain/models/planning_draft.dart';
 export 'src/domain/models/planning_generation_status.dart';
 export 'src/domain/models/planning_interest.dart';
 export 'src/domain/models/planning_preview.dart';
+export 'src/domain/models/preview_cover_resolution.dart';
 export 'src/domain/models/planning_travelers.dart';
 export 'src/domain/models/post_auth_intent.dart';
 export 'src/domain/repositories/planning_draft_storage.dart';

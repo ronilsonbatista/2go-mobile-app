@@ -78,6 +78,115 @@ void main() {
     expect(missing.resolvedCoverImageUrl, isNull);
   });
 
+  test('resolvePreviewCover falls back to home catalog then thumb assets', () {
+    const empty = PlanningPreviewSummary(
+      destinations: [
+        {'name': 'Roma', 'providerPlaceId': 'places/roma'},
+      ],
+      totalDays: 3,
+    );
+
+    final fromCatalog = resolvePreviewCover(
+      summary: empty,
+      catalog: const [
+        PreviewCoverCatalogEntry(
+          name: 'Roma',
+          providerPlaceId: 'places/roma',
+          imageUrl: 'https://cdn.example/home-roma.jpg',
+        ),
+      ],
+    );
+    expect(fromCatalog?.networkUrl, 'https://cdn.example/home-roma.jpg');
+
+    final fromName = resolvePreviewCover(
+      summary: empty,
+      catalog: const [
+        PreviewCoverCatalogEntry(
+          name: 'Roma',
+          imageUrl: 'https://cdn.example/roma-by-name.jpg',
+        ),
+      ],
+    );
+    expect(fromName?.networkUrl, 'https://cdn.example/roma-by-name.jpg');
+
+    final fromThumb = resolvePreviewCover(summary: empty);
+    expect(fromThumb?.assetPath, contains('roma'));
+    expect(fromThumb?.assetPackage, DestinationThumbCatalog.package);
+  });
+
+  testWidgets('Adicionar hospedagem and activity taps call callbacks', (
+    tester,
+  ) async {
+    var lodgingTaps = 0;
+    PlanningVisibleActivity? opened;
+    final bloc = PlanningPreviewBloc(
+      getPreviewUseCase: GetPlanningPreviewUseCase(_PreviewRepository()),
+    );
+    addTearDown(bloc.close);
+
+    tester.view.physicalSize = const Size(390, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlanningPreviewPage(
+          journeyId: 'journey-1',
+          bloc: bloc,
+          now: () => DateTime(2026, 7, 1, 12, 0),
+          onAddLodging: () => lodgingTaps++,
+          onActivityTap: (activity) => opened = activity,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.text('Adicionar hospedagem'));
+    await tester.pump();
+    expect(lodgingTaps, 1);
+
+    await tester.tap(find.text('Piazza Venezia'));
+    await tester.pump();
+    expect(opened?.title, 'Piazza Venezia');
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('header edit/pdf/share stay non-interactive', (tester) async {
+    final bloc = PlanningPreviewBloc(
+      getPreviewUseCase: GetPlanningPreviewUseCase(_PreviewRepository()),
+    );
+    addTearDown(bloc.close);
+
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlanningPreviewPage(
+          journeyId: 'journey-1',
+          bloc: bloc,
+          now: () => DateTime(2026, 7, 1, 12, 0),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.picture_as_pdf_outlined));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.ios_share_rounded));
+    await tester.pump();
+
+    expect(find.text('Aproveitar'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('countdown digit tiles fill card at 28x36', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

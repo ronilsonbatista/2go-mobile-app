@@ -15,6 +15,8 @@ Future<void> showAddAccommodationFlow(
   TripEntity? trip,
   double? biasLatitude,
   double? biasLongitude,
+  /// Guest Day-1 preview: search/browse without Core trip save.
+  bool previewOnly = false,
 }) {
   final bias = _resolveBias(
     trip: trip,
@@ -31,6 +33,7 @@ Future<void> showAddAccommodationFlow(
         getPlaceDetails: getPlaceDetails,
         biasLatitude: bias.$1,
         biasLongitude: bias.$2,
+        previewOnly: previewOnly,
       ),
     ),
   );

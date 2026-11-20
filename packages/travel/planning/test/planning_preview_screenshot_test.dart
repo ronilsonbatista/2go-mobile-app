@@ -63,7 +63,17 @@ void main() {
                 journeyId: 'shot',
                 bloc: bloc,
                 now: () => DateTime(2026, 6, 30, 12, 0),
+                // Empty Core cover → Home catalog URL resolved via loadCoverCatalog.
+                loadCoverCatalog: () async => const [
+                  PreviewCoverCatalogEntry(
+                    name: 'Roma',
+                    providerPlaceId: 'places/roma',
+                    imageUrl: 'https://cdn.example/home-roma.jpg',
+                  ),
+                ],
                 coverImageProviderBuilder: (_) => heroProvider,
+                onAddLodging: () {},
+                onActivityTap: (_) {},
               ),
             ),
           ),
@@ -76,6 +86,8 @@ void main() {
     });
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 32));
+    // Allow async hero catalog resolve.
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('Roma'), findsOneWidget);
     expect(find.text('Faltam apenas'), findsOneWidget);
@@ -84,11 +96,15 @@ void main() {
     expect(find.text('Adicionar hospedagem'), findsOneWidget);
     expect(find.text('Piazza Venezia'), findsOneWidget);
     expect(find.text('Mapa'), findsWidgets);
+    // Edit / PDF / Share remain visible (disabled).
+    expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.picture_as_pdf_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.ios_share_rounded), findsOneWidget);
 
     await tester.runAsync(
       () => _writePng(
         key,
-        '$outDir/03-after-full-widget-toimage-roma.png',
+        '$outDir/01-after-preview-hero-from-home-catalog-roma.png',
       ),
     );
 
@@ -159,18 +175,16 @@ class _FullRepo implements PlanningRepository {
         id: 'shot',
         status: GuestJourneyStatus.previewReady,
         summary: PlanningPreviewSummary(
+          // Mirrors user feedback: Core summary + dest cover empty → Home catalog.
           destinations: [
             {
               'name': 'Roma',
-              'coverImage':
-                  'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800',
+              'providerPlaceId': 'places/roma',
             },
           ],
           startDate: '2026-07-25',
           endDate: '2026-07-28',
           totalDays: 4,
-          coverImageUrl:
-              'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800',
         ),
         policy: PlanningPreviewPolicy(
           visibleDayCount: 1,

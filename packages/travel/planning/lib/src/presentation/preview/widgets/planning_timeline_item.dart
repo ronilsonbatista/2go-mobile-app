@@ -16,6 +16,7 @@ class PlanningTimelineItem extends StatelessWidget {
   final ImageProvider Function(String url)? imageProviderBuilder;
   final VoidCallback? onMenuTap;
   final VoidCallback? onRecommendationsTap;
+  final VoidCallback? onTap;
 
   const PlanningTimelineItem({
     super.key,
@@ -26,6 +27,7 @@ class PlanningTimelineItem extends StatelessWidget {
     this.imageProviderBuilder,
     this.onMenuTap,
     this.onRecommendationsTap,
+    this.onTap,
   });
 
   static String? mapUrl({double? latitude, double? longitude}) {
@@ -134,6 +136,7 @@ class PlanningTimelineItem extends StatelessWidget {
                       activity: activity,
                       imageProviderBuilder: imageProviderBuilder,
                       onMenuTap: onMenuTap,
+                      onTap: onTap,
                     ),
             ),
           ),
@@ -373,95 +376,105 @@ class _AttractionCard extends StatelessWidget {
     required this.activity,
     this.imageProviderBuilder,
     this.onMenuTap,
+    this.onTap,
   });
 
   final PlanningVisibleActivity activity;
   final ImageProvider Function(String url)? imageProviderBuilder;
   final VoidCallback? onMenuTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final cost = PlanningTimelineItem.costLabel(activity.cost);
     final isFree = activity.cost <= 0;
 
-    return Container(
-      padding: const EdgeInsets.all(TwoGoSpacing.sm),
-      decoration: BoxDecoration(
-        color: TwoGoColors.neutral0,
+    return Material(
+      color: TwoGoColors.neutral0,
+      borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(TwoGoRadius.medium),
-        border: Border.all(color: TwoGoColors.neutral200),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: (activity.imageUrl != null && activity.imageUrl!.isNotEmpty)
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image(
-                      image: imageProviderBuilder != null
-                          ? imageProviderBuilder!(activity.imageUrl!)
-                          : NetworkImage(activity.imageUrl!),
-                      width: 48,
-                      height: 48,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _thumbFallback(),
-                    ),
-                  )
-                : _thumbFallback(),
+        child: Container(
+          padding: const EdgeInsets.all(TwoGoSpacing.sm),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+            border: Border.all(color: TwoGoColors.neutral200),
           ),
-          const SizedBox(width: TwoGoSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  activity.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TwoGoTypography.titleSmall.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: TwoGoColors.contentPrimary,
-                  ),
-                ),
-                if (activity.timeLabel != null &&
-                    activity.timeLabel!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    activity.timeLabel!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TwoGoTypography.labelSmall.copyWith(
-                      color: TwoGoColors.contentSecondary,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 4),
-                Text(
-                  cost,
-                  style: TwoGoTypography.labelSmall.copyWith(
-                    color: isFree ? TwoGoColors.success : TwoGoColors.info,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: onMenuTap,
-            behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.all(4),
-              child: Icon(
-                Icons.more_vert_rounded,
-                size: 20,
-                color: TwoGoColors.neutral600,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: (activity.imageUrl != null &&
+                        activity.imageUrl!.isNotEmpty)
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image(
+                          image: imageProviderBuilder != null
+                              ? imageProviderBuilder!(activity.imageUrl!)
+                              : NetworkImage(activity.imageUrl!),
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _thumbFallback(),
+                        ),
+                      )
+                    : _thumbFallback(),
               ),
-            ),
+              const SizedBox(width: TwoGoSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      activity.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TwoGoTypography.titleSmall.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: TwoGoColors.contentPrimary,
+                      ),
+                    ),
+                    if (activity.timeLabel != null &&
+                        activity.timeLabel!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        activity.timeLabel!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TwoGoTypography.labelSmall.copyWith(
+                          color: TwoGoColors.contentSecondary,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 4),
+                    Text(
+                      cost,
+                      style: TwoGoTypography.labelSmall.copyWith(
+                        color: isFree ? TwoGoColors.success : TwoGoColors.info,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: onMenuTap,
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.more_vert_rounded,
+                    size: 20,
+                    color: TwoGoColors.neutral600,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
