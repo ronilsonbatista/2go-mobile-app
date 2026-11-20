@@ -329,6 +329,7 @@ class _SubstituteAttractionPageState extends State<SubstituteAttractionPage> {
                       ),
                     ),
                     TextButton(
+                      key: const Key('alternatives-open-filter'),
                       onPressed: _openFilters,
                       child: Text(
                         _filter.hasSheetFilters ? 'Filtrar ·' : 'Filtrar',
