@@ -84,11 +84,14 @@ class _PlanningPreviewCountdownState extends State<PlanningPreviewCountdown> {
     final hours = _remaining.inHours.remainder(24);
     final minutes = _remaining.inMinutes.remainder(60);
 
+    // Digits must dominate / fill the white card (Ronilson 2026-11-20).
+    // Tiles 28×36 with xs vertical pad ≈ digit stack ~70% of card height.
+    // No FittedBox (it was shrinking tiles below the intended size).
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
         horizontal: TwoGoSpacing.md,
-        vertical: TwoGoSpacing.sm,
+        vertical: TwoGoSpacing.xs,
       ),
       decoration: BoxDecoration(
         color: TwoGoColors.neutral100,
@@ -96,30 +99,27 @@ class _PlanningPreviewCountdownState extends State<PlanningPreviewCountdown> {
       ),
       child: Row(
         children: [
-          Text(
-            'Faltam apenas',
-            maxLines: 1,
-            style: TwoGoTypography.bodySmall.copyWith(
-              color: TwoGoColors.contentPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 8),
           Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _DigitPair(value: days, label: 'dias'),
-                  const SizedBox(width: 4),
-                  _DigitPair(value: hours, label: 'horas'),
-                  const SizedBox(width: 4),
-                  _DigitPair(value: minutes, label: 'minutos'),
-                ],
+            child: Text(
+              'Faltam apenas',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TwoGoTypography.bodyMedium.copyWith(
+                color: TwoGoColors.contentPrimary,
+                fontWeight: FontWeight.w600,
               ),
             ),
+          ),
+          const SizedBox(width: TwoGoSpacing.xs),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _DigitPair(value: days, label: 'dias'),
+              const SizedBox(width: 6),
+              _DigitPair(value: hours, label: 'horas'),
+              const SizedBox(width: 6),
+              _DigitPair(value: minutes, label: 'minutos'),
+            ],
           ),
         ],
       ),
@@ -147,7 +147,7 @@ class _DigitPair extends StatelessWidget {
             _DigitBox(padded[1]),
           ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           label,
           style: TwoGoTypography.labelSmall.copyWith(
@@ -166,20 +166,25 @@ class _DigitBox extends StatelessWidget {
 
   final String digit;
 
+  /// Lime tile sized to fill the countdown card (~28×36).
+  static const double sizeW = 28;
+  static const double sizeH = 36;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 18,
-      height: 24,
+      width: sizeW,
+      height: sizeH,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: TwoGoColors.brandLime,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(5),
       ),
       child: Text(
         digit,
         style: TwoGoTypography.labelMedium.copyWith(
           fontWeight: FontWeight.w800,
+          fontSize: 18,
           color: TwoGoColors.neutral900,
           height: 1,
         ),

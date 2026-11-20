@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -7,21 +8,39 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:twogo_core/twogo_core.dart';
 import 'package:twogo_planning/twogo_planning.dart';
 
-/// Writes PNGs when PREVIEW_SCREENSHOT_DIR is set. Skips otherwise.
+/// Writes full Day-1 preview PNGs when PREVIEW_SCREENSHOT_DIR is set.
+///
+/// These are **widget `toImage` compositions** (not a device simulator).
+/// Filenames are prefixed accordingly. Provide PREVIEW_HERO_IMAGE for a real
+/// destination photo; otherwise a solid teal placeholder is used for the hero.
 void main() {
-  testWidgets('export preview + upsell screenshots', (tester) async {
+  testWidgets('export full Day-1 preview composition', (tester) async {
     final outDir = Platform.environment['PREVIEW_SCREENSHOT_DIR'];
     if (outDir == null || outDir.isEmpty) {
       return;
     }
     Directory(outDir).createSync(recursive: true);
 
+    final heroPath = Platform.environment['PREVIEW_HERO_IMAGE'];
+    final ImageProvider heroProvider;
+    if (heroPath != null &&
+        heroPath.isNotEmpty &&
+        File(heroPath).existsSync()) {
+      // MemoryImage avoids FileImage async stalls in widget tests.
+      heroProvider = MemoryImage(File(heroPath).readAsBytesSync());
+    } else {
+      heroProvider = MemoryImage(Uint8List.fromList(_kTealPng));
+    }
+
     final bloc = PlanningPreviewBloc(
-      getPreviewUseCase: GetPlanningPreviewUseCase(_Repo()),
+      getPreviewUseCase: GetPlanningPreviewUseCase(_FullRepo()),
     );
     addTearDown(bloc.close);
 
-    tester.view.physicalSize = const Size(390, 844);
+    // Tall enough for hero + countdown + upsell + chips + full Day-1 timeline
+    // + Mapa FAB, without a huge empty scroll tail.
+    const logical = Size(390, 1100);
+    tester.view.physicalSize = logical;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -30,26 +49,50 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: RepaintBoundary(
-          key: key,
-          child: SizedBox(
-            width: 390,
-            height: 844,
-            child: PlanningPreviewPage(
-              journeyId: 'shot',
-              bloc: bloc,
-              now: () => DateTime(2026, 6, 30, 12, 0),
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: logical,
+            padding: EdgeInsets.only(top: 44),
+          ),
+          child: RepaintBoundary(
+            key: key,
+            child: SizedBox(
+              width: logical.width,
+              height: logical.height,
+              child: PlanningPreviewPage(
+                journeyId: 'shot',
+                bloc: bloc,
+                now: () => DateTime(2026, 6, 30, 12, 0),
+                coverImageProviderBuilder: (_) => heroProvider,
+              ),
             ),
           ),
         ),
       ),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-    expect(find.text('Roma'), findsOneWidget);
-    await tester.runAsync(() => _writePng(key, '$outDir/01-sim-preview-roma.png'));
+    await tester.runAsync(() async {
+      await precacheImage(heroProvider, tester.element(find.byType(MaterialApp)));
+    });
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 32));
 
-    // Modal lives in the overlay — capture the sheet alone for evidence.
+    expect(find.text('Roma'), findsOneWidget);
+    expect(find.text('Faltam apenas'), findsOneWidget);
+    expect(find.textContaining('R\$ 19,99'), findsWidgets);
+    expect(find.text('Sáb 25/07'), findsOneWidget);
+    expect(find.text('Adicionar hospedagem'), findsOneWidget);
+    expect(find.text('Piazza Venezia'), findsOneWidget);
+    expect(find.text('Mapa'), findsWidgets);
+
+    await tester.runAsync(
+      () => _writePng(
+        key,
+        '$outDir/03-after-full-widget-toimage-roma.png',
+      ),
+    );
+
+    // Modal evidence (secondary).
     final modalKey = GlobalKey();
     await tester.pumpWidget(
       MaterialApp(
@@ -82,7 +125,7 @@ void main() {
     await tester.pump();
     expect(find.text('Aproveitar'), findsOneWidget);
     await tester.runAsync(
-      () => _writePng(modalKey, '$outDir/02-sim-upsell-modal.png'),
+      () => _writePng(modalKey, '$outDir/04-after-upsell-modal-widget-toimage.png'),
     );
 
     await tester.pumpWidget(const SizedBox());
@@ -97,7 +140,18 @@ Future<void> _writePng(GlobalKey key, String path) async {
   File(path).writeAsBytesSync(bytes!.buffer.asUint8List());
 }
 
-class _Repo implements PlanningRepository {
+/// Opaque teal 1×1 PNG fallback when no hero file is provided.
+const _kTealPng = <int>[
+  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
+  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+  0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53, 0xDE, 0x00, 0x00, 0x00,
+  0x0C, 0x49, 0x44, 0x41, 0x54, 0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00,
+  0x00, 0x00, 0x03, 0x00, 0x01, 0x00, 0x05, 0xFE, 0x02, 0xFE, 0xDC, 0xCC,
+  0x59, 0xE7, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42,
+  0x60, 0x82,
+];
+
+class _FullRepo implements PlanningRepository {
   @override
   Future<Result<PlanningPreview>> getPreview(String journeyId) async {
     return Result.success(
@@ -106,11 +160,17 @@ class _Repo implements PlanningRepository {
         status: GuestJourneyStatus.previewReady,
         summary: PlanningPreviewSummary(
           destinations: [
-            {'name': 'Roma'},
+            {
+              'name': 'Roma',
+              'coverImage':
+                  'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800',
+            },
           ],
           startDate: '2026-07-25',
           endDate: '2026-07-28',
           totalDays: 4,
+          coverImageUrl:
+              'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800',
         ),
         policy: PlanningPreviewPolicy(
           visibleDayCount: 1,
@@ -121,11 +181,12 @@ class _Repo implements PlanningRepository {
             dayNumber: 1,
             date: '2026-07-25',
             destination: 'Roma',
-            title: 'Dia 1',
+            title: 'Dia 1: Roma',
             activities: [
               PlanningVisibleActivity(
                 title: 'Café da manhã',
                 category: 'CAFE',
+                period: 'Manhã',
                 cost: 0,
                 order: 1,
                 sourceType: 'AI',
@@ -141,11 +202,31 @@ class _Repo implements PlanningRepository {
                 sourceType: 'BASE_ATTRACTION',
               ),
               PlanningVisibleActivity(
-                title: 'Almoço',
-                category: 'RESTAURANT',
+                title: 'Fontana di Trevi',
+                category: 'TOURIST_ATTRACTION',
+                timeLabel: '10:30 - 11:30',
                 cost: 0,
                 order: 3,
+                latitude: 41.9009,
+                longitude: 12.4833,
+                sourceType: 'BASE_ATTRACTION',
+              ),
+              PlanningVisibleActivity(
+                title: 'Almoço',
+                category: 'RESTAURANT',
+                cost: 25,
+                order: 4,
                 sourceType: 'AI',
+              ),
+              PlanningVisibleActivity(
+                title: 'Panteão',
+                category: 'TOURIST_ATTRACTION',
+                timeLabel: '13:30 - 15:00',
+                cost: 0,
+                order: 5,
+                latitude: 41.8986,
+                longitude: 12.4769,
+                sourceType: 'BASE_ATTRACTION',
               ),
             ],
           ),
@@ -156,6 +237,12 @@ class _Repo implements PlanningRepository {
             date: '2026-07-26',
             destination: 'Roma',
             title: 'Dia 2',
+          ),
+          PlanningLockedDay(
+            dayNumber: 3,
+            date: '2026-07-27',
+            destination: 'Roma',
+            title: 'Dia 3',
           ),
         ],
         unlockOffer: PlanningUnlockOffer(

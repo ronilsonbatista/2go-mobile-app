@@ -34,11 +34,11 @@ class PlanningPreviewUpsellBanner extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: TwoGoSpacing.md,
-            vertical: TwoGoSpacing.sm + 2,
+            vertical: TwoGoSpacing.sm,
           ),
           child: Row(
             children: [
-              const _UpsellBadge(size: 44),
+              const _UpsellBadge(size: 40),
               const SizedBox(width: TwoGoSpacing.sm),
               Expanded(
                 child: Text.rich(

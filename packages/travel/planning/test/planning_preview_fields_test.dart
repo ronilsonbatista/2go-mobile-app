@@ -51,6 +51,72 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  test('resolvedCoverImageUrl prefers summary then destination coverImage', () {
+    const withSummary = PlanningPreviewSummary(
+      destinations: [
+        {'name': 'Lisboa', 'coverImage': 'https://cdn.example/dest.jpg'},
+      ],
+      totalDays: 3,
+      coverImageUrl: 'https://cdn.example/summary.jpg',
+    );
+    expect(withSummary.resolvedCoverImageUrl, 'https://cdn.example/summary.jpg');
+
+    const destOnly = PlanningPreviewSummary(
+      destinations: [
+        {'name': 'Lisboa', 'coverImage': 'https://cdn.example/lisboa.jpg'},
+      ],
+      totalDays: 3,
+    );
+    expect(destOnly.resolvedCoverImageUrl, 'https://cdn.example/lisboa.jpg');
+
+    const missing = PlanningPreviewSummary(
+      destinations: [
+        {'name': 'Lisboa'},
+      ],
+      totalDays: 3,
+    );
+    expect(missing.resolvedCoverImageUrl, isNull);
+  });
+
+  testWidgets('countdown digit tiles fill card at 28x36', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PlanningPreviewCountdown(
+            startDate: '2026-07-25',
+            now: () => DateTime(2026, 7, 1, 12, 0),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Faltam apenas'), findsOneWidget);
+    expect(find.text('dias'), findsOneWidget);
+
+    final countdown = find.byType(PlanningPreviewCountdown);
+    expect(countdown, findsOneWidget);
+
+    var foundDigit = false;
+    for (final element in find
+        .descendant(
+          of: countdown,
+          matching: find.byType(Container),
+        )
+        .evaluate()) {
+      final size = element.size;
+      if (size != null &&
+          (size.width - 28).abs() < 0.5 &&
+          (size.height - 36).abs() < 0.5) {
+        foundDigit = true;
+        break;
+      }
+    }
+    expect(foundDigit, isTrue, reason: 'expected 28×36 digit tiles');
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('upsell banner opens Aproveitar modal', (tester) async {
     final bloc = PlanningPreviewBloc(
       getPreviewUseCase: GetPlanningPreviewUseCase(_PreviewRepository()),

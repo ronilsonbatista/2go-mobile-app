@@ -37,7 +37,7 @@ class PlanningPreviewDayChips extends StatelessWidget {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(vertical: TwoGoSpacing.xs),
+      padding: const EdgeInsets.symmetric(vertical: TwoGoSpacing.xxs),
       child: Row(
         children: [
           for (final entry in entries) ...[

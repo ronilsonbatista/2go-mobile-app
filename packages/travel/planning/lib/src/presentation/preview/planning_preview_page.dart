@@ -20,6 +20,9 @@ class PlanningPreviewPage extends StatefulWidget {
   final VoidCallback? onBack;
   final DateTime Function()? now;
 
+  /// Optional override for hero [Image] (widget tests / offline screenshots).
+  final ImageProvider Function(String url)? coverImageProviderBuilder;
+
   const PlanningPreviewPage({
     super.key,
     required this.journeyId,
@@ -28,6 +31,7 @@ class PlanningPreviewPage extends StatefulWidget {
     this.onOpenUrl,
     this.onBack,
     this.now,
+    this.coverImageProviderBuilder,
   });
 
   @override
@@ -201,19 +205,23 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
             slivers: [
               SliverToBoxAdapter(
                 child: _HeroHeader(
-                  coverImageUrl: summary.coverImageUrl,
+                  coverImageUrl: summary.resolvedCoverImageUrl,
                   destinationName: destinationName,
                   onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
                   onLockedAction: () {
                     _bloc.add(const OpenPaywallEvent(source: 'HERO_ACTION'));
                   },
+                  coverImageProviderBuilder: widget.coverImageProviderBuilder,
                 ),
               ),
+              // Gutters vs design: keep readable breathing room (not sparse).
+              // h-margin 16; hero→countdown 12; countdown→upsell 12;
+              // upsell→chips 16; chips→timeline 12.
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
                     TwoGoSpacing.md,
-                    TwoGoSpacing.md,
+                    TwoGoSpacing.sm,
                     TwoGoSpacing.md,
                     0,
                   ),
@@ -387,16 +395,19 @@ class _HeroHeader extends StatelessWidget {
     required this.destinationName,
     required this.onBack,
     required this.onLockedAction,
+    this.coverImageProviderBuilder,
   });
 
   final String? coverImageUrl;
   final String destinationName;
   final VoidCallback onBack;
   final VoidCallback onLockedAction;
+  final ImageProvider Function(String url)? coverImageProviderBuilder;
 
   @override
   Widget build(BuildContext context) {
     final topPad = MediaQuery.paddingOf(context).top;
+    // Design hero content ~182–220pt below status.
     return SizedBox(
       height: 220 + topPad,
       width: double.infinity,
@@ -404,8 +415,9 @@ class _HeroHeader extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           if (coverImageUrl != null && coverImageUrl!.isNotEmpty)
-            Image.network(
-              coverImageUrl!,
+            Image(
+              image: coverImageProviderBuilder?.call(coverImageUrl!) ??
+                  NetworkImage(coverImageUrl!),
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => _fallbackBg(),
             )
@@ -426,9 +438,9 @@ class _HeroHeader extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: topPad + 8,
-            left: 12,
-            right: 12,
+            top: topPad + TwoGoSpacing.xs,
+            left: TwoGoSpacing.sm,
+            right: TwoGoSpacing.sm,
             child: Row(
               children: [
                 _RoundIconButton(
@@ -441,13 +453,13 @@ class _HeroHeader extends StatelessWidget {
                   iconColor: const Color(0xFFF5C518),
                   onPressed: onLockedAction,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: TwoGoSpacing.xs),
                 _RoundIconButton(
                   icon: Icons.picture_as_pdf_outlined,
                   iconColor: const Color(0xFFE53935),
                   onPressed: onLockedAction,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: TwoGoSpacing.xs),
                 _RoundIconButton(
                   icon: Icons.ios_share_rounded,
                   onPressed: onLockedAction,
@@ -456,9 +468,9 @@ class _HeroHeader extends StatelessWidget {
             ),
           ),
           Positioned(
-            left: 20,
-            bottom: 20,
-            right: 20,
+            left: TwoGoSpacing.md,
+            bottom: TwoGoSpacing.md,
+            right: TwoGoSpacing.md,
             child: Text(
               destinationName,
               style: TwoGoTypography.headlineLarge.copyWith(

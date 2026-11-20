@@ -16,6 +16,19 @@ class PlanningPreviewSummary extends Equatable {
     this.coverImageUrl,
   });
 
+  /// Hero photo URL: Core `coverImageUrl`, else first destination `coverImage`
+  /// from the destinations payload (Home/wizard seed field).
+  String? get resolvedCoverImageUrl {
+    final fromSummary = coverImageUrl?.trim();
+    if (fromSummary != null && fromSummary.isNotEmpty) return fromSummary;
+    if (destinations.isEmpty) return null;
+    final first = destinations[0];
+    if (first is! Map) return null;
+    final fromDest = first['coverImage']?.toString().trim();
+    if (fromDest != null && fromDest.isNotEmpty) return fromDest;
+    return null;
+  }
+
   @override
   List<Object?> get props => [
     destinations,
