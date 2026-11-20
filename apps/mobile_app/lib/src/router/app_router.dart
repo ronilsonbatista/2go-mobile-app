@@ -250,6 +250,18 @@ class AppRouter {
                     activity: activity,
                   );
                 },
+                onMealRecommendationsTap: (activity) {
+                  interactions.openActivityDetails(
+                    context,
+                    activity: activity,
+                  );
+                },
+                onItemMenuTap: (activity) {
+                  interactions.openActivityDetails(
+                    context,
+                    activity: activity,
+                  );
+                },
                 onShare: () {
                   context.push(
                     '/trips/debug-preview/share?name=${Uri.encodeComponent('Roma')}',
@@ -340,6 +352,18 @@ class AppRouter {
                 );
               },
               onActivityTap: (activity) {
+                interactions.openActivityDetails(
+                  context,
+                  activity: activity,
+                );
+              },
+              onMealRecommendationsTap: (activity) {
+                interactions.openActivityDetails(
+                  context,
+                  activity: activity,
+                );
+              },
+              onItemMenuTap: (activity) {
                 interactions.openActivityDetails(
                   context,
                   activity: activity,

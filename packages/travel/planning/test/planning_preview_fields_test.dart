@@ -96,6 +96,7 @@ void main() {
       ],
     );
     expect(fromCatalog?.networkUrl, 'https://cdn.example/home-roma.jpg');
+    expect(fromCatalog?.assetPath, contains('roma'));
 
     final fromName = resolvePreviewCover(
       summary: empty,
@@ -111,6 +112,29 @@ void main() {
     final fromThumb = resolvePreviewCover(summary: empty);
     expect(fromThumb?.assetPath, contains('roma'));
     expect(fromThumb?.assetPackage, DestinationThumbCatalog.package);
+  });
+
+  test('resolvePreviewCover keeps Lisboa thumb when Core cover URL is present',
+      () {
+    const withBrokenCore = PlanningPreviewSummary(
+      destinations: [
+        {'name': 'Lisboa'},
+      ],
+      totalDays: 4,
+      coverImageUrl: 'https://cdn.example/broken-lisboa.jpg',
+    );
+
+    final resolution = resolvePreviewCover(summary: withBrokenCore);
+    expect(resolution?.networkUrl, 'https://cdn.example/broken-lisboa.jpg');
+    expect(resolution?.assetPath, contains('lisboa'));
+    expect(resolution?.assetPackage, DestinationThumbCatalog.package);
+
+    final withoutPayload = resolvePreviewCover(
+      summary: withBrokenCore,
+      includePayloadUrl: false,
+    );
+    expect(withoutPayload?.networkUrl, isNull);
+    expect(withoutPayload?.assetPath, contains('lisboa'));
   });
 
   testWidgets('Adicionar hospedagem and activity taps call callbacks', (
@@ -156,6 +180,48 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets(
+    'Ver recomendações and item menu unlock Day-1 without paywall',
+    (tester) async {
+      final mealRecs = <String>[];
+      final menus = <String>[];
+      final bloc = PlanningPreviewBloc(
+        getPreviewUseCase: GetPlanningPreviewUseCase(_PreviewRepository()),
+      );
+      addTearDown(bloc.close);
+
+      tester.view.physicalSize = const Size(390, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PlanningPreviewPage(
+            journeyId: 'journey-1',
+            bloc: bloc,
+            now: () => DateTime(2026, 7, 1, 12, 0),
+            onMealRecommendationsTap: (a) => mealRecs.add(a.title),
+            onItemMenuTap: (a) => menus.add(a.title),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.text('Ver recomendações').first);
+      await tester.pump();
+      expect(mealRecs, isNotEmpty);
+      expect(find.text('Aproveitar'), findsNothing);
+
+      await tester.tap(find.byIcon(Icons.more_vert_rounded).first);
+      await tester.pump();
+      expect(menus, isNotEmpty);
+      expect(find.text('Aproveitar'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   testWidgets('header edit/pdf stay non-interactive; share blocked without onShare',
       (tester) async {

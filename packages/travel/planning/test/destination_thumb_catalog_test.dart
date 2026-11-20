@@ -3,7 +3,7 @@ import 'package:twogo_planning/twogo_planning.dart';
 
 void main() {
   group('DestinationThumbCatalog', () {
-    test('maps Roma / Paris / Tóquio to curated monument assets', () {
+    test('maps Roma / Paris / Lisboa / Tóquio to curated monument assets', () {
       expect(
         DestinationThumbCatalog.assetForName('Roma'),
         'assets/destination_thumbs/roma.jpg',
@@ -11,6 +11,14 @@ void main() {
       expect(
         DestinationThumbCatalog.assetForName('Paris'),
         'assets/destination_thumbs/paris.jpg',
+      );
+      expect(
+        DestinationThumbCatalog.assetForName('Lisboa'),
+        'assets/destination_thumbs/lisboa.jpg',
+      );
+      expect(
+        DestinationThumbCatalog.assetForName('Lisbon'),
+        'assets/destination_thumbs/lisboa.jpg',
       );
       expect(
         DestinationThumbCatalog.assetForName('Tóquio'),

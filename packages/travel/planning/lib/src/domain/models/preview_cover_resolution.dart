@@ -21,6 +21,9 @@ class PreviewCoverCatalogEntry {
 }
 
 /// Resolved hero photo for Day-1 preview (network URL and/or packaged asset).
+///
+/// When both [networkUrl] and [assetPath] are set, UI should paint the network
+/// image first and fall back to the asset if loading fails (broken Core CDN).
 class PreviewCoverResolution {
   const PreviewCoverResolution({
     this.networkUrl,
@@ -42,6 +45,10 @@ class PreviewCoverResolution {
   ImageProvider? toImageProvider() {
     final url = networkUrl?.trim();
     if (url != null && url.isNotEmpty) return NetworkImage(url);
+    return toAssetImageProvider();
+  }
+
+  ImageProvider? toAssetImageProvider() {
     final asset = assetPath?.trim();
     if (asset == null || asset.isEmpty) return null;
     final pkg = assetPackage?.trim();
@@ -51,16 +58,27 @@ class PreviewCoverResolution {
 
 /// Resolves Day-1 hero cover without inventing Core APIs.
 ///
-/// Order: summary `coverImageUrl` → first destination `coverImage` →
-/// Home/catalog match by `providerPlaceId` / `placeId` / name →
-/// packaged [DestinationThumbCatalog] by destination name.
+/// Prefer order for the primary network URL:
+/// summary `coverImageUrl` → first destination `coverImage` →
+/// Home/catalog match by `providerPlaceId` / `placeId` / name.
+///
+/// Always also attaches a packaged [DestinationThumbCatalog] (or catalog
+/// local asset) when the destination name is known, so a broken Core URL
+/// can fall back to Lisboa/Roma/… thumbs instead of the mountain placeholder.
 PreviewCoverResolution? resolvePreviewCover({
   required PlanningPreviewSummary summary,
   List<PreviewCoverCatalogEntry> catalog = const [],
+  bool includePayloadUrl = true,
 }) {
-  final fromPayload = summary.resolvedCoverImageUrl;
-  if (fromPayload != null && fromPayload.isNotEmpty) {
-    return PreviewCoverResolution(networkUrl: fromPayload);
+  String? networkUrl;
+  String? assetPath;
+  String? assetPackage;
+
+  if (includePayloadUrl) {
+    final fromPayload = summary.resolvedCoverImageUrl;
+    if (fromPayload != null && fromPayload.isNotEmpty) {
+      networkUrl = fromPayload;
+    }
   }
 
   final first = _firstDestinationMap(summary);
@@ -71,60 +89,76 @@ PreviewCoverResolution? resolvePreviewCover({
   final name = _nonEmpty(first?['name']?.toString());
 
   if (catalog.isNotEmpty) {
-    PreviewCoverCatalogEntry? match;
-    if (placeId != null) {
-      for (final entry in catalog) {
-        final id = entry.providerPlaceId?.trim();
-        if (id != null && id.isNotEmpty && id == placeId) {
-          match = entry;
-          break;
-        }
-      }
-    }
-    if (match == null && name != null) {
-      final needle = _normalizeName(name);
-      for (final entry in catalog) {
-        if (_normalizeName(entry.name) == needle) {
-          match = entry;
-          break;
-        }
-      }
-      if (match == null) {
-        for (final entry in catalog) {
-          final entryKey = _normalizeName(entry.name);
-          if (entryKey != null &&
-              needle != null &&
-              (needle.startsWith('$entryKey ') ||
-                  needle.startsWith('$entryKey-') ||
-                  entryKey.startsWith('$needle ') ||
-                  entryKey.startsWith('$needle-'))) {
-            match = entry;
-            break;
-          }
-        }
-      }
-    }
+    final match = _matchCatalog(
+      catalog: catalog,
+      placeId: placeId,
+      name: name,
+    );
     if (match != null) {
       final url = match.imageUrl?.trim();
-      if (url != null && url.isNotEmpty) {
-        return PreviewCoverResolution(networkUrl: url);
+      if ((networkUrl == null || networkUrl.isEmpty) &&
+          url != null &&
+          url.isNotEmpty) {
+        networkUrl = url;
       }
       final asset = match.assetPath?.trim();
       if (asset != null && asset.isNotEmpty) {
-        return PreviewCoverResolution(
-          assetPath: asset,
-          assetPackage: match.assetPackage,
-        );
+        assetPath = asset;
+        assetPackage = match.assetPackage;
       }
     }
   }
 
-  final thumb = DestinationThumbCatalog.assetForName(name);
-  if (thumb != null) {
-    return PreviewCoverResolution(
-      assetPath: thumb,
-      assetPackage: DestinationThumbCatalog.package,
-    );
+  if (assetPath == null || assetPath.isEmpty) {
+    final thumb = DestinationThumbCatalog.assetForName(name);
+    if (thumb != null) {
+      assetPath = thumb;
+      assetPackage = DestinationThumbCatalog.package;
+    }
+  }
+
+  if ((networkUrl == null || networkUrl.isEmpty) &&
+      (assetPath == null || assetPath.isEmpty)) {
+    return null;
+  }
+
+  return PreviewCoverResolution(
+    networkUrl: networkUrl,
+    assetPath: assetPath,
+    assetPackage: assetPackage,
+  );
+}
+
+PreviewCoverCatalogEntry? _matchCatalog({
+  required List<PreviewCoverCatalogEntry> catalog,
+  required String? placeId,
+  required String? name,
+}) {
+  if (placeId != null) {
+    for (final entry in catalog) {
+      final id = entry.providerPlaceId?.trim();
+      if (id != null && id.isNotEmpty && id == placeId) {
+        return entry;
+      }
+    }
+  }
+  if (name == null) return null;
+  final needle = _normalizeName(name);
+  for (final entry in catalog) {
+    if (_normalizeName(entry.name) == needle) {
+      return entry;
+    }
+  }
+  for (final entry in catalog) {
+    final entryKey = _normalizeName(entry.name);
+    if (entryKey != null &&
+        needle != null &&
+        (needle.startsWith('$entryKey ') ||
+            needle.startsWith('$entryKey-') ||
+            entryKey.startsWith('$needle ') ||
+            entryKey.startsWith('$needle-'))) {
+      return entry;
+    }
   }
   return null;
 }

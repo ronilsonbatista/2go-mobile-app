@@ -74,6 +74,8 @@ void main() {
                 coverImageProviderBuilder: (_) => heroProvider,
                 onAddLodging: () {},
                 onActivityTap: (_) {},
+                onMealRecommendationsTap: (_) {},
+                onItemMenuTap: (_) {},
               ),
             ),
           ),
@@ -105,6 +107,63 @@ void main() {
       () => _writePng(
         key,
         '$outDir/01-after-preview-hero-from-home-catalog-roma.png',
+      ),
+    );
+
+    // Lisboa: empty Core cover → Home/catalog URL (thumb still attached in resolve).
+    final lisboaBloc = PlanningPreviewBloc(
+      getPreviewUseCase: GetPlanningPreviewUseCase(_LisboaRepo()),
+    );
+    addTearDown(lisboaBloc.close);
+    final lisboaKey = GlobalKey();
+    await tester.pumpWidget(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: logical,
+            padding: EdgeInsets.only(top: 44),
+          ),
+          child: RepaintBoundary(
+            key: lisboaKey,
+            child: SizedBox(
+              width: logical.width,
+              height: logical.height,
+              child: PlanningPreviewPage(
+                journeyId: 'shot-lisboa',
+                bloc: lisboaBloc,
+                now: () => DateTime(2026, 6, 30, 12, 0),
+                loadCoverCatalog: () async => const [
+                  PreviewCoverCatalogEntry(
+                    name: 'Lisboa',
+                    providerPlaceId: 'places/lisboa',
+                    imageUrl: 'https://cdn.example/home-lisboa.jpg',
+                  ),
+                ],
+                coverImageProviderBuilder: (_) => heroProvider,
+                onAddLodging: () {},
+                onActivityTap: (_) {},
+                onMealRecommendationsTap: (_) {},
+                onItemMenuTap: (_) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.runAsync(() async {
+      await precacheImage(heroProvider, tester.element(find.byType(MaterialApp)));
+    });
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
+    expect(find.text('Lisboa'), findsOneWidget);
+    expect(find.text('Ver recomendações'), findsWidgets);
+    expect(find.text('Adicionar hospedagem'), findsOneWidget);
+    await tester.runAsync(
+      () => _writePng(
+        lisboaKey,
+        '$outDir/02-after-lisboa-hero-from-home-catalog.png',
       ),
     );
 
@@ -166,6 +225,115 @@ const _kTealPng = <int>[
   0x59, 0xE7, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42,
   0x60, 0x82,
 ];
+
+class _LisboaRepo implements PlanningRepository {
+  @override
+  Future<Result<PlanningPreview>> getPreview(String journeyId) async {
+    return Result.success(
+      const PlanningPreview(
+        id: 'shot-lisboa',
+        status: GuestJourneyStatus.previewReady,
+        summary: PlanningPreviewSummary(
+          destinations: [
+            {'name': 'Lisboa', 'providerPlaceId': 'places/lisboa'},
+          ],
+          startDate: '2026-07-25',
+          endDate: '2026-07-28',
+          totalDays: 4,
+        ),
+        policy: PlanningPreviewPolicy(
+          visibleDayCount: 1,
+          autoPaywallDelaySeconds: 10,
+        ),
+        visibleDays: [
+          PlanningVisibleDay(
+            dayNumber: 1,
+            date: '2026-07-25',
+            destination: 'Lisboa',
+            title: 'Dia 1: Lisboa',
+            activities: [
+              PlanningVisibleActivity(
+                title: 'Almoço no Time Out Market',
+                category: 'RESTAURANT',
+                cost: 0,
+                order: 1,
+                sourceType: 'AI',
+              ),
+              PlanningVisibleActivity(
+                title: 'Miradouro de Santa Catarina',
+                category: 'TOURIST_ATTRACTION',
+                timeLabel: '11:30 - 12:30',
+                cost: 0,
+                order: 2,
+                latitude: 38.711,
+                longitude: -9.148,
+                sourceType: 'BASE_ATTRACTION',
+              ),
+            ],
+          ),
+        ],
+        lockedDays: [
+          PlanningLockedDay(
+            dayNumber: 2,
+            date: '2026-07-26',
+            destination: 'Lisboa',
+            title: 'Dia 2',
+          ),
+        ],
+        unlockOffer: PlanningUnlockOffer(
+          productId: 'prod',
+          code: 'ITINERARY_FULL_ACCESS',
+          name: 'Roteiro Completo 2GO',
+          price: 29.90,
+          currency: 'BRL',
+          available: true,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<Result<ClaimJourneyResult>> claimJourney(String journeyId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<CreatedGuestJourneyResult>> createJourney({
+    int? answersVersion,
+    int? initialStep,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<GuestJourney>> finalizeJourney(String journeyId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<PlanningGenerationStatus>> getGenerationStatus(
+    String journeyId,
+  ) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<GuestJourney>> getJourney(String journeyId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<PlanningGenerationStatus>> startGeneration(String journeyId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<GuestJourney>> updateJourney({
+    required String journeyId,
+    int? currentStep,
+    List<PlanningDestination>? destinations,
+    PlanningTravelers? travelers,
+    List<PlanningInterest>? interests,
+    PlanningActivityWindow? activityWindow,
+    String? budgetLevel,
+    String? travelStyle,
+  }) =>
+      throw UnimplementedError();
+}
 
 class _FullRepo implements PlanningRepository {
   @override

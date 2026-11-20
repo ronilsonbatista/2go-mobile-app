@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../application/get_planning_preview_use_case.dart';
 import 'planning_preview_event.dart';
@@ -7,7 +6,6 @@ import 'planning_preview_state.dart';
 class PlanningPreviewBloc
     extends Bloc<PlanningPreviewEvent, PlanningPreviewState> {
   final GetPlanningPreviewUseCase _getPreviewUseCase;
-  Timer? _autoPaywallTimer;
 
   PlanningPreviewBloc({required GetPlanningPreviewUseCase getPreviewUseCase})
     : _getPreviewUseCase = getPreviewUseCase,
@@ -33,36 +31,20 @@ class PlanningPreviewBloc
             ? preview.visibleDays.first.dayNumber
             : 1;
 
-        final loadedState = PlanningPreviewLoadedState(
-          preview: preview,
-          selectedDayNumber: initialDay,
+        emit(
+          PlanningPreviewLoadedState(
+            preview: preview,
+            selectedDayNumber: initialDay,
+          ),
         );
 
-        emit(loadedState);
-
-        // Auto paywall timer check: if offer available, locked days exist, and not auto opened yet
-        if (preview.unlockOffer.available &&
-            preview.lockedDays.isNotEmpty &&
-            preview.policy.autoPaywallDelaySeconds > 0) {
-          _scheduleAutoPaywall(preview.policy.autoPaywallDelaySeconds);
-        }
+        // Day-1 preview: paywall only from locked-day chips + upsell banner CTA.
+        // Do not auto-open the unlock sheet while the guest explores Day 1.
       },
       (failure) {
         emit(PlanningPreviewErrorState(failure: failure));
       },
     );
-  }
-
-  void _scheduleAutoPaywall(int delaySeconds) {
-    _autoPaywallTimer?.cancel();
-    _autoPaywallTimer = Timer(Duration(seconds: delaySeconds), () {
-      if (!isClosed && state is PlanningPreviewLoadedState) {
-        final current = state as PlanningPreviewLoadedState;
-        if (!current.hasAutoOpenedPaywall && !current.isPaywallOpen) {
-          add(const OpenPaywallEvent(source: 'AUTO'));
-        }
-      }
-    });
   }
 
   void _onSelectDay(
@@ -128,11 +110,5 @@ class PlanningPreviewBloc
         currency: offer.currency,
       ),
     );
-  }
-
-  @override
-  Future<void> close() {
-    _autoPaywallTimer?.cancel();
-    return super.close();
   }
 }
