@@ -33,6 +33,9 @@ class PlanningPreviewPage extends StatefulWidget {
   /// Guest Day-1: open existing Detalhes for an activity / check-in point.
   final ValueChanged<PlanningVisibleActivity>? onActivityTap;
 
+  /// Unlocks Share in the hero header (Edit/PDF stay blocked).
+  final VoidCallback? onShare;
+
   const PlanningPreviewPage({
     super.key,
     required this.journeyId,
@@ -45,6 +48,7 @@ class PlanningPreviewPage extends StatefulWidget {
     this.loadCoverCatalog,
     this.onAddLodging,
     this.onActivityTap,
+    this.onShare,
   });
 
   @override
@@ -261,6 +265,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                   destinationName: destinationName,
                   onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
                   coverImageProviderBuilder: widget.coverImageProviderBuilder,
+                  onShare: widget.onShare,
                 ),
               ),
               // Gutters vs design: keep readable breathing room (not sparse).
@@ -456,6 +461,7 @@ class _HeroHeader extends StatelessWidget {
     this.coverImage,
     this.coverImageUrl,
     this.coverImageProviderBuilder,
+    this.onShare,
   });
 
   final ImageProvider? coverImage;
@@ -463,6 +469,7 @@ class _HeroHeader extends StatelessWidget {
   final String destinationName;
   final VoidCallback onBack;
   final ImageProvider Function(String url)? coverImageProviderBuilder;
+  final VoidCallback? onShare;
 
   ImageProvider? get _image {
     if (coverImage != null) return coverImage;
@@ -515,7 +522,7 @@ class _HeroHeader extends StatelessWidget {
                   onPressed: onBack,
                 ),
                 const Spacer(),
-                // Edit / PDF / Share stay visible but non-functional on Day-1.
+                // Edit / PDF stay blocked; Share unlocks when [onShare] is set.
                 const _RoundIconButton(
                   icon: Icons.edit_outlined,
                   iconColor: Color(0xFFF5C518),
@@ -528,9 +535,10 @@ class _HeroHeader extends StatelessWidget {
                   enabled: false,
                 ),
                 const SizedBox(width: TwoGoSpacing.xs),
-                const _RoundIconButton(
+                _RoundIconButton(
                   icon: Icons.ios_share_rounded,
-                  enabled: false,
+                  enabled: onShare != null,
+                  onPressed: onShare,
                 ),
               ],
             ),

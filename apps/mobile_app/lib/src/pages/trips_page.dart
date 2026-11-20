@@ -9,6 +9,8 @@ class TripsPage extends StatelessWidget {
   final String? tripId;
   final SearchHotelsUseCase? searchHotels;
   final GetPlaceDetailsUseCase? getPlaceDetails;
+  final ValueChanged<TripEntity>? onShare;
+  final bool showInviteAcceptedToast;
 
   const TripsPage({
     super.key,
@@ -16,6 +18,8 @@ class TripsPage extends StatelessWidget {
     this.tripId,
     this.searchHotels,
     this.getPlaceDetails,
+    this.onShare,
+    this.showInviteAcceptedToast = false,
   });
 
   @override
@@ -35,6 +39,8 @@ class TripsPage extends StatelessWidget {
         tripId: tripId,
         searchHotels: searchHotels,
         getPlaceDetails: getPlaceDetails,
+        onShare: onShare,
+        showInviteAcceptedToast: showInviteAcceptedToast,
       ),
     );
   }

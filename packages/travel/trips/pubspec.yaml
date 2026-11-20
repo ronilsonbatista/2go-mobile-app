@@ -14,6 +14,7 @@ dependencies:
   dio: ^5.7.0
   twogo_core: any
   twogo_design_system: any
+  twogo_networking: any
   twogo_places: any
 
 dev_dependencies:
