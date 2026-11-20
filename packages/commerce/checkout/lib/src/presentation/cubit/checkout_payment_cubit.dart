@@ -202,11 +202,19 @@ class CheckoutPaymentCubit extends Cubit<CheckoutPaymentState> {
   void _startCountdownTimer(int initialSeconds) {
     _countdownTimer?.cancel();
     var secondsLeft = initialSeconds;
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (_isPaused) return;
       secondsLeft--;
       if (secondsLeft <= 0) {
         timer.cancel();
+        final currentState = state;
+        if (currentState is CheckoutPixPendingState) {
+          await expireActivePurchase(
+            purchaseId: currentState.purchaseId,
+            tripId: currentState.tripId,
+          );
+        }
+        return;
       }
       final currentState = state;
       if (currentState is CheckoutPixPendingState) {
@@ -216,10 +224,40 @@ class CheckoutPaymentCubit extends Cubit<CheckoutPaymentState> {
           copyPaste: currentState.copyPaste,
           qrCodeBase64: currentState.qrCodeBase64,
           expiresAt: currentState.expiresAt,
-          remainingSeconds: secondsLeft < 0 ? 0 : secondsLeft,
+          remainingSeconds: secondsLeft,
         ));
       }
     });
+  }
+
+  /// Calls Core `POST /purchases/:id/expire` then emits expired state.
+  Future<void> expireActivePurchase({
+    required String purchaseId,
+    required String tripId,
+  }) async {
+    _stopTimers();
+    try {
+      await _paymentsRepository.expirePurchase(purchaseId);
+    } catch (_) {
+      // Still clear local pending so Carrinho can retry.
+    }
+    if (_activeTripId != null) {
+      await _storage.remove('checkout_idempotency_op_$tripId');
+      await _storage.remove('checkout_purchase_id_$tripId');
+    }
+    _activePurchaseId = null;
+    emit(CheckoutPaymentExpiredState(purchaseId: purchaseId));
+  }
+
+  Future<void> acknowledgeExpiredPayment() async {
+    resetToIdle();
+  }
+
+  void resetToIdle() {
+    _stopTimers();
+    _isExecuting = false;
+    _activePurchaseId = null;
+    emit(const CheckoutPaymentInitialState());
   }
 
   void pausePolling() {

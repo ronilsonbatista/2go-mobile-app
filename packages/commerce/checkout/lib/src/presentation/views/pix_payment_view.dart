@@ -1,14 +1,20 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:twogo_design_system/design_system.dart';
 
+import '../../domain/checkout_currency_format.dart';
+
+/// Pix screen — copia-e-cola, instruções 1–3, countdown progress.
 class PixPaymentView extends StatelessWidget {
   final String purchaseId;
   final String? copyPaste;
   final String? qrCodeBase64;
   final int remainingSeconds;
+  final int totalSeconds;
+  final double amount;
   final VoidCallback? onCopied;
+  final VoidCallback? onBack;
+  final VoidCallback? onExpired;
 
   const PixPaymentView({
     super.key,
@@ -16,160 +22,214 @@ class PixPaymentView extends StatelessWidget {
     this.copyPaste,
     this.qrCodeBase64,
     required this.remainingSeconds,
+    this.totalSeconds = 300,
+    required this.amount,
     this.onCopied,
+    this.onBack,
+    this.onExpired,
   });
 
   String _formatTime(int totalSeconds) {
     final minutes = totalSeconds ~/ 60;
     final seconds = totalSeconds % 60;
-    final mStr = minutes.toString().padLeft(2, '0');
-    final sStr = seconds.toString().padLeft(2, '0');
-    return '$mStr:$sStr';
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final minutesLeft = _formatTime(remainingSeconds);
+    final progress = totalSeconds <= 0
+        ? 0.0
+        : (remainingSeconds / totalSeconds).clamp(0.0, 1.0);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(TwoGoSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const TwoGoBadge(
-            label: 'Aguardando Pagamento PIX',
-            variant: TwoGoBadgeVariant.info,
-          ),
-          const SizedBox(height: TwoGoSpacing.md),
+    if (remainingSeconds <= 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        onExpired?.call();
+      });
+    }
 
-          Text(
-            'Escaneie o QR Code ou copie a chave PIX',
-            style: TwoGoTypography.headlineSmall.copyWith(
-              color: TwoGoColors.contentPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: TwoGoSpacing.sm),
-
-          Text(
-            'O acesso será liberado assim que o pagamento for confirmado pelo servidor.',
-            style: TwoGoTypography.bodySmall.copyWith(
-              color: TwoGoColors.neutral600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: TwoGoSpacing.lg),
-
-          // QR Code rendering
-          if (qrCodeBase64 != null && qrCodeBase64!.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(TwoGoSpacing.md),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(TwoGoSpacing.md),
-                border: Border.all(color: TwoGoColors.neutral200),
+    return Scaffold(
+      backgroundColor: TwoGoColors.backgroundPrimary,
+      appBar: TwoGoAppBar(
+        title: 'Pix',
+        onBackPressed: onBack,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          TwoGoSpacing.md,
+          TwoGoSpacing.sm,
+          TwoGoSpacing.md,
+          TwoGoSpacing.xl,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text.rich(
+              TextSpan(
+                style: TwoGoTypography.bodyLarge.copyWith(
+                  color: TwoGoColors.contentPrimary,
+                  height: 1.4,
+                ),
+                children: [
+                  const TextSpan(text: 'Pague '),
+                  TextSpan(
+                    text: formatCheckoutCurrency(amount),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const TextSpan(
+                    text: ' para concluir a compra do seu roteiro.',
+                  ),
+                ],
               ),
-              child: Image.memory(
-                base64Decode(qrCodeBase64!),
-                width: 200,
-                height: 200,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.qr_code_2,
-                  size: 160,
-                  color: Colors.black87,
+            ),
+            const SizedBox(height: TwoGoSpacing.lg),
+            if (copyPaste != null && copyPaste!.isNotEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(TwoGoSpacing.md),
+                decoration: BoxDecoration(
+                  color: TwoGoColors.surfaceSecondary,
+                  borderRadius: BorderRadius.circular(TwoGoRadius.large),
+                ),
+                child: Text(
+                  copyPaste!,
+                  style: TwoGoTypography.bodySmall.copyWith(
+                    color: TwoGoColors.contentPrimary,
+                    fontFamily: 'monospace',
+                  ),
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            )
-          else
-            Container(
-              width: 200,
-              height: 200,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: TwoGoColors.neutral100,
-                borderRadius: BorderRadius.circular(TwoGoSpacing.md),
-              ),
-              child: const Icon(
-                Icons.qr_code_2,
-                size: 140,
-                color: Colors.black54,
-              ),
-            ),
-          const SizedBox(height: TwoGoSpacing.lg),
-
-          // Countdown Timer display
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.timer_outlined, color: TwoGoColors.primary, size: 20),
-              const SizedBox(width: TwoGoSpacing.xs),
-              Text(
-                'Expira em: ',
-                style: TwoGoTypography.bodyMedium.copyWith(
-                  color: TwoGoColors.neutral600,
-                ),
-              ),
-              Text(
-                minutesLeft,
-                style: TwoGoTypography.headlineSmall.copyWith(
-                  color: TwoGoColors.primary,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(height: TwoGoSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: copyPaste!));
+                    onCopied?.call();
+                    if (context.mounted) {
+                      TwoGoSnackbar.show(
+                        context,
+                        message: 'Código PIX copiado!',
+                        variant: TwoGoSnackbarVariant.success,
+                      );
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: TwoGoColors.contentPrimary,
+                    backgroundColor: TwoGoColors.brandLimeLight.withValues(
+                      alpha: 0.35,
+                    ),
+                    side: BorderSide(
+                      color: TwoGoColors.brandLime.withValues(alpha: 0.5),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: TwoGoSpacing.md,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(TwoGoRadius.large),
+                    ),
+                  ),
+                  child: Text(
+                    'Copiar código PIX',
+                    style: TwoGoTypography.labelLarge.copyWith(
+                      color: TwoGoColors.contentPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: TwoGoSpacing.lg),
-
-          // Copia e cola code display & button
-          if (copyPaste != null && copyPaste!.isNotEmpty) ...[
-            Container(
-              padding: const EdgeInsets.all(TwoGoSpacing.md),
-              decoration: BoxDecoration(
-                color: TwoGoColors.neutral100,
-                borderRadius: BorderRadius.circular(TwoGoSpacing.sm),
-                border: Border.all(color: TwoGoColors.neutral200),
-              ),
-              child: Text(
-                copyPaste!,
-                style: TwoGoTypography.bodySmall.copyWith(
-                  fontFamily: 'monospace',
-                  color: TwoGoColors.contentPrimary,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            const SizedBox(height: TwoGoSpacing.xl),
+            Text(
+              'Instruções de pagamento',
+              style: TwoGoTypography.titleMedium.copyWith(
+                color: TwoGoColors.contentPrimary,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: TwoGoSpacing.md),
-            TwoGoButton(
-              text: 'Copiar Código PIX',
-              icon: Icons.copy,
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: copyPaste!));
-                onCopied?.call();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Código PIX copiado!')),
-                  );
-                }
-              },
+            const SizedBox(height: TwoGoSpacing.sm),
+            const _InstructionStep(
+              number: '1',
+              text:
+                  'Abra o app do seu banco ou carteira digital e escolha pagar com Pix.',
+            ),
+            const _InstructionStep(
+              number: '2',
+              text:
+                  'Selecione Pix Copia e Cola e cole o código gerado nesta tela.',
+            ),
+            const _InstructionStep(
+              number: '3',
+              text:
+                  'Confirme o pagamento. Assim que o banco confirmar, o acesso ao roteiro é liberado.',
+            ),
+            const SizedBox(height: TwoGoSpacing.xl),
+            Text(
+              'Tempo restante para pagamento',
+              style: TwoGoTypography.bodyMedium.copyWith(
+                color: TwoGoColors.contentSecondary,
+              ),
+            ),
+            const SizedBox(height: TwoGoSpacing.xs),
+            ClipRRect(
+              borderRadius: TwoGoRadius.borderFull,
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 8,
+                backgroundColor: TwoGoColors.neutral200,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  TwoGoColors.brandLime,
+                ),
+              ),
+            ),
+            const SizedBox(height: TwoGoSpacing.xs),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                _formatTime(remainingSeconds < 0 ? 0 : remainingSeconds),
+                style: TwoGoTypography.titleMedium.copyWith(
+                  color: TwoGoColors.contentPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
-          const SizedBox(height: TwoGoSpacing.xl),
+        ),
+      ),
+    );
+  }
+}
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const TwoGoLoadingIndicator(size: 18),
-              const SizedBox(width: TwoGoSpacing.sm),
-              Text(
-                'Checando confirmação do servidor...',
-                style: TwoGoTypography.bodySmall.copyWith(
-                  color: TwoGoColors.neutral600,
-                ),
+class _InstructionStep extends StatelessWidget {
+  const _InstructionStep({required this.number, required this.text});
+
+  final String number;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: TwoGoSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$number.',
+            style: TwoGoTypography.bodyMedium.copyWith(
+              color: TwoGoColors.contentPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: TwoGoSpacing.xs),
+          Expanded(
+            child: Text(
+              text,
+              style: TwoGoTypography.bodyMedium.copyWith(
+                color: TwoGoColors.contentSecondary,
+                height: 1.4,
               ),
-            ],
+            ),
           ),
         ],
       ),

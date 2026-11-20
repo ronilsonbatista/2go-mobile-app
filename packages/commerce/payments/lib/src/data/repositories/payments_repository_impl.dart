@@ -1,5 +1,8 @@
+import '../../domain/entities/card_intent_result.dart';
 import '../../domain/entities/checkout_payment_result.dart';
 import '../../domain/entities/checkout_summary.dart';
+import '../../domain/entities/coupon_validation_result.dart';
+import '../../domain/entities/expire_purchase_result.dart';
 import '../../domain/entities/product_entity.dart';
 import '../../domain/entities/purchase_entity.dart';
 import '../../domain/entities/purchase_status_result.dart';
@@ -44,6 +47,14 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
   }
 
   @override
+  Future<CouponValidationResult> validateCoupon(
+    String tripId, {
+    required String couponCode,
+  }) {
+    return _remoteDataSource.validateCoupon(tripId, couponCode: couponCode);
+  }
+
+  @override
   Future<CheckoutPaymentResult> processCheckoutPayment({
     required String tripId,
     required String paymentMethod,
@@ -73,6 +84,24 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
             )
           : null,
     );
+  }
+
+  @override
+  Future<CardIntentResult> createCardIntent({
+    required String tripId,
+    String? couponCode,
+    int? installments,
+  }) {
+    return _remoteDataSource.createCardIntent(
+      tripId: tripId,
+      couponCode: couponCode,
+      installments: installments,
+    );
+  }
+
+  @override
+  Future<ExpirePurchaseResult> expirePurchase(String purchaseId) {
+    return _remoteDataSource.expirePurchase(purchaseId);
   }
 
   @override

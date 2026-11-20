@@ -1,4 +1,4 @@
-enum PaymentMethodType { PIX, CARD }
+enum PaymentMethodType { PIX, CARD, APPLE_PAY, GOOGLE_PAY }
 
 class CheckoutPurchaseDto {
   final String tripId;

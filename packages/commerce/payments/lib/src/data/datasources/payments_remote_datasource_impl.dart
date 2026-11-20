@@ -1,4 +1,7 @@
 import 'package:app_roteiros_api/app_roteiros_api.dart';
+import '../../domain/entities/card_intent_result.dart';
+import '../../domain/entities/coupon_validation_result.dart';
+import '../../domain/entities/expire_purchase_result.dart';
 import 'billing_api_client.dart';
 import '../models/product_dto.dart';
 import '../models/purchase_dto.dart';
@@ -38,6 +41,14 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
   }
 
   @override
+  Future<CouponValidationResult> validateCoupon(
+    String tripId, {
+    required String couponCode,
+  }) {
+    return _billingApiClient.validateCoupon(tripId, couponCode: couponCode);
+  }
+
+  @override
   Future<CheckoutResponseDto> processCheckout({
     required String tripId,
     required String paymentMethod,
@@ -46,10 +57,24 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
     int? installments,
     String? idempotencyKey,
   }) async {
-    final methodEnum = paymentMethod.toUpperCase() == 'CARD' ||
-            paymentMethod.toUpperCase() == 'CREDIT_CARD'
-        ? PaymentMethodType.CARD
-        : PaymentMethodType.PIX;
+    final upper = paymentMethod.toUpperCase();
+    final PaymentMethodType methodEnum;
+    switch (upper) {
+      case 'CARD':
+      case 'CREDIT_CARD':
+        methodEnum = PaymentMethodType.CARD;
+        break;
+      case 'APPLE_PAY':
+      case 'APPLEPAY':
+        methodEnum = PaymentMethodType.APPLE_PAY;
+        break;
+      case 'GOOGLE_PAY':
+      case 'GOOGLEPAY':
+        methodEnum = PaymentMethodType.GOOGLE_PAY;
+        break;
+      default:
+        methodEnum = PaymentMethodType.PIX;
+    }
 
     final dto = CheckoutPurchaseDto(
       tripId: tripId,
@@ -63,6 +88,24 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
       dto,
       idempotencyKey: idempotencyKey,
     );
+  }
+
+  @override
+  Future<CardIntentResult> createCardIntent({
+    required String tripId,
+    String? couponCode,
+    int? installments,
+  }) {
+    return _billingApiClient.createCardIntent(
+      tripId: tripId,
+      couponCode: couponCode,
+      installments: installments,
+    );
+  }
+
+  @override
+  Future<ExpirePurchaseResult> expirePurchase(String purchaseId) {
+    return _billingApiClient.expirePurchase(purchaseId);
   }
 
   @override
