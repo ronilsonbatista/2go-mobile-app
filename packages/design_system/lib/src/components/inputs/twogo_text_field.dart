@@ -26,6 +26,7 @@ class TwoGoTextField extends StatefulWidget {
   final int maxLines;
   final bool autofocus;
   final bool isSuccess;
+  final List<TextInputFormatter>? inputFormatters;
 
   /// When true (default), shows the design-system `!` icon on error if [suffix]
   /// is null.

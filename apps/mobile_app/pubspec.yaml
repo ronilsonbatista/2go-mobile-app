@@ -27,6 +27,7 @@ dependencies:
   twogo_design_system: any
   twogo_authentication: any
   twogo_session: any
+  twogo_profile: any
   twogo_trips: any
   twogo_payments: any
   twogo_checkout: any

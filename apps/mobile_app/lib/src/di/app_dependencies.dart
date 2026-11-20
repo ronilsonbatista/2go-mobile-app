@@ -7,6 +7,7 @@ import 'package:twogo_networking/twogo_networking.dart';
 import 'package:twogo_payments/twogo_payments.dart';
 import 'package:twogo_places/places.dart';
 import 'package:twogo_planning/twogo_planning.dart';
+import 'package:twogo_profile/profile.dart';
 import 'package:twogo_security/twogo_security.dart';
 import 'package:twogo_session/twogo_session.dart';
 import 'package:twogo_trips/trips.dart';
@@ -39,6 +40,7 @@ class AppDependencies {
     required this.claimPlanningJourneyUseCase,
     required this.seedHomeDestinationDraftUseCase,
     required this.homeContentRepository,
+    required this.accountProfileRepository,
   });
 
   final String environment;
@@ -57,6 +59,7 @@ class AppDependencies {
   final GetPlaceDetailsUseCase getPlaceDetailsUseCase;
   final CardTokenizer cardTokenizer;
   final HomeContentRepository homeContentRepository;
+  final AccountProfileRepository accountProfileRepository;
 
   final CreatePlanningJourneyUseCase createPlanningJourneyUseCase;
   final RestorePlanningJourneyUseCase restorePlanningJourneyUseCase;
@@ -143,6 +146,8 @@ class AppDependencies {
       fallback: LocalHomeContentRepository(forceInitialsOnly: true),
     );
 
+    final accountProfileRepository = RemoteAccountProfileRepository(dio: dio);
+
     return AppDependencies._(
       environment: environment,
       apiConfig: apiConfig,
@@ -191,6 +196,7 @@ class AppDependencies {
       seedHomeDestinationDraftUseCase: SeedHomeDestinationDraftUseCase(
         draftStorage: draftStorage,
       ),
+      accountProfileRepository: accountProfileRepository,
     );
   }
 

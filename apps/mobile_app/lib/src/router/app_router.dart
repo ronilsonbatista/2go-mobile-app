@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:twogo_authentication/twogo_authentication.dart';
 import 'package:twogo_checkout/twogo_checkout.dart';
 import 'package:twogo_planning/twogo_planning.dart';
+import 'package:twogo_profile/profile.dart';
 import 'package:twogo_session/twogo_session.dart';
 import 'package:twogo_storage/twogo_storage.dart';
 import 'package:twogo_trips/trips.dart';
@@ -416,9 +417,55 @@ class AppRouter {
             ),
             StatefulShellBranch(
               routes: [
-                GoRoute(
-                  path: '/app/profile',
-                  builder: (context, state) => const ProfilePage(),
+                ShellRoute(
+                  builder: (context, state, child) {
+                    final email = sessionCubit.state.userId;
+                    return ProfileScope(
+                      repository: dependencies.accountProfileRepository,
+                      fallbackEmail: email,
+                      child: child,
+                    );
+                  },
+                  routes: [
+                    GoRoute(
+                      path: '/app/profile',
+                      builder: (context, state) => const ProfilePage(),
+                      routes: [
+                        GoRoute(
+                          path: 'personal-data',
+                          builder: (context, state) => PersonalDataPage(
+                            onBack: () => context.pop(),
+                          ),
+                        ),
+                        GoRoute(
+                          path: 'saved-cards',
+                          builder: (context, state) => SavedCardsPage(
+                            onBack: () => context.pop(),
+                          ),
+                        ),
+                        GoRoute(
+                          path: 'expired-itineraries',
+                          builder: (context, state) =>
+                              ExpiredItinerariesPage(
+                            onBack: () => context.pop(),
+                          ),
+                        ),
+                        GoRoute(
+                          path: 'change-photo',
+                          builder: (context, state) {
+                            final path = state.extra is String
+                                ? state.extra! as String
+                                : '';
+                            return ChangePhotoPage(
+                              imagePath: path,
+                              onBack: () => context.pop(),
+                              onSaved: () => context.pop(),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),
