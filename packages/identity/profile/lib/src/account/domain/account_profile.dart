@@ -22,10 +22,11 @@ class AccountProfile extends Equatable {
   final String? displayName;
   final String? photoUrl;
 
-  /// Local-only — Core User has no phone field today.
+  /// Local-only — Core DB may store phone, but GET /users/me does not expose it
+  /// and there is no self-service PATCH.
   final String? phone;
 
-  /// Local-only — Core User has no cpf field today.
+  /// Local-only — Core has no cpf field / profile PATCH.
   final String? cpf;
 
   bool get hasPhoto => photoUrl != null && photoUrl!.trim().isNotEmpty;

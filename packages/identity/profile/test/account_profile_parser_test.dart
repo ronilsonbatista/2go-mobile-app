@@ -54,4 +54,36 @@ void main() {
     expect(profile.hasPhoto, isFalse);
     expect(profile.initials, 'MS');
   });
+
+  test('prefers displayName over fullName (Core GET /users/me shape)', () {
+    final profile = parser.parse({
+      'user': {
+        'userId': 'usr_4',
+        'email': 'x@2go.app',
+        'displayName': 'Nome Exibido',
+        'fullName': 'Nome Completo Ignorado',
+        'photoUrl': null,
+      },
+    });
+
+    expect(profile.id, 'usr_4');
+    expect(profile.displayName, 'Nome Exibido');
+  });
+
+  test('falls back to userId and fallbackEmail', () {
+    final profile = parser.parse(
+      {
+        'user': {
+          'userId': 'only-user-id',
+          'displayName': null,
+          'photoUrl': null,
+        },
+      },
+      fallbackEmail: 'fallback@2go.app',
+    );
+
+    expect(profile.id, 'only-user-id');
+    expect(profile.email, 'fallback@2go.app');
+    expect(profile.hasPhoto, isFalse);
+  });
 }
