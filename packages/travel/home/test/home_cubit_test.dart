@@ -21,6 +21,13 @@ class _FakeHomeRepository implements HomeContentRepository {
     if (!isAuthenticated) return HomeProfile.guest();
     return profile;
   }
+
+  @override
+  Future<HomeCrmSnapshot> fetchCrmSnapshot({
+    required bool isAuthenticated,
+    String? userId,
+  }) async =>
+      HomeCrmSnapshot.empty;
 }
 
 HomeDestination _dest(String id, {int order = 0, String? providerPlaceId}) {

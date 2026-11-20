@@ -32,8 +32,42 @@ class ApiTripsDataSource implements TripsRemoteDataSource {
   }
 
   @override
-  Future<List<TripDto>> getMyTrips() =>
-      Future<List<TripDto>>.error(_missingEndpoint);
+  Future<List<TripDto>> getMyTrips() async {
+    final response = await _dio.get<dynamic>('/trips');
+    final data = response.data;
+    final list = _asTripList(data);
+    return list.map(TripDto.fromJson).toList(growable: false);
+  }
+
+  List<Map<String, dynamic>> _asTripList(dynamic data) {
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(growable: false);
+    }
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      final nested = map['data'] ?? map['items'] ?? map['trips'];
+      if (nested is List) {
+        return nested
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      }
+      if (nested is Map) {
+        final inner = Map<String, dynamic>.from(nested);
+        final items = inner['items'] ?? inner['trips'];
+        if (items is List) {
+          return items
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(growable: false);
+        }
+      }
+    }
+    throw const FormatException('GET /trips não devolveu uma lista');
+  }
 
   @override
   Future<TripDto> createTrip(Map<String, dynamic> body) =>

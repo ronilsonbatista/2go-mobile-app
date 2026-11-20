@@ -1,3 +1,4 @@
+import '../domain/models/home_crm_snapshot.dart';
 import '../domain/models/home_destination.dart';
 import '../domain/models/home_profile.dart';
 import '../domain/repositories/home_content_repository.dart';
@@ -131,6 +132,15 @@ class LocalHomeContentRepository implements HomeContentRepository {
       displayName: displayName,
       photoAssetPath: demoPhotoAssetPath,
     );
+  }
+
+  @override
+  Future<HomeCrmSnapshot> fetchCrmSnapshot({
+    required bool isAuthenticated,
+    String? userId,
+  }) async {
+    // Local stub has no paid trip — discovery Home only.
+    return HomeCrmSnapshot.empty;
   }
 
   String _displayNameFrom(String? userId) {

@@ -73,6 +73,9 @@ class HomePage extends StatelessWidget {
         onDestinationSelected: (destination) {
           _openOndeWithDestination(context, destination);
         },
+        onTripSelected: (trip) {
+          context.go('/app/trips?tripId=${Uri.encodeComponent(trip.id)}');
+        },
       ),
     );
 
