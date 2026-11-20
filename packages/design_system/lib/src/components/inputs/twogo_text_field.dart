@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../icons/twogo_icons.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radius.dart';
 import '../../tokens/spacing.dart';
@@ -25,7 +25,10 @@ class TwoGoTextField extends StatefulWidget {
   final int maxLines;
   final bool autofocus;
   final bool isSuccess;
-  final List<TextInputFormatter>? inputFormatters;
+
+  /// When true (default), shows the design-system `!` icon on error if [suffix]
+  /// is null.
+  final bool showErrorIcon;
 
   TwoGoTextField({
     super.key,
@@ -49,7 +52,7 @@ class TwoGoTextField extends StatefulWidget {
     this.maxLines = 1,
     this.autofocus = false,
     this.isSuccess = false,
-    this.inputFormatters,
+    this.showErrorIcon = true,
   }) : hint = hint ?? hintText,
        prefix =
            prefix ??
@@ -98,7 +101,8 @@ class _TwoGoTextFieldState extends State<TwoGoTextField> {
       fillColor = TwoGoColors.surfaceDisabled;
     } else if (hasError) {
       borderColor = TwoGoColors.borderError;
-      fillColor = TwoGoColors.errorLight.withValues(alpha: 0.3);
+      // Design: soft pink field fill for invalid / empty states.
+      fillColor = TwoGoColors.errorLight;
     } else if (widget.isSuccess) {
       borderColor = TwoGoColors.borderSuccess;
       fillColor = TwoGoColors.successLight.withValues(alpha: 0.3);
@@ -106,6 +110,16 @@ class _TwoGoTextFieldState extends State<TwoGoTextField> {
       borderColor = TwoGoColors.borderFocused;
       fillColor = TwoGoColors.surfacePrimary;
     }
+
+    final Widget? suffixIcon =
+        widget.suffix ??
+        (hasError && widget.showErrorIcon
+            ? const Icon(
+                TwoGoIcons.error,
+                size: 22,
+                color: TwoGoColors.feedbackError,
+              )
+            : null);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,7 +159,6 @@ class _TwoGoTextFieldState extends State<TwoGoTextField> {
             autofocus: widget.autofocus,
             onChanged: widget.onChanged,
             onSubmitted: widget.onSubmitted,
-            inputFormatters: widget.inputFormatters,
             style: TwoGoTypography.bodyMedium.copyWith(
               color: widget.enabled
                   ? TwoGoColors.contentPrimary
@@ -157,7 +170,7 @@ class _TwoGoTextFieldState extends State<TwoGoTextField> {
                 color: TwoGoColors.contentSecondary,
               ),
               prefixIcon: widget.prefix,
-              suffixIcon: widget.suffix,
+              suffixIcon: suffixIcon,
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
@@ -176,6 +189,7 @@ class _TwoGoTextFieldState extends State<TwoGoTextField> {
             widget.errorText!,
             style: TwoGoTypography.labelSmall.copyWith(
               color: TwoGoColors.feedbackError,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ] else if (widget.helperText != null) ...[

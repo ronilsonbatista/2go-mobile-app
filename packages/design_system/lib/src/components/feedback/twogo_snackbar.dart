@@ -5,12 +5,14 @@ import '../../tokens/radius.dart';
 import '../../tokens/spacing.dart';
 import '../../tokens/typography.dart';
 
-enum TwoGoSnackbarVariant { success, error, warning, info }
+enum TwoGoSnackbarVariant { success, error, warning, info, connectivity }
 
 /// Floating Toast / Snackbar for 2GO Mobile Design System.
 ///
 /// Dark bar + colored leading icon + bottom progress line that drains over
 /// [duration] (matches login OTP invalid / resend toasts).
+///
+/// [TwoGoSnackbarVariant.connectivity] uses the coral “Sem conexão…” pattern.
 class TwoGoSnackbar extends StatelessWidget {
   final String message;
   final TwoGoSnackbarVariant variant;
@@ -68,8 +70,28 @@ class TwoGoSnackbar extends StatelessWidget {
     );
   }
 
+  /// Coral connectivity toast matching design copy.
+  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>
+  showNoConnection(
+    BuildContext context, {
+    String message = 'Sem conexão com a internet!',
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    return show(
+      context,
+      message: message,
+      variant: TwoGoSnackbarVariant.connectivity,
+      duration: duration,
+      showProgress: false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (variant == TwoGoSnackbarVariant.connectivity) {
+      return _ConnectivityToast(message: message, icon: icon);
+    }
+
     Color indicatorColor;
     IconData defaultIconData;
 
@@ -87,6 +109,7 @@ class TwoGoSnackbar extends StatelessWidget {
         defaultIconData = TwoGoIcons.warning;
         break;
       case TwoGoSnackbarVariant.info:
+      case TwoGoSnackbarVariant.connectivity:
         indicatorColor = TwoGoColors.feedbackInfo;
         defaultIconData = TwoGoIcons.info;
         break;
@@ -152,6 +175,49 @@ class TwoGoSnackbar extends StatelessWidget {
                 duration: progressDuration!,
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ConnectivityToast extends StatelessWidget {
+  const _ConnectivityToast({required this.message, this.icon});
+
+  final String message;
+  final Widget? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: TwoGoRadius.borderMedium,
+      child: ColoredBox(
+        color: TwoGoColors.toastConnectivity,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TwoGoSpacing.md,
+            vertical: TwoGoSpacing.sm + 2,
+          ),
+          child: Row(
+            children: [
+              icon ??
+                  const Icon(
+                    TwoGoIcons.satellite,
+                    size: 22,
+                    color: TwoGoColors.contentPrimary,
+                  ),
+              const SizedBox(width: TwoGoSpacing.sm),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TwoGoTypography.bodyMedium.copyWith(
+                    color: TwoGoColors.contentPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

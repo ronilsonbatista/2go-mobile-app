@@ -10,7 +10,31 @@ abstract class AppFailure implements Exception {
 }
 
 class NetworkFailure extends AppFailure {
-  const NetworkFailure({required super.message, super.code, super.statusCode});
+  static const defaultMessage = 'Sem conexão com a internet!';
+
+  const NetworkFailure({
+    super.message = defaultMessage,
+    super.code = 'NETWORK_UNAVAILABLE',
+    super.statusCode,
+  });
+}
+
+/// Client or Nest ValidationPipe field errors (400 / BAD_REQUEST).
+class ValidationFailure extends AppFailure {
+  final Map<String, String> fieldErrors;
+  final List<String> messages;
+
+  const ValidationFailure({
+    required super.message,
+    this.fieldErrors = const {},
+    this.messages = const [],
+    super.code = 'BAD_REQUEST',
+    super.statusCode = 400,
+  });
+
+  String? errorFor(String field) => fieldErrors[field];
+
+  bool get hasFieldErrors => fieldErrors.isNotEmpty;
 }
 
 class InvalidOtpFailure extends AppFailure {
