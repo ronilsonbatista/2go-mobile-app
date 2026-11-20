@@ -1,4 +1,6 @@
 import 'package:app_roteiros_api/app_roteiros_api.dart' as api;
+import 'package:dio/dio.dart';
+import 'package:twogo_networking/twogo_networking.dart';
 import 'package:twogo_security/twogo_security.dart';
 import '../../domain/entities/auth_tokens_entity.dart';
 import '../../domain/entities/user_entity.dart';
@@ -27,9 +29,13 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> requestOtp({required String email, String? purpose}) async {
     if (_apiClient != null) {
-      await _apiClient.requestOtp(
-        api.RequestOtpDto(email: email, purpose: purpose),
-      );
+      try {
+        await _apiClient.requestOtp(
+          api.RequestOtpDto(email: email, purpose: purpose),
+        );
+      } on DioException catch (error) {
+        ErrorMapper.throwMapped(error);
+      }
       return;
     }
   }
@@ -41,17 +47,21 @@ class AuthRepositoryImpl implements AuthRepository {
     String? purpose,
   }) async {
     if (_apiClient != null) {
-      final response = await _apiClient.verifyOtp(
-        api.VerifyOtpDto(email: email, code: code, purpose: purpose),
-      );
-      final tokensEntity = AuthMapper.toTokensEntity(response);
-      _currentUser = AuthMapper.toUserEntity(response.user);
-      _currentTokens = tokensEntity;
+      try {
+        final response = await _apiClient.verifyOtp(
+          api.VerifyOtpDto(email: email, code: code, purpose: purpose),
+        );
+        final tokensEntity = AuthMapper.toTokensEntity(response);
+        _currentUser = AuthMapper.toUserEntity(response.user);
+        _currentTokens = tokensEntity;
 
-      if (_tokenStorage != null) {
-        await _tokenStorage.saveTokens(AuthMapper.toSecurityTokens(response));
+        if (_tokenStorage != null) {
+          await _tokenStorage.saveTokens(AuthMapper.toSecurityTokens(response));
+        }
+        return tokensEntity;
+      } on DioException catch (error) {
+        ErrorMapper.throwMapped(error);
       }
-      return tokensEntity;
     }
 
     final mockTokens = AuthTokensEntity(

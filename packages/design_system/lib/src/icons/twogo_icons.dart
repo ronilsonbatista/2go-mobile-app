@@ -12,6 +12,8 @@ abstract class TwoGoIcons {
   static const IconData error = Icons.error_rounded;
   static const IconData warning = Icons.warning_amber_rounded;
   static const IconData info = Icons.info_outline_rounded;
+  static const IconData satellite = Icons.satellite_alt_rounded;
+  static const IconData noConnection = Icons.satellite_alt_rounded;
   static const IconData chevronRight = Icons.chevron_right_rounded;
 
   // Payments / Commerce primitives

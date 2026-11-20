@@ -37,6 +37,34 @@ void main() {
       );
 
       expect(find.text('E-mail inválido'), findsOneWidget);
+      expect(find.byIcon(TwoGoIcons.error), findsOneWidget);
+    });
+
+    testWidgets('shows design helper copy for empty and invalid fields', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                TwoGoTextField(
+                  label: 'Título do campo',
+                  errorText: TwoGoErrorFeedback.requiredField,
+                ),
+                TwoGoTextField(
+                  label: 'Título do campo',
+                  errorText: TwoGoErrorFeedback.invalidField,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text(TwoGoErrorFeedback.requiredField), findsOneWidget);
+      expect(find.text(TwoGoErrorFeedback.invalidField), findsOneWidget);
+      expect(find.byIcon(TwoGoIcons.error), findsNWidgets(2));
     });
 
     testWidgets('Golden Test - TwoGoTextField Focused State', (tester) async {

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:twogo_core/twogo_core.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_places/places.dart';
 
@@ -80,7 +81,12 @@ class _DestinationSearchSheetState extends State<DestinationSearchSheet> {
         (failure) {
           setState(() {
             _isLoading = false;
-            _errorMessage = failure.message;
+            if (failure is NetworkFailure) {
+              _errorMessage = null;
+              TwoGoErrorFeedback.present(context, failure);
+            } else {
+              _errorMessage = failure.message;
+            }
           });
         },
       );

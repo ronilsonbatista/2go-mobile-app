@@ -38,6 +38,10 @@ abstract class TwoGoColors {
   static const Color error = Color(0xFFDC2626);
   static const Color errorLight = Color(0xFFFEE2E2);
 
+  /// Coral used by connectivity toast (design: Sem conexão com a internet!).
+  static const Color coral = Color(0xFFFF6B5B);
+  static const Color coralDark = Color(0xFFE85A4B);
+
   static const Color warning = Color(0xFFF59E0B);
   static const Color warningLight = Color(0xFFFEF3C7);
 
@@ -86,6 +90,7 @@ abstract class TwoGoColors {
 
   /// Overlay / Toast / Toast Background
   static const Color toastBackground = neutral900;
+  static const Color toastConnectivity = coral;
 
   // Legacy alias getters for backwards compatibility
   static Color get primary => actionPrimary;

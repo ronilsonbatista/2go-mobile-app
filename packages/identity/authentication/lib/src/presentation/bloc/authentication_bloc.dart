@@ -66,17 +66,15 @@ class AuthenticationBloc
         ),
       );
     } on AppFailure catch (failure) {
-      emit(
-        state.copyWith(
-          step: AuthenticationStep.emailEntry,
-          errorMessage: failure.message,
-        ),
-      );
+      emit(_failureState(AuthenticationStep.emailEntry, failure));
     } catch (e) {
       emit(
         state.copyWith(
           step: AuthenticationStep.emailEntry,
           errorMessage: 'Falha ao solicitar código. Tente novamente.',
+          failure: const UnknownFailure(
+            message: 'Falha ao solicitar código. Tente novamente.',
+          ),
         ),
       );
     }
@@ -129,6 +127,7 @@ class AuthenticationBloc
             step: AuthenticationStep.otpInvalid,
             codeError: 'AUTH_OTP_INVALID',
             errorMessage: 'Verifique o código e tente novamente!',
+            failure: failure,
           ),
         );
       } else if (failure.code == 'AUTH_OTP_EXPIRED') {
@@ -136,6 +135,7 @@ class AuthenticationBloc
           state.copyWith(
             step: AuthenticationStep.otpExpired,
             errorMessage: 'Código expirado. Solicite um novo código.',
+            failure: failure,
           ),
         );
       } else if (failure.code == 'AUTH_OTP_TOO_MANY_ATTEMPTS') {
@@ -144,6 +144,7 @@ class AuthenticationBloc
             step: AuthenticationStep.otpAttemptsExceeded,
             errorMessage:
                 'Limite de tentativas excedido. Solicite um novo código.',
+            failure: failure,
           ),
         );
       } else if (failure.code == 'AUTH_OTP_RATE_LIMITED') {
@@ -151,21 +152,20 @@ class AuthenticationBloc
           state.copyWith(
             step: AuthenticationStep.otpRateLimited,
             errorMessage: 'Aguarde antes de solicitar um novo código.',
+            failure: failure,
           ),
         );
       } else {
-        emit(
-          state.copyWith(
-            step: AuthenticationStep.otpInvalid,
-            errorMessage: failure.message,
-          ),
-        );
+        emit(_failureState(AuthenticationStep.otpInvalid, failure));
       }
     } catch (e) {
       emit(
         state.copyWith(
           step: AuthenticationStep.otpInvalid,
           errorMessage: 'Falha ao verificar código. Tente novamente.',
+          failure: const UnknownFailure(
+            message: 'Falha ao verificar código. Tente novamente.',
+          ),
         ),
       );
     }
@@ -194,20 +194,31 @@ class AuthenticationBloc
         ),
       );
     } on AppFailure catch (failure) {
-      emit(
-        state.copyWith(
-          step: AuthenticationStep.otpEntry,
-          errorMessage: failure.message,
-        ),
-      );
+      emit(_failureState(AuthenticationStep.otpEntry, failure));
     } catch (e) {
       emit(
         state.copyWith(
           step: AuthenticationStep.otpEntry,
           errorMessage: 'Falha ao reenviar código.',
+          failure: const UnknownFailure(message: 'Falha ao reenviar código.'),
         ),
       );
     }
+  }
+
+  AuthenticationState _failureState(
+    AuthenticationStep step,
+    AppFailure failure,
+  ) {
+    final fieldErrors = failure is ValidationFailure
+        ? failure.fieldErrors
+        : const <String, String>{};
+    return state.copyWith(
+      step: step,
+      errorMessage: failure.message,
+      failure: failure,
+      fieldErrors: fieldErrors,
+    );
   }
 
   void _onBackToEmailRequested(

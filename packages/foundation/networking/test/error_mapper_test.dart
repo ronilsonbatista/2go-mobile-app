@@ -60,7 +60,7 @@ void main() {
       expect(failure, isA<TooManyOtpAttemptsFailure>());
     });
 
-    test('maps connection timeout to NetworkFailure', () {
+    test('maps connection timeout to NetworkFailure with design copy', () {
       final dioError = DioException(
         requestOptions: RequestOptions(path: '/trips'),
         type: DioExceptionType.connectionTimeout,
@@ -68,6 +68,65 @@ void main() {
 
       final failure = ErrorMapper.mapDioError(dioError);
       expect(failure, isA<NetworkFailure>());
+      expect(failure.message, NetworkFailure.defaultMessage);
+      expect(failure.message, 'Sem conexão com a internet!');
+    });
+
+    test('maps connectionError to NetworkFailure', () {
+      final dioError = DioException(
+        requestOptions: RequestOptions(path: '/places/autocomplete'),
+        type: DioExceptionType.connectionError,
+      );
+
+      final failure = ErrorMapper.mapDioError(dioError);
+      expect(failure, isA<NetworkFailure>());
+    });
+
+    test('maps BAD_REQUEST message list to ValidationFailure field errors', () {
+      final dioError = DioException(
+        requestOptions: RequestOptions(path: '/auth/otp/request'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/auth/otp/request'),
+          statusCode: 400,
+          data: {
+            'success': false,
+            'code': 'BAD_REQUEST',
+            'message': [
+              'email must be an email',
+              'code must be longer than or equal to 6 characters',
+            ],
+          },
+        ),
+      );
+
+      final failure = ErrorMapper.mapDioError(dioError);
+      expect(failure, isA<ValidationFailure>());
+      final validation = failure as ValidationFailure;
+      expect(validation.fieldErrors.containsKey('email'), isTrue);
+      expect(validation.fieldErrors.containsKey('code'), isTrue);
+      expect(validation.errorFor('email'), TwoGoCoreFieldMessages.invalid);
+    });
+
+    test('maps Nest order Min(1) message into destinations field error', () {
+      final dioError = DioException(
+        requestOptions: RequestOptions(path: '/planning-sessions/x'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/planning-sessions/x'),
+          statusCode: 400,
+          data: {
+            'statusCode': 400,
+            'message': ['destinations.0.order must not be less than 1'],
+            'error': 'Bad Request',
+          },
+        ),
+      );
+
+      final failure = ErrorMapper.mapDioError(dioError);
+      expect(failure, isA<ValidationFailure>());
+      expect(
+        (failure as ValidationFailure).fieldErrors.containsKey('destinations'),
+        isTrue,
+      );
     });
   });
 }

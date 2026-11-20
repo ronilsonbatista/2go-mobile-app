@@ -15,6 +15,7 @@ class EmailStepView extends StatefulWidget {
 
 class _EmailStepViewState extends State<EmailStepView> {
   late final TextEditingController _controller;
+  bool _showLocalFieldError = false;
 
   @override
   void initState() {
@@ -29,25 +30,29 @@ class _EmailStepViewState extends State<EmailStepView> {
     super.dispose();
   }
 
+  String? _resolveFieldError(AuthenticationState state) {
+    if (state.emailFieldError != null) return state.emailFieldError;
+    if (!_showLocalFieldError) return null;
+    if (state.email.trim().isEmpty) return TwoGoErrorFeedback.requiredField;
+    if (!state.isEmailValid) return TwoGoErrorFeedback.invalidField;
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return BlocConsumer<AuthenticationBloc, AuthenticationState>(
       listenWhen: (previous, current) =>
-          previous.errorMessage != current.errorMessage &&
-          current.errorMessage != null,
+          previous.failure != current.failure && current.failure != null,
       listener: (context, state) {
-        if (state.errorMessage != null) {
-          TwoGoSnackbar.show(
-            context,
-            message: state.errorMessage!,
-            variant: TwoGoSnackbarVariant.error,
-          );
-        }
+        final failure = state.failure;
+        if (failure == null) return;
+        TwoGoErrorFeedback.present(context, failure);
       },
       builder: (context, state) {
         final isLoading = state.step == AuthenticationStep.requestingOtp;
+        final fieldError = _resolveFieldError(state);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -76,15 +81,19 @@ class _EmailStepViewState extends State<EmailStepView> {
                         hint: 'seu.email@gmail.com',
                         controller: _controller,
                         keyboardType: TextInputType.emailAddress,
+                        errorText: fieldError,
                         prefix: const Icon(
                           Icons.email_outlined,
                           size: 20,
                           color: TwoGoColors.contentSecondary,
                         ),
                         onChanged: (val) {
-                          context
-                              .read<AuthenticationBloc>()
-                              .add(EmailChanged(val));
+                          if (_showLocalFieldError) {
+                            setState(() => _showLocalFieldError = false);
+                          }
+                          context.read<AuthenticationBloc>().add(
+                            EmailChanged(val),
+                          );
                         },
                       ),
 
@@ -94,13 +103,17 @@ class _EmailStepViewState extends State<EmailStepView> {
                       TwoGoButton(
                         text: 'Continuar',
                         loading: isLoading,
-                        onPressed: state.isEmailValid && !isLoading
-                            ? () {
+                        onPressed: isLoading
+                            ? null
+                            : () {
+                                if (!state.isEmailValid) {
+                                  setState(() => _showLocalFieldError = true);
+                                  return;
+                                }
                                 context.read<AuthenticationBloc>().add(
                                   const OtpRequestSubmitted(),
                                 );
-                              }
-                            : null,
+                              },
                       ),
 
                       const SizedBox(height: TwoGoSpacing.md),

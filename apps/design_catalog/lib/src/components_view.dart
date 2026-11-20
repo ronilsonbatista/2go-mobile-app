@@ -48,9 +48,20 @@ class _ComponentsCatalogViewState extends State<ComponentsCatalogView> {
         TwoGoTextField(label: 'Entrar com e-mail', hint: 'seu.email@gmail.com'),
         const SizedBox(height: TwoGoSpacing.sm),
         TwoGoTextField(
-          label: 'Campo com erro',
-          hint: '123456',
-          errorText: 'Código inválido. Verifique e tente novamente.',
+          label: 'Título do campo',
+          hint: 'Conteúdo inválido',
+          errorText: TwoGoErrorFeedback.invalidField,
+        ),
+        const SizedBox(height: TwoGoSpacing.sm),
+        TwoGoTextField(
+          label: 'Título do campo',
+          errorText: TwoGoErrorFeedback.requiredField,
+        ),
+        const SizedBox(height: TwoGoSpacing.sm),
+        TwoGoButton(
+          text: 'Mostrar Sem conexão',
+          variant: TwoGoButtonVariant.secondary,
+          onPressed: () => TwoGoSnackbar.showNoConnection(context),
         ),
         const SizedBox(height: TwoGoSpacing.md),
         Text('OTP Input (6 dígitos)', style: TwoGoTypography.titleMedium),

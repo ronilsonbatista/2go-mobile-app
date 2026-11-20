@@ -143,6 +143,8 @@ class PlanningMapper {
   }
 
   static PlanningDestination destinationToDomain(PlanningDestinationDto dto) {
+    // Domain keeps 0-based order; Core wire format is 1-based (@Min(1)).
+    final wireOrder = dto.order ?? 1;
     return PlanningDestination(
       providerPlaceId: dto.providerPlaceId,
       name: dto.name,
@@ -153,11 +155,13 @@ class PlanningMapper {
       arrivalTime: dto.arrivalTime,
       departureDate: dto.departureDate,
       departureTime: dto.departureTime,
-      order: dto.order ?? 1,
+      order: wireOrder < 1 ? 0 : wireOrder - 1,
     );
   }
 
   static PlanningDestinationDto destinationToDto(PlanningDestination model) {
+    // Core ValidationPipe: destinations[].order @Min(1). App domain is 0-based.
+    final wireOrder = model.order < 0 ? 1 : model.order + 1;
     return PlanningDestinationDto(
       providerPlaceId: model.providerPlaceId,
       name: model.name,
@@ -168,7 +172,7 @@ class PlanningMapper {
       arrivalTime: model.arrivalTime,
       departureDate: model.departureDate,
       departureTime: model.departureTime,
-      order: model.order,
+      order: wireOrder,
     );
   }
 

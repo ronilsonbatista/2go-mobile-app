@@ -14,8 +14,7 @@ class OtpStepView extends StatelessWidget {
           (previous.step != current.step) ||
           (previous.resentSuccess != current.resentSuccess &&
               current.resentSuccess) ||
-          (previous.errorMessage != current.errorMessage &&
-              current.errorMessage != null),
+          (previous.failure != current.failure && current.failure != null),
       listener: (context, state) {
         if (state.step == AuthenticationStep.otpInvalid ||
             state.codeError == 'AUTH_OTP_INVALID') {
@@ -34,14 +33,9 @@ class OtpStepView extends StatelessWidget {
             duration: const Duration(seconds: 3),
             showProgress: true,
           );
-        } else if (state.errorMessage != null &&
+        } else if (state.failure != null &&
             state.step != AuthenticationStep.otpInvalid) {
-          TwoGoSnackbar.show(
-            context,
-            message: state.errorMessage!,
-            variant: TwoGoSnackbarVariant.error,
-            showProgress: true,
-          );
+          TwoGoErrorFeedback.present(context, state.failure!);
         }
       },
       builder: (context, state) {
