@@ -31,7 +31,6 @@ class TwoGoTextField extends StatefulWidget {
   /// When true (default), shows the design-system `!` icon on error if [suffix]
   /// is null.
   final bool showErrorIcon;
-  final List<TextInputFormatter>? inputFormatters;
 
   TwoGoTextField({
     super.key,

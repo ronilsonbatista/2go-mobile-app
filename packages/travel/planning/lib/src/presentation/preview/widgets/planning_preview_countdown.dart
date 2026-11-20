@@ -84,11 +84,13 @@ class _PlanningPreviewCountdownState extends State<PlanningPreviewCountdown> {
     final hours = _remaining.inHours.remainder(24);
     final minutes = _remaining.inMinutes.remainder(60);
 
+    // Measured vs design-preview-roma.png (digit tiles 12×16, pair gap 4,
+    // card padding ~8 vertical / 16 horizontal; digits right-aligned).
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
         horizontal: TwoGoSpacing.md,
-        vertical: TwoGoSpacing.sm,
+        vertical: TwoGoSpacing.xs,
       ),
       decoration: BoxDecoration(
         color: TwoGoColors.neutral100,
@@ -104,20 +106,23 @@ class _PlanningPreviewCountdownState extends State<PlanningPreviewCountdown> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
+          const SizedBox(width: TwoGoSpacing.xs),
+          Expanded(
+            child: Align(
               alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _DigitPair(value: days, label: 'dias'),
-                  const SizedBox(width: 4),
-                  _DigitPair(value: hours, label: 'horas'),
-                  const SizedBox(width: 4),
-                  _DigitPair(value: minutes, label: 'minutos'),
-                ],
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _DigitPair(value: days, label: 'dias'),
+                    const SizedBox(width: TwoGoSpacing.xxs),
+                    _DigitPair(value: hours, label: 'horas'),
+                    const SizedBox(width: TwoGoSpacing.xxs),
+                    _DigitPair(value: minutes, label: 'minutos'),
+                  ],
+                ),
               ),
             ),
           ),
@@ -143,7 +148,7 @@ class _DigitPair extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _DigitBox(padded[0]),
-            const SizedBox(width: 2),
+            const SizedBox(width: 1),
             _DigitBox(padded[1]),
           ],
         ),
@@ -152,7 +157,7 @@ class _DigitPair extends StatelessWidget {
           label,
           style: TwoGoTypography.labelSmall.copyWith(
             color: TwoGoColors.contentSecondary,
-            fontSize: 9,
+            fontSize: 8,
             height: 1.1,
           ),
         ),
@@ -166,20 +171,25 @@ class _DigitBox extends StatelessWidget {
 
   final String digit;
 
+  /// Design-measured lime tile (design-preview-roma.png).
+  static const double sizeW = 12;
+  static const double sizeH = 16;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 18,
-      height: 24,
+      width: sizeW,
+      height: sizeH,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: TwoGoColors.brandLime,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(3),
       ),
       child: Text(
         digit,
-        style: TwoGoTypography.labelMedium.copyWith(
+        style: TwoGoTypography.labelSmall.copyWith(
           fontWeight: FontWeight.w800,
+          fontSize: 10,
           color: TwoGoColors.neutral900,
           height: 1,
         ),

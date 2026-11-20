@@ -31,19 +31,20 @@ class PlanningPreviewUpsellBanner extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(TwoGoRadius.large),
+        // Design upsell band ~40pt tall; badge ~32 with compact padding.
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: TwoGoSpacing.md,
-            vertical: TwoGoSpacing.sm + 2,
+            horizontal: TwoGoSpacing.sm,
+            vertical: TwoGoSpacing.xs,
           ),
           child: Row(
             children: [
-              const _UpsellBadge(size: 44),
+              const _UpsellBadge(size: 32),
               const SizedBox(width: TwoGoSpacing.sm),
               Expanded(
                 child: Text.rich(
                   TextSpan(
-                    style: TwoGoTypography.bodyMedium.copyWith(
+                    style: TwoGoTypography.bodySmall.copyWith(
                       color: TwoGoColors.contentInverse,
                       height: 1.25,
                     ),

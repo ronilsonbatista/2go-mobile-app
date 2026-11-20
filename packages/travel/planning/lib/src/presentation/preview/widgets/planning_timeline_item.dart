@@ -122,7 +122,7 @@ class PlanningTimelineItem extends StatelessWidget {
           const SizedBox(width: TwoGoSpacing.sm),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: TwoGoSpacing.md),
+              padding: const EdgeInsets.only(bottom: TwoGoSpacing.sm),
               child: activity.isMeal
                   ? _MealCard(
                       title: activity.title,
@@ -167,12 +167,12 @@ class PlanningLodgingTimelineItem extends StatelessWidget {
           const SizedBox(width: TwoGoSpacing.sm),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: TwoGoSpacing.md),
+              padding: const EdgeInsets.only(bottom: TwoGoSpacing.sm),
               child: InkWell(
                 onTap: onTap,
                 borderRadius: BorderRadius.circular(TwoGoRadius.medium),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  padding: const EdgeInsets.symmetric(vertical: TwoGoSpacing.xxs),
                   child: Text(
                     'Adicionar hospedagem',
                     style: TwoGoTypography.titleSmall.copyWith(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -7,6 +8,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:twogo_core/twogo_core.dart';
 import 'package:twogo_planning/twogo_planning.dart';
 
+/// Minimal 1×1 PNG (opaque teal) so hero Image.network resolves offline.
+const _kPngBytes = <int>[
+  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
+  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+  0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53, 0xDE, 0x00, 0x00, 0x00,
+  0x0C, 0x49, 0x44, 0x41, 0x54, 0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00,
+  0x00, 0x00, 0x03, 0x00, 0x01, 0x00, 0x05, 0xFE, 0x02, 0xFE, 0xDC, 0xCC,
+  0x59, 0xE7, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42,
+  0x60, 0x82,
+];
+
 /// Writes PNGs when PREVIEW_SCREENSHOT_DIR is set. Skips otherwise.
 void main() {
   testWidgets('export preview + upsell screenshots', (tester) async {
@@ -15,6 +27,10 @@ void main() {
       return;
     }
     Directory(outDir).createSync(recursive: true);
+
+    final previous = HttpOverrides.current;
+    HttpOverrides.global = _PngHttpOverrides();
+    addTearDown(() => HttpOverrides.global = previous);
 
     final bloc = PlanningPreviewBloc(
       getPreviewUseCase: GetPlanningPreviewUseCase(_Repo()),
@@ -44,6 +60,11 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
+    // Allow mocked network image decode.
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
     expect(find.text('Roma'), findsOneWidget);
@@ -97,6 +118,71 @@ Future<void> _writePng(GlobalKey key, String path) async {
   File(path).writeAsBytesSync(bytes!.buffer.asUint8List());
 }
 
+class _PngHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) => _PngHttpClient();
+}
+
+class _PngHttpClient implements HttpClient {
+  @override
+  bool autoUncompress = true;
+
+  @override
+  Future<HttpClientRequest> getUrl(Uri url) async => _PngHttpRequest(url);
+
+  @override
+  Future<HttpClientRequest> openUrl(String method, Uri url) async =>
+      _PngHttpRequest(url);
+
+  @override
+  void close({bool force = false}) {}
+
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _PngHttpRequest implements HttpClientRequest {
+  _PngHttpRequest(this._uri);
+
+  final Uri _uri;
+
+  @override
+  Uri get uri => _uri;
+
+  @override
+  Future<HttpClientResponse> close() async => _PngHttpResponse();
+
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _PngHttpResponse extends Stream<List<int>> implements HttpClientResponse {
+  @override
+  int get statusCode => 200;
+
+  @override
+  int get contentLength => _kPngBytes.length;
+
+  @override
+  HttpClientResponseCompressionState get compressionState =>
+      HttpClientResponseCompressionState.notCompressed;
+
+  @override
+  StreamSubscription<List<int>> listen(
+    void Function(List<int> event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return Stream<List<int>>.fromIterable([_kPngBytes]).listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
+  }
+
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class _Repo implements PlanningRepository {
   @override
   Future<Result<PlanningPreview>> getPreview(String journeyId) async {
@@ -106,11 +192,17 @@ class _Repo implements PlanningRepository {
         status: GuestJourneyStatus.previewReady,
         summary: PlanningPreviewSummary(
           destinations: [
-            {'name': 'Roma'},
+            {
+              'name': 'Roma',
+              'coverImage':
+                  'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800',
+            },
           ],
           startDate: '2026-07-25',
           endDate: '2026-07-28',
           totalDays: 4,
+          coverImageUrl:
+              'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800',
         ),
         policy: PlanningPreviewPolicy(
           visibleDayCount: 1,

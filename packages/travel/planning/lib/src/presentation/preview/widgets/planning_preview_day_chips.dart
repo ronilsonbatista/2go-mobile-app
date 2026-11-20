@@ -35,9 +35,10 @@ class PlanningPreviewDayChips extends StatelessWidget {
       ),
     ]..sort((a, b) => a.dayNumber.compareTo(b.dayNumber));
 
+    // Pill height ~20pt in design; keep horizontal gap sm (12).
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(vertical: TwoGoSpacing.xs),
+      padding: EdgeInsets.zero,
       child: Row(
         children: [
           for (final entry in entries) ...[
@@ -107,7 +108,10 @@ class _DayChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(999),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: TwoGoSpacing.sm,
+            vertical: TwoGoSpacing.xs,
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -119,10 +123,10 @@ class _DayChip extends StatelessWidget {
                 ),
               ),
               if (locked) ...[
-                const SizedBox(width: 6),
+                const SizedBox(width: TwoGoSpacing.xxs),
                 Icon(
                   Icons.lock_rounded,
-                  size: 14,
+                  size: 12,
                   color: selected ? TwoGoColors.contentInverse : TwoGoColors.neutral500,
                 ),
               ],

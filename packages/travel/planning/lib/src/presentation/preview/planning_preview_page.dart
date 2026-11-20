@@ -201,7 +201,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
             slivers: [
               SliverToBoxAdapter(
                 child: _HeroHeader(
-                  coverImageUrl: summary.coverImageUrl,
+                  coverImageUrl: summary.resolvedCoverImageUrl,
                   destinationName: destinationName,
                   onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
                   onLockedAction: () {
@@ -209,11 +209,14 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                   },
                 ),
               ),
+              // Gutters measured vs design-preview-roma.png:
+              // hero→countdown flush; countdown→upsell ~4; upsell→chips ~16;
+              // chips→timeline ~8; horizontal content inset 16 (TwoGoSpacing.md).
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
                     TwoGoSpacing.md,
-                    TwoGoSpacing.md,
+                    TwoGoSpacing.xxs,
                     TwoGoSpacing.md,
                     0,
                   ),
@@ -224,7 +227,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                         startDate: summary.startDate,
                         now: widget.now,
                       ),
-                      const SizedBox(height: TwoGoSpacing.sm),
+                      const SizedBox(height: TwoGoSpacing.xxs),
                       PlanningPreviewUpsellBanner(
                         offer: preview.unlockOffer,
                         onTap: () {
@@ -239,7 +242,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                           _bloc.add(SelectPreviewDayEvent(dayNumber: day));
                         },
                       ),
-                      const SizedBox(height: TwoGoSpacing.sm),
+                      const SizedBox(height: TwoGoSpacing.xs),
                       if (visibleDayMatch != null)
                         _buildTimelineList(visibleDayMatch)
                       else
@@ -397,8 +400,9 @@ class _HeroHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topPad = MediaQuery.paddingOf(context).top;
+    // Design hero content ~182pt below status; keep ~200 + safe area.
     return SizedBox(
-      height: 220 + topPad,
+      height: 200 + topPad,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
@@ -426,9 +430,9 @@ class _HeroHeader extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: topPad + 8,
-            left: 12,
-            right: 12,
+            top: topPad + TwoGoSpacing.xs,
+            left: TwoGoSpacing.sm,
+            right: TwoGoSpacing.sm,
             child: Row(
               children: [
                 _RoundIconButton(
@@ -441,13 +445,13 @@ class _HeroHeader extends StatelessWidget {
                   iconColor: const Color(0xFFF5C518),
                   onPressed: onLockedAction,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: TwoGoSpacing.xs),
                 _RoundIconButton(
                   icon: Icons.picture_as_pdf_outlined,
                   iconColor: const Color(0xFFE53935),
                   onPressed: onLockedAction,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: TwoGoSpacing.xs),
                 _RoundIconButton(
                   icon: Icons.ios_share_rounded,
                   onPressed: onLockedAction,
@@ -456,9 +460,9 @@ class _HeroHeader extends StatelessWidget {
             ),
           ),
           Positioned(
-            left: 20,
-            bottom: 20,
-            right: 20,
+            left: TwoGoSpacing.md,
+            bottom: TwoGoSpacing.md,
+            right: TwoGoSpacing.md,
             child: Text(
               destinationName,
               style: TwoGoTypography.headlineLarge.copyWith(

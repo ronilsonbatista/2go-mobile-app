@@ -12,11 +12,18 @@ class FakePlanningRepository implements PlanningRepository {
         status: GuestJourneyStatus.previewReady,
         summary: PlanningPreviewSummary(
           destinations: [
-            {'name': 'Roma', 'arrivalDate': '2026-07-25'},
+            {
+              'name': 'Roma',
+              'arrivalDate': '2026-07-25',
+              'coverImage':
+                  'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800',
+            },
           ],
           startDate: '2026-07-25',
           endDate: '2026-07-28',
           totalDays: 4,
+          coverImageUrl:
+              'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800',
         ),
         policy: PlanningPreviewPolicy(
           visibleDayCount: 1,
