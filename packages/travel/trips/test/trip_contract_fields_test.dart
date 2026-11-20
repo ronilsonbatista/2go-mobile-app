@@ -165,12 +165,30 @@ void main() {
     expect(find.text('Trocas: 1 de 4'), findsOneWidget);
     expect(find.text('Hospedagem'), findsOneWidget);
     expect(find.text('Hotel do Chiado'), findsOneWidget);
+    expect(find.text('Fim do dia'), findsOneWidget);
+    expect(find.text('Ver detalhes'), findsOneWidget);
     expect(find.text('Gratuito'), findsOneWidget);
     expect(find.text('Ingresso necessário'), findsOneWidget);
     expect(find.text('1.5 km · 12 min · a pé'), findsOneWidget);
     expect(find.text('Substituir'), findsNothing);
     expect(find.text('Sugestões de refeição'), findsNothing);
     expect(find.text('Adicionar hospedagem'), findsNothing);
+
+    await tester.ensureVisible(find.byKey(const Key('lodging-hotel-card')));
+    await tester.tap(find.byKey(const Key('lodging-hotel-card')));
+    await tester.pumpAndSettle();
+    expect(find.text('Obter direções'), findsOneWidget);
+    expect(find.text('Hotel do Chiado'), findsWidgets);
+    expect(find.text('Alterar hospedagem'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(const Key('lodging-end-of-day')));
+    await tester.tap(find.byKey(const Key('lodging-end-of-day')));
+    await tester.pumpAndSettle();
+    expect(find.text('Obter direções'), findsOneWidget);
+    expect(find.text('Alterar hospedagem'), findsOneWidget);
+    expect(find.textContaining('Rua Garrett'), findsWidgets);
   });
 
   testWidgets('missing transit and lodging stay off the screen', (

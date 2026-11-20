@@ -5,6 +5,8 @@ import '../../domain/entities/itinerary_item_entity.dart';
 import '../../domain/entities/trip_accommodation.dart';
 import '../../domain/entities/trip_day_entity.dart';
 import '../../domain/entities/trip_entity.dart';
+import '../../domain/place_details_view_data.dart';
+import '../place_details/lodging_details_sheet.dart';
 import '../place_details/place_details_sheet.dart';
 import 'accommodation/add_accommodation_flow.dart';
 import 'trip_control_sheets.dart';
@@ -118,7 +120,7 @@ class TripItineraryView extends StatelessWidget {
           if (swaps != null) _line(swaps),
           if (trip.accommodation != null) ...[
             const SizedBox(height: TwoGoSpacing.md),
-            _buildAccommodation(trip.accommodation!),
+            _buildAccommodation(context, trip.accommodation!),
           ],
           if (controls != null) ...[
             const SizedBox(height: TwoGoSpacing.sm),
@@ -231,14 +233,17 @@ class TripItineraryView extends StatelessWidget {
                 color: TwoGoColors.contentSecondary,
               ),
             )
-          else
+          else ...[
             ...items.map((item) => _buildItem(context, item)),
+            if (trip.accommodation != null)
+              _buildEndOfDayLodging(context, trip.accommodation!),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildAccommodation(TripAccommodation stay) {
+  Widget _buildAccommodation(BuildContext context, TripAccommodation stay) {
     final checkIn = _stayMoment(
       stay.checkInDateTime,
       stay.checkInDate,
@@ -258,26 +263,128 @@ class TripItineraryView extends StatelessWidget {
         ? 'https://www.google.com/maps/search/?api=1&query=${stay.latitude},${stay.longitude}'
         : null;
 
-    return TwoGoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Hospedagem',
-            style: TwoGoTypography.titleSmall.copyWith(
-              fontWeight: FontWeight.bold,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: const Key('lodging-hotel-card'),
+        onTap: () => _openLodgingDetails(
+          context,
+          stay: stay,
+          kind: PlaceDetailsKind.hotel,
+        ),
+        borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+        child: TwoGoCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hospedagem',
+                style: TwoGoTypography.titleSmall.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (_filled(stay.name)) _line(stay.name!),
+              if (place.isNotEmpty) _line(place),
+              if (checkIn != null) _line('Check-in: $checkIn'),
+              if (checkOut != null) _line('Check-out: $checkOut'),
+              if (mapLink != null) ...[
+                const SizedBox(height: TwoGoSpacing.xs),
+                _mapLink(mapLink),
+              ],
+              const SizedBox(height: TwoGoSpacing.xs),
+              Text(
+                'Ver detalhes',
+                style: TwoGoTypography.labelSmall.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: TwoGoColors.contentSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEndOfDayLodging(
+    BuildContext context,
+    TripAccommodation stay,
+  ) {
+    final place = [
+      stay.address,
+      stay.neighborhood,
+      stay.zipCode,
+    ].whereType<String>().where((part) => part.trim().isNotEmpty).join(', ');
+    final label = place.isNotEmpty
+        ? place
+        : (_filled(stay.name) ? stay.name! : 'Retorno à hospedagem');
+
+    return Padding(
+      padding: const EdgeInsets.only(top: TwoGoSpacing.sm),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: const Key('lodging-end-of-day'),
+          onTap: () => _openLodgingDetails(
+            context,
+            stay: stay,
+            kind: PlaceDetailsKind.endOfDay,
+          ),
+          borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+          child: TwoGoCard(
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.home_outlined,
+                  size: 20,
+                  color: TwoGoColors.contentSecondary,
+                ),
+                const SizedBox(width: TwoGoSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Fim do dia',
+                        style: TwoGoTypography.titleSmall.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: TwoGoSpacing.xxs),
+                      Text(
+                        label,
+                        style: TwoGoTypography.bodySmall.copyWith(
+                          color: TwoGoColors.contentSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: TwoGoColors.contentSecondary,
+                ),
+              ],
             ),
           ),
-          if (_filled(stay.name)) _line(stay.name!),
-          if (place.isNotEmpty) _line(place),
-          if (checkIn != null) _line('Check-in: $checkIn'),
-          if (checkOut != null) _line('Check-out: $checkOut'),
-          if (mapLink != null) ...[
-            const SizedBox(height: TwoGoSpacing.xs),
-            _mapLink(mapLink),
-          ],
-        ],
+        ),
       ),
+    );
+  }
+
+  Future<void> _openLodgingDetails(
+    BuildContext context, {
+    required TripAccommodation stay,
+    required PlaceDetailsKind kind,
+  }) async {
+    await showLodgingDetailsFlow(
+      context,
+      stay: stay,
+      kind: kind,
+      onOpenUrl: onOpenUrl,
+      onChangeLodging: controls == null
+          ? null
+          : () => _openAddOrEditAccommodation(context, trip),
     );
   }
 

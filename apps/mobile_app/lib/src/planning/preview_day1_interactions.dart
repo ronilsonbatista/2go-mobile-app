@@ -5,7 +5,7 @@ import 'package:twogo_trips/trips.dart';
 
 import '../di/app_dependencies.dart';
 
-/// Day-1 preview bridges: Home cover catalog + lodging/detalhes (#18/#19).
+/// Day-1 preview bridges: Home cover catalog + lodging/detalhes (#18/#19/#TG-178).
 class PreviewDay1Interactions {
   PreviewDay1Interactions(this.dependencies);
 
@@ -51,6 +51,7 @@ class PreviewDay1Interactions {
     );
   }
 
+  /// Opens meal-slot sheet, placed-item sheet → full page, matching #18 variants.
   Future<void> openActivityDetails(
     BuildContext context, {
     required PlanningVisibleActivity activity,
@@ -58,11 +59,30 @@ class PreviewDay1Interactions {
   }) async {
     final data = _viewDataFromActivity(activity);
     if (!context.mounted) return;
-    await PlaceDetailsPage.open<void>(
+
+    if (data.isMealSlot) {
+      await PlaceDetailsSheet.show(
+        context,
+        data: data,
+        onOpenUrl: onOpenUrl,
+        onShowSuggestions: () => Navigator.of(context).maybePop(),
+      );
+      return;
+    }
+
+    await PlaceDetailsSheet.show(
       context,
       data: data,
       onOpenUrl: onOpenUrl,
-      onSelect: () => Navigator.of(context).maybePop(),
+      onShowDetails: () async {
+        if (!context.mounted) return;
+        await PlaceDetailsPage.open<void>(
+          context,
+          data: data,
+          onOpenUrl: onOpenUrl,
+          onSelect: () => Navigator.of(context).maybePop(),
+        );
+      },
     );
   }
 
@@ -70,15 +90,18 @@ class PreviewDay1Interactions {
     PlanningVisibleActivity activity,
   ) {
     final category = _mapCategory(activity.category);
-    final kind = activity.isMeal
-        ? PlaceDetailsKind.restaurant
-        : (category == ItineraryCategory.touristAttraction ||
-                category == ItineraryCategory.museum ||
-                category == ItineraryCategory.park ||
-                category == ItineraryCategory.paidActivity ||
-                category == ItineraryCategory.freeActivity
-            ? PlaceDetailsKind.attraction
-            : PlaceDetailsKind.other);
+    final mealSlot = _isPreviewMealSlot(activity);
+    final kind = mealSlot
+        ? PlaceDetailsKind.mealSlot
+        : (activity.isMeal
+            ? PlaceDetailsKind.restaurant
+            : (category == ItineraryCategory.touristAttraction ||
+                    category == ItineraryCategory.museum ||
+                    category == ItineraryCategory.park ||
+                    category == ItineraryCategory.paidActivity ||
+                    category == ItineraryCategory.freeActivity
+                ? PlaceDetailsKind.attraction
+                : PlaceDetailsKind.other));
 
     final photos = <String>[];
     final image = activity.imageUrl?.trim();
@@ -107,12 +130,32 @@ class PreviewDay1Interactions {
       recommendedDurationMinutes: activity.duration,
       category: category,
       kind: kind,
-      mode: PlaceDetailsMode.pick,
+      mode: mealSlot ? PlaceDetailsMode.edit : PlaceDetailsMode.pick,
       imageUrl: photos.isNotEmpty ? photos.first : null,
       priceLevelDisplay: activity.cost <= 0
           ? null
           : PlanningTimelineItem.costLabel(activity.cost),
     );
+  }
+
+  /// Generic meal period without a concrete place → Modal / Modal-1.
+  static bool _isPreviewMealSlot(PlanningVisibleActivity activity) {
+    if (!activity.isMeal) return false;
+    final hasPlace = activity.providerPlaceId?.trim().isNotEmpty ?? false;
+    if (hasPlace) return false;
+    final title = activity.title.trim().toLowerCase();
+    const slots = {
+      'café da manhã',
+      'cafe da manha',
+      'almoço',
+      'almoco',
+      'jantar',
+      'lanche',
+      'pausa',
+    };
+    if (slots.contains(title)) return true;
+    final desc = activity.description?.trim() ?? '';
+    return desc.isEmpty && activity.latitude == null && activity.imageUrl == null;
   }
 
   static ItineraryCategory _mapCategory(String raw) {

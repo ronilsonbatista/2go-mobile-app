@@ -1,4 +1,5 @@
 import 'entities/itinerary_item_entity.dart';
+import 'entities/trip_accommodation.dart';
 import 'paid_trip_controls.dart';
 
 /// Full-screen / modal mode for Detalhes.
@@ -11,7 +12,16 @@ enum PlaceDetailsMode {
 }
 
 /// Visual kind drives cuisine row, ticket vs site link, CTA copy.
-enum PlaceDetailsKind { restaurant, attraction, mealSlot, other }
+enum PlaceDetailsKind {
+  restaurant,
+  attraction,
+  mealSlot,
+  /// Paid-trip / timeline lodging with name (Modal hotel).
+  hotel,
+  /// Fim do dia — same lodging coords, address-only card (Modal end).
+  endOfDay,
+  other,
+}
 
 /// Merged itinerary item + Core `verifiedDetails` for Detalhes UI.
 ///
@@ -78,6 +88,9 @@ class PlaceDetailsViewData {
 
   bool get isMealSlot => kind == PlaceDetailsKind.mealSlot;
 
+  bool get isLodgingDetails =>
+      kind == PlaceDetailsKind.hotel || kind == PlaceDetailsKind.endOfDay;
+
   bool get requiresTicket {
     final status = ticketStatus?.trim().toUpperCase();
     return status == 'TICKET_REQUIRED';
@@ -105,6 +118,35 @@ class PlaceDetailsViewData {
   String get substituteCtaLabel {
     if (isRestaurantLike) return 'Substituir restaurante';
     return 'Substituir atração';
+  }
+
+  /// Build lodging Detalhes from `Trip.accommodation` (no Places enrich).
+  static PlaceDetailsViewData fromAccommodation({
+    required TripAccommodation stay,
+    required PlaceDetailsKind kind,
+  }) {
+    assert(
+      kind == PlaceDetailsKind.hotel || kind == PlaceDetailsKind.endOfDay,
+      'fromAccommodation expects hotel or endOfDay',
+    );
+    final address = _joinAddressParts([
+      stay.address,
+      stay.neighborhood,
+      stay.zipCode,
+    ]);
+    final mapsUri = stay.latitude != null && stay.longitude != null
+        ? 'https://www.google.com/maps/dir/?api=1'
+            '&destination=${stay.latitude},${stay.longitude}'
+        : null;
+    return PlaceDetailsViewData(
+      displayName: _nonEmpty(stay.name) ?? 'Hospedagem',
+      address: address,
+      latitude: stay.latitude,
+      longitude: stay.longitude,
+      mapsUri: mapsUri,
+      kind: kind,
+      mode: PlaceDetailsMode.edit,
+    );
   }
 
   static PlaceDetailsViewData merge({
@@ -356,4 +398,13 @@ String? _nonEmpty(String? value) {
   final text = value?.trim();
   if (text == null || text.isEmpty) return null;
   return text;
+}
+
+String? _joinAddressParts(List<String?> parts) {
+  final joined = parts
+      .whereType<String>()
+      .map((p) => p.trim())
+      .where((p) => p.isNotEmpty)
+      .join(', ');
+  return joined.isEmpty ? null : joined;
 }

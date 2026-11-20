@@ -129,6 +129,7 @@ class PlanningTimelineItem extends StatelessWidget {
                   ? _MealCard(
                       title: activity.title,
                       icon: _mealIcon(),
+                      onTap: onTap,
                       onRecommendationsTap: onRecommendationsTap,
                       onMenuTap: onMenuTap,
                     )
@@ -303,69 +304,75 @@ class _MealCard extends StatelessWidget {
   const _MealCard({
     required this.title,
     required this.icon,
+    this.onTap,
     this.onRecommendationsTap,
     this.onMenuTap,
   });
 
   final String title;
   final IconData icon;
+  final VoidCallback? onTap;
   final VoidCallback? onRecommendationsTap;
   final VoidCallback? onMenuTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: TwoGoSpacing.md,
-        vertical: TwoGoSpacing.sm + 2,
-      ),
-      decoration: BoxDecoration(
-        color: TwoGoColors.neutral100,
+    return Material(
+      color: TwoGoColors.neutral100,
+      borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(TwoGoRadius.medium),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: TwoGoColors.neutral800),
-          const SizedBox(width: TwoGoSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TwoGoTypography.titleSmall.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: TwoGoColors.contentPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                GestureDetector(
-                  onTap: onRecommendationsTap,
-                  child: Text(
-                    'Ver recomendações',
-                    style: TwoGoTypography.labelSmall.copyWith(
-                      color: TwoGoColors.contentSecondary,
-                      decoration: TextDecoration.underline,
-                      decorationColor: TwoGoColors.contentSecondary,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TwoGoSpacing.md,
+            vertical: TwoGoSpacing.sm + 2,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: TwoGoColors.neutral800),
+              const SizedBox(width: TwoGoSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TwoGoTypography.titleSmall.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: TwoGoColors.contentPrimary,
+                      ),
                     ),
+                    const SizedBox(height: 2),
+                    GestureDetector(
+                      onTap: onRecommendationsTap,
+                      child: Text(
+                        'Ver recomendações',
+                        style: TwoGoTypography.labelSmall.copyWith(
+                          color: TwoGoColors.contentSecondary,
+                          decoration: TextDecoration.underline,
+                          decorationColor: TwoGoColors.contentSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: onMenuTap,
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.more_vert_rounded,
+                    size: 20,
+                    color: TwoGoColors.neutral600,
                   ),
                 ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: onMenuTap,
-            behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.all(4),
-              child: Icon(
-                Icons.more_vert_rounded,
-                size: 20,
-                color: TwoGoColors.neutral600,
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

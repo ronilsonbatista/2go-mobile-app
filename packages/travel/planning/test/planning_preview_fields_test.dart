@@ -150,6 +150,11 @@ void main() {
     await tester.pump();
     expect(opened?.title, 'Piazza Venezia');
 
+    opened = null;
+    await tester.tap(find.text('Café da manhã'));
+    await tester.pump();
+    expect(opened?.title, 'Café da manhã');
+
     await tester.pumpWidget(const SizedBox());
   });
 
