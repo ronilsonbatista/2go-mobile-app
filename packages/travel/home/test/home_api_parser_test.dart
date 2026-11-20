@@ -240,12 +240,16 @@ void main() {
   group('RemoteHomeContentRepository', () {
     test('GET /home/destinations sends clamped limit query', () async {
       final dio = Dio(BaseOptions(baseUrl: 'https://core.test'));
+      String? path;
       Map<String, dynamic>? query;
+      Object? skipAuthRefresh;
 
       dio.interceptors.add(
         InterceptorsWrapper(
           onRequest: (options, handler) {
+            path = options.path;
             query = Map<String, dynamic>.from(options.queryParameters);
+            skipAuthRefresh = options.extra['skipAuthRefresh'];
             handler.resolve(
               Response<dynamic>(
                 requestOptions: options,
@@ -272,9 +276,71 @@ void main() {
       final repo = RemoteHomeContentRepository(dio: dio, destinationsLimit: 99);
       final items = await repo.fetchDestinations();
 
+      expect(path, '/home/destinations');
       expect(query?['limit'], 50);
+      expect(skipAuthRefresh, isTrue);
       expect(items, hasLength(1));
       expect(items.single.id, 'capadocia');
+    });
+
+    test('GET /home/destinations parses raw Core envelope', () async {
+      final dio = Dio(BaseOptions(baseUrl: 'https://core.test'));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            expect(options.path, '/home/destinations');
+            handler.resolve(
+              Response<dynamic>(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'success': true,
+                  'timestamp': '2026-11-20T00:00:00.000Z',
+                  'data': {
+                    'items': [
+                      {
+                        'id': 'lisboa',
+                        'name': 'Lisboa',
+                        'country': 'Portugal',
+                        'imageUrl': 'https://cdn.example/lisboa.jpg',
+                        'providerPlaceId': 'places/ChIJlisboa',
+                        'sortOrder': 0,
+                        'active': true,
+                      },
+                    ],
+                  },
+                },
+              ),
+            );
+          },
+        ),
+      );
+
+      final repo = RemoteHomeContentRepository(dio: dio);
+      final items = await repo.fetchDestinations();
+      expect(items.single.providerPlaceId, 'places/ChIJlisboa');
+    });
+
+    test('fetchDestinations propagates DioException', () async {
+      final dio = Dio(BaseOptions(baseUrl: 'https://core.test'));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            handler.reject(
+              DioException(
+                requestOptions: options,
+                type: DioExceptionType.connectionTimeout,
+              ),
+            );
+          },
+        ),
+      );
+
+      final repo = RemoteHomeContentRepository(dio: dio);
+      expect(
+        () => repo.fetchDestinations(),
+        throwsA(isA<DioException>()),
+      );
     });
 
     test('resolveProfile maps null photoUrl from /users/me', () async {

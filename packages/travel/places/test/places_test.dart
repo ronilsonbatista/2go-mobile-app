@@ -393,5 +393,92 @@ void main() {
       expect(path, '/places/hotels/search');
       expect(results.single.name, 'The Hoxton Rome');
     });
+
+    test('GET /places/:id parses details from raw envelope', () async {
+      String? path;
+      final dio = Dio(BaseOptions(baseUrl: 'https://core.test'));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            path = options.path;
+            handler.resolve(
+              Response<dynamic>(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'success': true,
+                  'data': {
+                    'providerPlaceId': 'ChIJRoma',
+                    'name': 'Roma',
+                    'formattedAddress': 'Roma, Itália',
+                    'iconUrl': 'https://cdn.example/roma.svg',
+                  },
+                  'timestamp': '2026-11-20T00:00:00.000Z',
+                },
+              ),
+            );
+          },
+        ),
+      );
+
+      final client = PlacesApiClient(dio);
+      final place = await client.getPlaceDetails('ChIJRoma');
+
+      expect(path, '/places/ChIJRoma');
+      expect(place, isNotNull);
+      expect(place!.name, 'Roma');
+      expect(place.iconUrl, 'https://cdn.example/roma.svg');
+    });
+
+    test('GET /places/:id returns null for non-map payload', () async {
+      final dio = Dio(BaseOptions(baseUrl: 'https://core.test'));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            handler.resolve(
+              Response<dynamic>(
+                requestOptions: options,
+                statusCode: 200,
+                data: null,
+              ),
+            );
+          },
+        ),
+      );
+
+      final client = PlacesApiClient(dio);
+      expect(await client.getPlaceDetails('missing'), isNull);
+    });
+
+    test('GET /places/autocomplete propagates DioException', () async {
+      final dio = Dio(BaseOptions(baseUrl: 'https://core.test'));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            handler.reject(
+              DioException(
+                requestOptions: options,
+                type: DioExceptionType.badResponse,
+                response: Response(
+                  requestOptions: options,
+                  statusCode: 500,
+                  data: {
+                    'success': false,
+                    'message': 'Places down',
+                    'timestamp': '2026-11-20T00:00:00.000Z',
+                  },
+                ),
+              ),
+            );
+          },
+        ),
+      );
+
+      final client = PlacesApiClient(dio);
+      expect(
+        () => client.searchPlaces('Roma'),
+        throwsA(isA<DioException>()),
+      );
+    });
   });
 }
