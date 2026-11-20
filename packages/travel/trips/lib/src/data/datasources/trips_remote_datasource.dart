@@ -31,7 +31,10 @@ abstract class TripsRemoteDataSource {
     AccommodationDraft stay,
   );
   Future<void> deleteAccommodation(String tripId);
-  Future<AlternativesResult> getItemAlternatives(String itemId);
+  Future<AlternativesResult> getItemAlternatives(
+    String itemId, {
+    AlternativesFilter filter = AlternativesFilter.empty,
+  });
   Future<SwapQuota> substituteItem(String itemId, Map<String, dynamic> body);
   Future<MealRecommendationsResult> getMealRecommendations(
     String dayId, {

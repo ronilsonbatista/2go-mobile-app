@@ -140,9 +140,14 @@ class ApiTripsDataSource implements TripsRemoteDataSource {
   }
 
   @override
-  Future<AlternativesResult> getItemAlternatives(String itemId) async {
+  Future<AlternativesResult> getItemAlternatives(
+    String itemId, {
+    AlternativesFilter filter = AlternativesFilter.empty,
+  }) async {
+    final query = filter.toQueryParameters();
     final response = await _dio.get<dynamic>(
       '/itinerary-items/${_id(itemId)}/alternatives',
+      queryParameters: query.isEmpty ? null : query,
     );
     return AlternativesResult.fromJson(
       _asMap(response.data, 'GET /itinerary-items/:id/alternatives'),

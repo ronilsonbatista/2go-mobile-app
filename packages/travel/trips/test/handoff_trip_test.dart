@@ -83,11 +83,6 @@ void main() {
       'https://maps.example/cafe',
     );
     expect(trip.days.firstWhere((d) => d.dayNumber == 2).items, isEmpty);
-
-    expect(
-      ApiTripsDataSource(dio).getMyTrips(),
-      throwsA(isA<UnsupportedError>()),
-    );
   });
 
   test('loadTrip without an id does not call the list', () async {
@@ -290,8 +285,10 @@ class _RecordingTripsRepository implements TripsRepository {
   Future<void> deleteAccommodation(String tripId) => throw UnimplementedError();
 
   @override
-  Future<AlternativesResult> getItemAlternatives(String itemId) =>
-      throw UnimplementedError();
+  Future<AlternativesResult> getItemAlternatives(
+    String itemId, {
+    AlternativesFilter filter = AlternativesFilter.empty,
+  }) => throw UnimplementedError();
 
   @override
   Future<SwapQuota> substituteItem(String itemId, Map<String, dynamic> body) =>

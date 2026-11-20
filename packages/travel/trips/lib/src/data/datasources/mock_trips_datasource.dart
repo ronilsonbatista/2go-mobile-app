@@ -218,8 +218,10 @@ class MockTripsDataSource implements TripsRemoteDataSource {
       Future<void>.error(_phase3);
 
   @override
-  Future<AlternativesResult> getItemAlternatives(String itemId) =>
-      Future<AlternativesResult>.error(_phase3);
+  Future<AlternativesResult> getItemAlternatives(
+    String itemId, {
+    AlternativesFilter filter = AlternativesFilter.empty,
+  }) => Future<AlternativesResult>.error(_phase3);
 
   @override
   Future<SwapQuota> substituteItem(String itemId, Map<String, dynamic> body) =>

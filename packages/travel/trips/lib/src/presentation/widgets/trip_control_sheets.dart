@@ -6,6 +6,7 @@ import 'package:twogo_places/places.dart';
 import '../../domain/entities/itinerary_item_entity.dart';
 import '../../domain/paid_trip_controls.dart';
 import '../../domain/repositories/trips_repository.dart';
+import 'alternatives_filter_sheet.dart';
 
 /// Ações da viagem paga. Sem este objeto a tela só mostra o que o GET já trouxe.
 class TripControls {
@@ -443,6 +444,9 @@ class _AlternativesSheet extends StatefulWidget {
 
 class _AlternativesSheetState extends State<_AlternativesSheet> {
   AlternativesResult? _result;
+  AlternativesFacets _facets = const AlternativesFacets();
+  AlternativesFilter _filter = AlternativesFilter.empty;
+  final _search = TextEditingController();
   var _loading = true;
   String? _error;
   String? _pendingTitle;
@@ -453,14 +457,31 @@ class _AlternativesSheetState extends State<_AlternativesSheet> {
     _load();
   }
 
-  Future<void> _load() async {
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load({bool keepFacets = false}) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final result = await widget.controls.repository.getItemAlternatives(
         widget.itemId,
+        filter: _filter,
       );
       if (!mounted) return;
       setState(() {
         _result = result;
+        if (!keepFacets ||
+            result.facets.categories.isNotEmpty ||
+            result.facets.durations.isNotEmpty ||
+            result.facets.locations.isNotEmpty) {
+          _facets = result.facets;
+        }
         _loading = false;
       });
     } catch (error) {
@@ -470,6 +491,26 @@ class _AlternativesSheetState extends State<_AlternativesSheet> {
         _error = apiErrorMessage(error);
       });
     }
+  }
+
+  Future<void> _openFilters() async {
+    final applied = await showAlternativesFilterSheet(
+      context,
+      initial: _filter,
+      facets: _facets,
+    );
+    if (applied == null || !mounted) return;
+    setState(() {
+      _filter = applied.copyWith(q: _search.text.trim());
+    });
+    await _load(keepFacets: true);
+  }
+
+  Future<void> _applySearch(String value) async {
+    setState(() {
+      _filter = _filter.copyWith(q: value.trim(), clearQ: value.trim().isEmpty);
+    });
+    await _load(keepFacets: true);
   }
 
   Future<void> _substitute(ItemAlternative alternative) async {
@@ -490,64 +531,231 @@ class _AlternativesSheetState extends State<_AlternativesSheet> {
     }
   }
 
+  String? _availableLabel(SwapQuota quota) {
+    final remaining = quota.remainingSwaps;
+    final allowed = quota.allowedSwapsCount;
+    if (remaining != null && allowed != null) {
+      return 'Alterações disponíveis  $remaining de $allowed';
+    }
+    return quota.label;
+  }
+
   @override
   Widget build(BuildContext context) {
     final result = _result;
-    return _SheetFrame(
-      title: 'Alternativas',
-      child: _loading
-          ? const Text('Carregando')
-          : ListView(
-              children: [
-                if (result != null && result.quota.label != null)
-                  Text(
-                    result.quota.label!,
-                    style: TwoGoTypography.titleSmall.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                if (result != null && !result.quota.canSubstitute)
-                  Padding(
-                    padding: const EdgeInsets.only(top: TwoGoSpacing.xs),
+    final height = MediaQuery.sizeOf(context).height * 0.9;
+
+    return SafeArea(
+      child: SizedBox(
+        height: height,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            TwoGoSpacing.lg,
+            TwoGoSpacing.md,
+            TwoGoSpacing.lg,
+            TwoGoSpacing.lg,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
                     child: Text(
-                      result.quota.exhausted
-                          ? 'Cota de trocas esgotada'
-                          : 'Cota de trocas indisponível',
+                      'Substituir por',
+                      style: TwoGoTypography.titleLarge.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                if (_error != null) ...[
-                  const SizedBox(height: TwoGoSpacing.sm),
-                  Text(_error!),
-                ],
-                if (result != null && result.items.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(top: TwoGoSpacing.md),
-                    child: Text('Nenhuma alternativa nesta resposta.'),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: IconButton.styleFrom(
+                      backgroundColor: TwoGoColors.neutral100,
+                    ),
+                    icon: const Icon(
+                      Icons.close,
+                      color: TwoGoColors.neutral900,
+                    ),
                   ),
-                if (result != null)
-                  ...result.items.map((alternative) {
-                    final body = alternative.toSubstituteBody();
-                    final enabled =
-                        result.quota.canSubstitute &&
-                        body != null &&
-                        _pendingTitle == null;
-                    return Padding(
-                      padding: const EdgeInsets.only(top: TwoGoSpacing.md),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ..._alternativeLines(alternative),
-                          if (enabled)
-                            TextButton(
-                              onPressed: () => _substitute(alternative),
-                              child: const Text('Usar esta'),
-                            ),
-                        ],
+                ],
+              ),
+              if (result != null && _availableLabel(result.quota) != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: TwoGoSpacing.sm),
+                  child: Text(
+                    _availableLabel(result.quota)!,
+                    style: TwoGoTypography.bodyMedium.copyWith(
+                      color: TwoGoColors.contentSecondary,
+                    ),
+                  ),
+                ),
+              if (result != null && !result.quota.canSubstitute)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: TwoGoSpacing.sm),
+                  child: Text(
+                    result.quota.exhausted
+                        ? 'Cota de trocas esgotada'
+                        : 'Cota de trocas indisponível',
+                  ),
+                ),
+              Text(
+                'Atrações recomendadas',
+                style: TwoGoTypography.titleSmall.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: TwoGoSpacing.sm),
+              Row(
+                children: [
+                  Expanded(
+                    child: TwoGoTextField(
+                      key: const Key('alternatives-search'),
+                      label: 'Ou busque por atividade',
+                      controller: _search,
+                      prefixIcon: Icons.search,
+                      onSubmitted: _applySearch,
+                    ),
+                  ),
+                  const SizedBox(width: TwoGoSpacing.sm),
+                  TextButton(
+                    key: const Key('alternatives-open-filter'),
+                    onPressed: _loading ? null : _openFilters,
+                    child: Text(
+                      _filter.hasSheetFilters ? 'Filtrar ·' : 'Filtrar',
+                      style: TwoGoTypography.labelLarge.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: TwoGoColors.contentPrimary,
                       ),
-                    );
-                  }),
+                    ),
+                  ),
+                ],
+              ),
+              if (_filter.hasSheetFilters ||
+                  (_filter.q != null && _filter.q!.isNotEmpty))
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () {
+                      _search.clear();
+                      setState(() => _filter = AlternativesFilter.empty);
+                      _load();
+                    },
+                    child: const Text('Limpar busca e filtros'),
+                  ),
+                ),
+              if (_error != null) ...[
+                const SizedBox(height: TwoGoSpacing.sm),
+                Text(_error!),
               ],
-            ),
+              const SizedBox(height: TwoGoSpacing.sm),
+              Expanded(
+                child: _loading
+                    ? const Center(child: Text('Carregando'))
+                    : result == null
+                    ? const SizedBox.shrink()
+                    : result.items.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.only(top: TwoGoSpacing.md),
+                        child: Text('Nenhuma alternativa nesta resposta.'),
+                      )
+                    : ListView.separated(
+                        itemCount: result.items.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: TwoGoSpacing.md),
+                        itemBuilder: (context, index) {
+                          final alternative = result.items[index];
+                          final body = alternative.toSubstituteBody();
+                          final enabled = result.quota.canSubstitute &&
+                              body != null &&
+                              _pendingTitle == null;
+                          return _AlternativeCard(
+                            alternative: alternative,
+                            enabled: enabled,
+                            pending: _pendingTitle == alternative.title,
+                            onUse: () => _substitute(alternative),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AlternativeCard extends StatelessWidget {
+  final ItemAlternative alternative;
+  final bool enabled;
+  final bool pending;
+  final VoidCallback onUse;
+
+  const _AlternativeCard({
+    required this.alternative,
+    required this.enabled,
+    required this.pending,
+    required this.onUse,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rating = alternative.rating;
+    return Material(
+      color: TwoGoColors.surfaceSecondary,
+      borderRadius: TwoGoRadius.borderLarge,
+      child: InkWell(
+        borderRadius: TwoGoRadius.borderLarge,
+        onTap: enabled ? onUse : null,
+        child: Padding(
+          padding: const EdgeInsets.all(TwoGoSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                alternative.title ?? 'Sem título',
+                style: TwoGoTypography.titleSmall.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (rating != null) ...[
+                const SizedBox(height: TwoGoSpacing.xxs),
+                Text(
+                  rating.toStringAsFixed(1),
+                  style: TwoGoTypography.bodySmall.copyWith(
+                    color: TwoGoColors.contentSecondary,
+                  ),
+                ),
+              ],
+              if (alternative.location != null) ...[
+                const SizedBox(height: TwoGoSpacing.xxs),
+                Text(
+                  alternative.location!,
+                  style: TwoGoTypography.bodySmall.copyWith(
+                    color: TwoGoColors.contentSecondary,
+                  ),
+                ),
+              ],
+              if (pending)
+                const Padding(
+                  padding: EdgeInsets.only(top: TwoGoSpacing.xs),
+                  child: Text('Substituindo…'),
+                )
+              else if (enabled)
+                Padding(
+                  padding: const EdgeInsets.only(top: TwoGoSpacing.xs),
+                  child: Text(
+                    'Usar esta',
+                    style: TwoGoTypography.labelLarge.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -901,30 +1109,6 @@ class _VerifiedDetailsSheetState extends State<_VerifiedDetailsSheet> {
   }
 }
 
-List<Widget> _alternativeLines(ItemAlternative alternative) {
-  final lines = <Widget>[];
-  void add(String? text) {
-    if (text == null || text.isEmpty) return;
-    lines.add(Text(text));
-  }
-
-  add(alternative.title);
-  add(alternative.description);
-  add(alternative.category);
-  add(alternative.location);
-  if (alternative.cost != null && alternative.currency != null) {
-    add('${alternative.currency} ${alternative.cost}');
-  }
-  add(alternative.duration == null ? null : '${alternative.duration} min');
-  add(_ticketStatusLabel(alternative.ticketStatus));
-  add(alternative.rating == null ? null : 'Avaliação: ${alternative.rating}');
-  add(alternative.source);
-  if (alternative.googleMapsUri != null) {
-    lines.add(SelectableText(alternative.googleMapsUri!));
-  }
-  return lines;
-}
-
 List<Widget> _mealLines(MealRecommendation meal) {
   final lines = <Widget>[];
   void add(String? text) {
@@ -950,21 +1134,6 @@ List<Widget> _mealLines(MealRecommendation meal) {
     lines.add(SelectableText(meal.googleMapsUri!));
   }
   return lines;
-}
-
-String? _ticketStatusLabel(String? raw) {
-  final value = raw?.trim();
-  if (value == null || value.isEmpty) return null;
-  switch (value.toUpperCase()) {
-    case 'FREE':
-      return 'Gratuito';
-    case 'TICKET_REQUIRED':
-      return 'Ingresso necessário';
-    case 'UNKNOWN':
-      return 'Ingresso não informado';
-    default:
-      return value;
-  }
 }
 
 String _coord(double? value) => value == null ? '' : value.toString();

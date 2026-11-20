@@ -43,6 +43,155 @@ class SwapQuota {
   }
 }
 
+/// Facet option from Core `GET …/alternatives` → `facets`.
+class AlternativesFacetOption {
+  final String value;
+  final String label;
+  final int? count;
+
+  const AlternativesFacetOption({
+    required this.value,
+    required this.label,
+    this.count,
+  });
+
+  factory AlternativesFacetOption.fromJson(Map<String, dynamic> json) {
+    return AlternativesFacetOption(
+      value: _readText(json['value']) ?? '',
+      label: _readText(json['label']) ?? _readText(json['value']) ?? '',
+      count: _readInt(json['count']),
+    );
+  }
+}
+
+class AlternativesFacets {
+  final List<AlternativesFacetOption> categories;
+  final List<AlternativesFacetOption> durations;
+  final List<AlternativesFacetOption> locations;
+
+  const AlternativesFacets({
+    this.categories = const [],
+    this.durations = const [],
+    this.locations = const [],
+  });
+
+  factory AlternativesFacets.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const AlternativesFacets();
+    return AlternativesFacets(
+      categories: _readFacetList(json['categories']),
+      durations: _readFacetList(json['durations']),
+      locations: _readFacetList(json['locations']),
+    );
+  }
+
+  static List<AlternativesFacetOption> _readFacetList(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map(
+          (item) =>
+              AlternativesFacetOption.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .where((item) => item.value.isNotEmpty)
+        .toList();
+  }
+}
+
+/// Query for paid-trip "Filtrar por" → `GET …/alternatives`.
+class AlternativesFilter {
+  final String? category;
+  final String? duration;
+  final String? location;
+  final bool free;
+  final bool paid;
+  final bool accessible;
+  final bool goodForRainyDays;
+  final bool goodForKids;
+  final String? q;
+
+  const AlternativesFilter({
+    this.category,
+    this.duration,
+    this.location,
+    this.free = false,
+    this.paid = false,
+    this.accessible = false,
+    this.goodForRainyDays = false,
+    this.goodForKids = false,
+    this.q,
+  });
+
+  static const empty = AlternativesFilter();
+
+  bool get isEmpty =>
+      (category == null || category!.isEmpty) &&
+      (duration == null || duration!.isEmpty) &&
+      (location == null || location!.isEmpty) &&
+      !free &&
+      !paid &&
+      !accessible &&
+      !goodForRainyDays &&
+      !goodForKids &&
+      (q == null || q!.trim().isEmpty);
+
+  bool get hasSheetFilters =>
+      (category != null && category!.isNotEmpty) ||
+      (duration != null && duration!.isNotEmpty) ||
+      (location != null && location!.isNotEmpty) ||
+      free ||
+      paid ||
+      accessible ||
+      goodForRainyDays ||
+      goodForKids;
+
+  AlternativesFilter copyWith({
+    String? category,
+    String? duration,
+    String? location,
+    bool? free,
+    bool? paid,
+    bool? accessible,
+    bool? goodForRainyDays,
+    bool? goodForKids,
+    String? q,
+    bool clearCategory = false,
+    bool clearDuration = false,
+    bool clearLocation = false,
+    bool clearQ = false,
+  }) {
+    return AlternativesFilter(
+      category: clearCategory ? null : (category ?? this.category),
+      duration: clearDuration ? null : (duration ?? this.duration),
+      location: clearLocation ? null : (location ?? this.location),
+      free: free ?? this.free,
+      paid: paid ?? this.paid,
+      accessible: accessible ?? this.accessible,
+      goodForRainyDays: goodForRainyDays ?? this.goodForRainyDays,
+      goodForKids: goodForKids ?? this.goodForKids,
+      q: clearQ ? null : (q ?? this.q),
+    );
+  }
+
+  /// Query map for Dio. Omits empty / false flags.
+  Map<String, dynamic> toQueryParameters() {
+    final query = <String, dynamic>{};
+    final cat = category?.trim();
+    if (cat != null && cat.isNotEmpty) query['category'] = cat;
+    final dur = duration?.trim();
+    if (dur != null && dur.isNotEmpty) query['duration'] = dur;
+    final loc = location?.trim();
+    if (loc != null && loc.isNotEmpty) query['location'] = loc;
+    if (free) query['free'] = true;
+    if (paid) query['paid'] = true;
+    if (accessible) query['accessible'] = true;
+    if (goodForRainyDays) query['goodForRainyDays'] = true;
+    if (goodForKids) query['goodForKids'] = true;
+    final search = q?.trim();
+    if (search != null && search.isNotEmpty) query['q'] = search;
+    return query;
+  }
+}
+
 class ItemAlternative {
   final String? title;
   final String? description;
@@ -59,6 +208,10 @@ class ItemAlternative {
   final double? rating;
   final int? userRatingsTotal;
   final String? googleMapsUri;
+  final bool accessible;
+  final bool goodForKids;
+  final bool goodForRainyDays;
+  final String? imageUrl;
 
   const ItemAlternative({
     this.title,
@@ -76,6 +229,10 @@ class ItemAlternative {
     this.rating,
     this.userRatingsTotal,
     this.googleMapsUri,
+    this.accessible = false,
+    this.goodForKids = false,
+    this.goodForRainyDays = false,
+    this.imageUrl,
   });
 
   factory ItemAlternative.fromJson(Map<String, dynamic> json) {
@@ -95,6 +252,10 @@ class ItemAlternative {
       rating: _readDouble(json['rating']),
       userRatingsTotal: _readInt(json['userRatingsTotal']),
       googleMapsUri: _readText(json['googleMapsUri']),
+      accessible: json['accessible'] == true,
+      goodForKids: json['goodForKids'] == true,
+      goodForRainyDays: json['goodForRainyDays'] == true,
+      imageUrl: _readText(json['imageUrl']) ?? _readText(json['image']),
     );
   }
 
@@ -120,8 +281,13 @@ class ItemAlternative {
 class AlternativesResult {
   final List<ItemAlternative> items;
   final SwapQuota quota;
+  final AlternativesFacets facets;
 
-  const AlternativesResult({required this.items, required this.quota});
+  const AlternativesResult({
+    required this.items,
+    required this.quota,
+    this.facets = const AlternativesFacets(),
+  });
 
   factory AlternativesResult.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'];
@@ -138,7 +304,11 @@ class AlternativesResult {
     final quota = rawQuota is Map
         ? SwapQuota.fromJson(Map<String, dynamic>.from(rawQuota))
         : const SwapQuota();
-    return AlternativesResult(items: items, quota: quota);
+    final rawFacets = json['facets'];
+    final facets = rawFacets is Map
+        ? AlternativesFacets.fromJson(Map<String, dynamic>.from(rawFacets))
+        : const AlternativesFacets();
+    return AlternativesResult(items: items, quota: quota, facets: facets);
   }
 }
 
