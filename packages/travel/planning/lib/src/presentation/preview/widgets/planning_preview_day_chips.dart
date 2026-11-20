@@ -107,7 +107,7 @@ class _DayChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(999),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -115,6 +115,7 @@ class _DayChip extends StatelessWidget {
                 label,
                 style: TwoGoTypography.labelMedium.copyWith(
                   color: fg,
+                  fontSize: 13,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
@@ -122,7 +123,7 @@ class _DayChip extends StatelessWidget {
                 const SizedBox(width: 6),
                 Icon(
                   Icons.lock_rounded,
-                  size: 14,
+                  size: 13,
                   color: selected ? TwoGoColors.contentInverse : TwoGoColors.neutral500,
                 ),
               ],

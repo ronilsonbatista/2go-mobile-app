@@ -25,27 +25,30 @@ class PlanningPreviewUpsellBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!offer.available) return const SizedBox.shrink();
 
+    // Design banner is a soft pill (~20 radius), not DS large=16.
+    const radius = 20.0;
     return Material(
       color: TwoGoColors.neutral900,
-      borderRadius: BorderRadius.circular(TwoGoRadius.large),
+      borderRadius: BorderRadius.circular(radius),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(TwoGoRadius.large),
+        borderRadius: BorderRadius.circular(radius),
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: TwoGoSpacing.md,
-            vertical: TwoGoSpacing.sm,
+            vertical: TwoGoSpacing.sm + 2,
           ),
           child: Row(
             children: [
-              const _UpsellBadge(size: 40),
+              const _UpsellBadge(size: 42),
               const SizedBox(width: TwoGoSpacing.sm),
               Expanded(
                 child: Text.rich(
                   TextSpan(
                     style: TwoGoTypography.bodyMedium.copyWith(
                       color: TwoGoColors.contentInverse,
-                      height: 1.25,
+                      height: 1.3,
+                      fontSize: 14,
                     ),
                     children: [
                       const TextSpan(
@@ -56,6 +59,7 @@ class PlanningPreviewUpsellBanner extends StatelessWidget {
                         style: const TextStyle(
                           color: _gold,
                           fontWeight: FontWeight.w800,
+                          fontSize: 14,
                         ),
                       ),
                     ],

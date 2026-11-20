@@ -287,7 +287,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                   onShare: widget.onShare,
                 ),
               ),
-              // Gutters vs design: keep readable breathing room (not sparse).
+              // Gutters vs design-preview-roma + user Lisboa:
               // h-margin 16; hero→countdown 12; countdown→upsell 12;
               // upsell→chips 16; chips→timeline 12.
               SliverToBoxAdapter(
@@ -320,7 +320,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                           _bloc.add(SelectPreviewDayEvent(dayNumber: day));
                         },
                       ),
-                      const SizedBox(height: TwoGoSpacing.sm),
+                      const SizedBox(height: TwoGoSpacing.md),
                       if (visibleDayMatch != null)
                         _buildTimelineList(visibleDayMatch)
                       else
@@ -590,6 +590,8 @@ class _HeroHeader extends StatelessWidget {
               style: TwoGoTypography.headlineLarge.copyWith(
                 color: TwoGoColors.contentInverse,
                 fontWeight: FontWeight.w800,
+                // Design destination name reads ~28pt (headlineLarge is 24).
+                fontSize: 28,
                 height: 1.1,
               ),
             ),

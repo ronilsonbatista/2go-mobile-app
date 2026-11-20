@@ -8,6 +8,18 @@ import '../../../domain/models/planning_preview.dart';
 /// Timeline node styles for the day-1 preview.
 enum PlanningTimelineNodeStyle { dashed, solid }
 
+/// Card corner radius sampled vs design-preview-roma (between DS medium/large).
+const double _kPreviewCardRadius = 12;
+
+/// Activity title size — design/user shots read ~15–16pt, not titleSmall (12).
+const TextStyle _kActivityTitleStyle = TextStyle(
+  fontFamily: TwoGoTypography.fontFamily,
+  fontSize: 15,
+  fontWeight: FontWeight.w700,
+  height: 1.3,
+  color: TwoGoColors.contentPrimary,
+);
+
 class PlanningTimelineItem extends StatelessWidget {
   final PlanningVisibleActivity activity;
   final bool isLast;
@@ -116,6 +128,7 @@ class PlanningTimelineItem extends StatelessWidget {
           _TimelineRail(
             style: nodeStyle,
             isLast: isLast,
+            filled: activity.isMeal && mealSelected,
             child: activity.isMeal
                 ? (mealSelected
                     ? const Icon(
@@ -125,12 +138,11 @@ class PlanningTimelineItem extends StatelessWidget {
                       )
                     : null)
                 : null,
-            filled: activity.isMeal && mealSelected,
           ),
           const SizedBox(width: TwoGoSpacing.sm),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: TwoGoSpacing.md),
+              padding: const EdgeInsets.only(bottom: TwoGoSpacing.sm),
               child: activity.isMeal
                   ? _MealCard(
                       activity: activity,
@@ -178,17 +190,58 @@ class PlanningLodgingTimelineItem extends StatelessWidget {
           const SizedBox(width: TwoGoSpacing.sm),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: TwoGoSpacing.md),
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(TwoGoRadius.medium),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Text(
-                    'Adicionar hospedagem',
-                    style: TwoGoTypography.titleSmall.copyWith(
-                      color: TwoGoColors.contentPrimary,
-                      fontWeight: FontWeight.w600,
+              padding: const EdgeInsets.only(bottom: TwoGoSpacing.sm),
+              child: Material(
+                color: TwoGoColors.neutral100,
+                borderRadius: BorderRadius.circular(_kPreviewCardRadius),
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(_kPreviewCardRadius),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TwoGoSpacing.sm,
+                      vertical: TwoGoSpacing.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: TwoGoColors.neutral0,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.apartment_outlined,
+                            size: 22,
+                            color: TwoGoColors.neutral600,
+                          ),
+                        ),
+                        const SizedBox(width: TwoGoSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Adicionar hospedagem',
+                                style: _kActivityTitleStyle.copyWith(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'para estimar o deslocamento',
+                                style: TwoGoTypography.labelSmall.copyWith(
+                                  color: TwoGoColors.contentSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -335,10 +388,10 @@ class _MealCard extends StatelessWidget {
     );
     final remote = activity.imageUrl?.trim();
     final thumb = ClipRRect(
-      borderRadius: BorderRadius.circular(TwoGoRadius.small),
+      borderRadius: BorderRadius.circular(8),
       child: SizedBox(
-        width: 56,
-        height: 56,
+        width: 52,
+        height: 52,
         child: remote != null && remote.isNotEmpty
             ? Image(
                 image:
@@ -360,17 +413,17 @@ class _MealCard extends StatelessWidget {
 
     return Material(
       color: TwoGoColors.neutral100,
-      borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+      borderRadius: BorderRadius.circular(_kPreviewCardRadius),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+        borderRadius: BorderRadius.circular(_kPreviewCardRadius),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: TwoGoSpacing.md,
-            vertical: TwoGoSpacing.sm + 2,
+            horizontal: TwoGoSpacing.sm,
+            vertical: TwoGoSpacing.sm,
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               thumb,
               const SizedBox(width: TwoGoSpacing.sm),
@@ -383,23 +436,22 @@ class _MealCard extends StatelessWidget {
                               activity.timeLabel!.trim().isNotEmpty)
                             Text(
                               activity.timeLabel!,
-                              style: TwoGoTypography.labelSmall.copyWith(
+                              style: TwoGoTypography.labelMedium.copyWith(
                                 color: TwoGoColors.contentSecondary,
+                                fontSize: 12,
                               ),
                             ),
                           Text(
                             activity.title,
-                            style: TwoGoTypography.titleSmall.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: TwoGoColors.contentPrimary,
-                            ),
+                            style: _kActivityTitleStyle,
                           ),
                           if (activity.cost > 0)
                             Text(
                               PlanningTimelineItem.costLabel(activity.cost),
-                              style: TwoGoTypography.labelSmall.copyWith(
+                              style: TwoGoTypography.labelMedium.copyWith(
                                 color: TwoGoColors.info,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
                               ),
                             ),
                         ],
@@ -409,20 +461,18 @@ class _MealCard extends StatelessWidget {
                         children: [
                           Text(
                             activity.title,
-                            style: TwoGoTypography.titleSmall.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: TwoGoColors.contentPrimary,
-                            ),
+                            style: _kActivityTitleStyle,
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 3),
                           GestureDetector(
                             onTap: onRecommendationsTap,
                             child: Text(
                               'Ver recomendações',
-                              style: TwoGoTypography.labelSmall.copyWith(
-                                color: TwoGoColors.contentSecondary,
+                              style: TwoGoTypography.labelMedium.copyWith(
+                                color: TwoGoColors.info,
+                                fontSize: 12,
                                 decoration: TextDecoration.underline,
-                                decorationColor: TwoGoColors.contentSecondary,
+                                decorationColor: TwoGoColors.info,
                               ),
                             ),
                           ),
@@ -469,22 +519,22 @@ class _AttractionCard extends StatelessWidget {
 
     return Material(
       color: TwoGoColors.neutral0,
-      borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+      borderRadius: BorderRadius.circular(_kPreviewCardRadius),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+        borderRadius: BorderRadius.circular(_kPreviewCardRadius),
         child: Container(
           padding: const EdgeInsets.all(TwoGoSpacing.sm),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+            borderRadius: BorderRadius.circular(_kPreviewCardRadius),
             border: Border.all(color: TwoGoColors.neutral200),
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                width: 48,
-                height: 48,
+                width: 52,
+                height: 52,
                 child: (activity.imageUrl != null &&
                         activity.imageUrl!.isNotEmpty)
                     ? ClipRRect(
@@ -493,8 +543,8 @@ class _AttractionCard extends StatelessWidget {
                           image: imageProviderBuilder != null
                               ? imageProviderBuilder!(activity.imageUrl!)
                               : NetworkImage(activity.imageUrl!),
-                          width: 48,
-                          height: 48,
+                          width: 52,
+                          height: 52,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => _thumbFallback(),
                         ),
@@ -510,39 +560,39 @@ class _AttractionCard extends StatelessWidget {
                       activity.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TwoGoTypography.titleSmall.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: TwoGoColors.contentPrimary,
-                      ),
+                      style: _kActivityTitleStyle,
                     ),
                     if (activity.timeLabel != null &&
                         activity.timeLabel!.trim().isNotEmpty) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
                         activity.timeLabel!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TwoGoTypography.labelSmall.copyWith(
+                        style: TwoGoTypography.labelMedium.copyWith(
                           color: TwoGoColors.contentSecondary,
+                          fontSize: 12,
                         ),
                       ),
                     ],
-                    const SizedBox(height: 4),
-                    Text(
-                      cost,
-                      style: TwoGoTypography.labelSmall.copyWith(
-                        color: isFree ? TwoGoColors.success : TwoGoColors.info,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
                   ],
+                ),
+              ),
+              const SizedBox(width: TwoGoSpacing.xs),
+              // Trailing cost column mirrors design (Grátis / $ right of title).
+              Text(
+                cost,
+                style: TwoGoTypography.labelMedium.copyWith(
+                  color: isFree ? TwoGoColors.success : TwoGoColors.info,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
                 ),
               ),
               GestureDetector(
                 onTap: onMenuTap,
                 behavior: HitTestBehavior.opaque,
                 child: const Padding(
-                  padding: EdgeInsets.all(4),
+                  padding: EdgeInsets.only(left: 2, top: 4, bottom: 4, right: 0),
                   child: Icon(
                     Icons.more_vert_rounded,
                     size: 20,
@@ -566,6 +616,7 @@ class _AttractionCard extends StatelessWidget {
       child: const Center(
         child: Icon(
           Icons.place_outlined,
+          size: 22,
           color: TwoGoColors.neutral500,
         ),
       ),
