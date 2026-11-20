@@ -6,10 +6,13 @@ class ApiEnvelopeInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     final data = response.data;
-    if (data is Map<String, dynamic> && data.containsKey('data')) {
-      final success = data['success'];
+    // Dio JSON maps are often Map<String, Object> / Map<dynamic, dynamic>,
+    // not Map<String, dynamic> — use Map and normalize before reading keys.
+    if (data is Map && data.containsKey('data')) {
+      final map = Map<String, dynamic>.from(data);
+      final success = map['success'];
       if (success == null || success == true) {
-        response.data = data['data'];
+        response.data = map['data'];
       }
     }
     handler.next(response);
