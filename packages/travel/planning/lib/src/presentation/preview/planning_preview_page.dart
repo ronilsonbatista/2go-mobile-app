@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:twogo_design_system/design_system.dart';
 
 import '../../domain/models/planning_preview.dart';
+import '../../domain/models/preview_cover_resolution.dart';
 import 'bloc/planning_preview_bloc.dart';
 import 'bloc/planning_preview_event.dart';
 import 'bloc/planning_preview_state.dart';
@@ -23,6 +24,15 @@ class PlanningPreviewPage extends StatefulWidget {
   /// Optional override for hero [Image] (widget tests / offline screenshots).
   final ImageProvider Function(String url)? coverImageProviderBuilder;
 
+  /// When Core summary/dest cover is empty, look up Home/catalog photos.
+  final Future<List<PreviewCoverCatalogEntry>> Function()? loadCoverCatalog;
+
+  /// Guest Day-1: open existing Adicionar hospedagem flow (preview-only save).
+  final VoidCallback? onAddLodging;
+
+  /// Guest Day-1: open existing Detalhes for an activity / check-in point.
+  final ValueChanged<PlanningVisibleActivity>? onActivityTap;
+
   const PlanningPreviewPage({
     super.key,
     required this.journeyId,
@@ -32,6 +42,9 @@ class PlanningPreviewPage extends StatefulWidget {
     this.onBack,
     this.now,
     this.coverImageProviderBuilder,
+    this.loadCoverCatalog,
+    this.onAddLodging,
+    this.onActivityTap,
   });
 
   @override
@@ -41,6 +54,8 @@ class PlanningPreviewPage extends StatefulWidget {
 class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
   late final PlanningPreviewBloc _bloc;
   bool _dialogVisible = false;
+  ImageProvider? _resolvedHeroImage;
+  String? _heroResolutionKey;
 
   @override
   void initState() {
@@ -112,6 +127,41 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
     return 'Sua Viagem';
   }
 
+  Future<void> _resolveHeroCover(PlanningPreviewSummary summary) async {
+    final key =
+        '${summary.coverImageUrl}|${summary.destinations}|${summary.totalDays}';
+    if (_heroResolutionKey == key && _resolvedHeroImage != null) return;
+    _heroResolutionKey = key;
+
+    List<PreviewCoverCatalogEntry> catalog = const [];
+    final loader = widget.loadCoverCatalog;
+    if (loader != null) {
+      try {
+        catalog = await loader();
+      } catch (_) {
+        catalog = const [];
+      }
+    }
+
+    final resolution = resolvePreviewCover(
+      summary: summary,
+      catalog: catalog,
+    );
+    if (!mounted) return;
+
+    ImageProvider? provider;
+    final url = resolution?.networkUrl?.trim();
+    if (url != null && url.isNotEmpty) {
+      provider = widget.coverImageProviderBuilder?.call(url) ??
+          NetworkImage(url);
+    } else {
+      provider = resolution?.toImageProvider();
+    }
+
+    if (!mounted) return;
+    setState(() => _resolvedHeroImage = provider);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
@@ -119,6 +169,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
       child: BlocConsumer<PlanningPreviewBloc, PlanningPreviewState>(
         listener: (context, state) {
           if (state is PlanningPreviewLoadedState) {
+            _resolveHeroCover(state.preview.summary);
             if (state.isPaywallOpen) {
               _showPaywallDialog(context, state);
             }
@@ -205,12 +256,10 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
             slivers: [
               SliverToBoxAdapter(
                 child: _HeroHeader(
+                  coverImage: _resolvedHeroImage,
                   coverImageUrl: summary.resolvedCoverImageUrl,
                   destinationName: destinationName,
                   onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
-                  onLockedAction: () {
-                    _bloc.add(const OpenPaywallEvent(source: 'HERO_ACTION'));
-                  },
                   coverImageProviderBuilder: widget.coverImageProviderBuilder,
                 ),
               ),
@@ -286,9 +335,10 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
 
     final children = <Widget>[
       PlanningLodgingTimelineItem(
-        onTap: () {
-          _bloc.add(const OpenPaywallEvent(source: 'LODGING'));
-        },
+        onTap: widget.onAddLodging ??
+            () {
+              _bloc.add(const OpenPaywallEvent(source: 'LODGING'));
+            },
       ),
     ];
 
@@ -303,6 +353,16 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
               ? PlanningTimelineNodeStyle.solid
               : PlanningTimelineNodeStyle.solid,
           onOpenUrl: widget.onOpenUrl,
+          onTap: activity.isTransport || activity.isMeal
+              ? null
+              : () {
+                  final open = widget.onActivityTap;
+                  if (open != null) {
+                    open(activity);
+                  } else {
+                    _bloc.add(const OpenPaywallEvent(source: 'ACTIVITY'));
+                  }
+                },
           onRecommendationsTap: () {
             _bloc.add(const OpenPaywallEvent(source: 'MEAL_RECS'));
           },
@@ -391,22 +451,30 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
 
 class _HeroHeader extends StatelessWidget {
   const _HeroHeader({
-    required this.coverImageUrl,
     required this.destinationName,
     required this.onBack,
-    required this.onLockedAction,
+    this.coverImage,
+    this.coverImageUrl,
     this.coverImageProviderBuilder,
   });
 
+  final ImageProvider? coverImage;
   final String? coverImageUrl;
   final String destinationName;
   final VoidCallback onBack;
-  final VoidCallback onLockedAction;
   final ImageProvider Function(String url)? coverImageProviderBuilder;
+
+  ImageProvider? get _image {
+    if (coverImage != null) return coverImage;
+    final url = coverImageUrl?.trim();
+    if (url == null || url.isEmpty) return null;
+    return coverImageProviderBuilder?.call(url) ?? NetworkImage(url);
+  }
 
   @override
   Widget build(BuildContext context) {
     final topPad = MediaQuery.paddingOf(context).top;
+    final image = _image;
     // Design hero content ~182–220pt below status.
     return SizedBox(
       height: 220 + topPad,
@@ -414,10 +482,9 @@ class _HeroHeader extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (coverImageUrl != null && coverImageUrl!.isNotEmpty)
+          if (image != null)
             Image(
-              image: coverImageProviderBuilder?.call(coverImageUrl!) ??
-                  NetworkImage(coverImageUrl!),
+              image: image,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => _fallbackBg(),
             )
@@ -448,21 +515,22 @@ class _HeroHeader extends StatelessWidget {
                   onPressed: onBack,
                 ),
                 const Spacer(),
-                _RoundIconButton(
+                // Edit / PDF / Share stay visible but non-functional on Day-1.
+                const _RoundIconButton(
                   icon: Icons.edit_outlined,
-                  iconColor: const Color(0xFFF5C518),
-                  onPressed: onLockedAction,
+                  iconColor: Color(0xFFF5C518),
+                  enabled: false,
                 ),
                 const SizedBox(width: TwoGoSpacing.xs),
-                _RoundIconButton(
+                const _RoundIconButton(
                   icon: Icons.picture_as_pdf_outlined,
-                  iconColor: const Color(0xFFE53935),
-                  onPressed: onLockedAction,
+                  iconColor: Color(0xFFE53935),
+                  enabled: false,
                 ),
                 const SizedBox(width: TwoGoSpacing.xs),
-                _RoundIconButton(
+                const _RoundIconButton(
                   icon: Icons.ios_share_rounded,
-                  onPressed: onLockedAction,
+                  enabled: false,
                 ),
               ],
             ),
@@ -502,28 +570,35 @@ class _HeroHeader extends StatelessWidget {
 class _RoundIconButton extends StatelessWidget {
   const _RoundIconButton({
     required this.icon,
-    required this.onPressed,
+    this.onPressed,
     this.iconColor,
+    this.enabled = true,
   });
 
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color? iconColor;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: TwoGoColors.neutral0.withValues(alpha: 0.92),
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onPressed,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(
-            icon,
-            size: 18,
-            color: iconColor ?? TwoGoColors.neutral900,
+    final color = (iconColor ?? TwoGoColors.neutral900)
+        .withValues(alpha: enabled ? 1 : 0.38);
+    return Opacity(
+      opacity: enabled ? 1 : 0.72,
+      child: Material(
+        color: TwoGoColors.neutral0.withValues(alpha: 0.92),
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: enabled ? onPressed : null,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              icon,
+              size: 18,
+              color: color,
+            ),
           ),
         ),
       ),
