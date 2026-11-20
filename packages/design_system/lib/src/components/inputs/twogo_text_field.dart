@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../icons/twogo_icons.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radius.dart';
@@ -25,6 +26,7 @@ class TwoGoTextField extends StatefulWidget {
   final int maxLines;
   final bool autofocus;
   final bool isSuccess;
+  final List<TextInputFormatter>? inputFormatters;
 
   /// When true (default), shows the design-system `!` icon on error if [suffix]
   /// is null.
@@ -53,6 +55,7 @@ class TwoGoTextField extends StatefulWidget {
     this.autofocus = false,
     this.isSuccess = false,
     this.showErrorIcon = true,
+    this.inputFormatters,
   }) : hint = hint ?? hintText,
        prefix =
            prefix ??
@@ -159,6 +162,7 @@ class _TwoGoTextFieldState extends State<TwoGoTextField> {
             autofocus: widget.autofocus,
             onChanged: widget.onChanged,
             onSubmitted: widget.onSubmitted,
+            inputFormatters: widget.inputFormatters,
             style: TwoGoTypography.bodyMedium.copyWith(
               color: widget.enabled
                   ? TwoGoColors.contentPrimary

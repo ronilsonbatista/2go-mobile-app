@@ -1,7 +1,7 @@
 name: twogo_profile
 resolution: workspace
 publish_to: none
-description: 2GO Domain Profile Module
+description: 2GO Domain Profile Module (account hub + travel profile)
 version: 1.0.0
 
 environment:
@@ -11,10 +11,18 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_bloc: ^8.1.6
+  equatable: any
+  dio: ^5.7.0
+  image_picker: ^1.1.2
   twogo_core: any
   twogo_design_system: any
+  twogo_networking: any
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

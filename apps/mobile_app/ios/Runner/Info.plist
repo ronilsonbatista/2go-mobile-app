@@ -45,6 +45,12 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>2GO usa a câmera para atualizar sua foto de perfil.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>2GO acessa sua galeria para escolher uma foto de perfil.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>2GO pode salvar imagens relacionadas ao seu perfil.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>2GO usa a rede local para ferramentas de desenvolvimento e hot reload.</string>
 	<key>NSBonjourServices</key>
