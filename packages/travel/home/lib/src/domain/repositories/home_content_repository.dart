@@ -1,3 +1,4 @@
+import '../models/home_crm_snapshot.dart';
 import '../models/home_destination.dart';
 import '../models/home_profile.dart';
 
@@ -10,6 +11,14 @@ abstract class HomeContentRepository {
   /// [isAuthenticated] / [userId] come from [SessionCubit].
   /// When Core exposes photo URL, implementations should return it here.
   Future<HomeProfile> resolveProfile({
+    required bool isAuthenticated,
+    String? userId,
+  });
+
+  /// Authenticated CRM: `GET /home/trip` (+ tips).
+  ///
+  /// Guests / no paid trip → [HomeCrmSnapshot.empty] (discovery Home).
+  Future<HomeCrmSnapshot> fetchCrmSnapshot({
     required bool isAuthenticated,
     String? userId,
   });

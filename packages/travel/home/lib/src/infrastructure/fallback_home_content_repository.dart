@@ -1,3 +1,4 @@
+import '../domain/models/home_crm_snapshot.dart';
 import '../domain/models/home_destination.dart';
 import '../domain/models/home_profile.dart';
 import '../domain/repositories/home_content_repository.dart';
@@ -21,7 +22,7 @@ class FallbackHomeContentRepository implements HomeContentRepository {
     try {
       final items = await _remote.fetchDestinations();
       if (items.isEmpty) {
-        return _fallback.fetchDestinations();
+        return await _fallback.fetchDestinations();
       }
       return items;
     } catch (_) {
@@ -45,6 +46,25 @@ class FallbackHomeContentRepository implements HomeContentRepository {
       );
     } catch (_) {
       return _fallback.resolveProfile(
+        isAuthenticated: isAuthenticated,
+        userId: userId,
+      );
+    }
+  }
+
+  @override
+  Future<HomeCrmSnapshot> fetchCrmSnapshot({
+    required bool isAuthenticated,
+    String? userId,
+  }) async {
+    if (!isAuthenticated) return HomeCrmSnapshot.empty;
+    try {
+      return await _remote.fetchCrmSnapshot(
+        isAuthenticated: isAuthenticated,
+        userId: userId,
+      );
+    } catch (_) {
+      return await _fallback.fetchCrmSnapshot(
         isAuthenticated: isAuthenticated,
         userId: userId,
       );

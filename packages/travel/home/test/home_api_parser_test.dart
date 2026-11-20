@@ -410,4 +410,12 @@ class _ThrowingHomeRepository implements HomeContentRepository {
   }) {
     return Future.error(Exception('staging down'));
   }
+
+  @override
+  Future<HomeCrmSnapshot> fetchCrmSnapshot({
+    required bool isAuthenticated,
+    String? userId,
+  }) {
+    return Future.error(Exception('staging down'));
+  }
 }

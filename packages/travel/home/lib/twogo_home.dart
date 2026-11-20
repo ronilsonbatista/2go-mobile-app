@@ -1,13 +1,27 @@
 library;
 
 export 'src/application/home_cubit.dart';
+export 'src/domain/models/home_crm_snapshot.dart';
 export 'src/domain/models/home_destination.dart';
 export 'src/domain/models/home_profile.dart';
+export 'src/domain/models/home_tip.dart';
+export 'src/domain/models/home_trip_day.dart';
+export 'src/domain/models/home_trip_destination_label.dart';
+export 'src/domain/models/home_trip_summary.dart';
 export 'src/domain/repositories/home_content_repository.dart';
 export 'src/home_module.dart';
 export 'src/infrastructure/fallback_home_content_repository.dart';
+export 'src/infrastructure/home_crm_remote.dart';
 export 'src/infrastructure/home_destinations_parser.dart';
 export 'src/infrastructure/home_profile_parser.dart';
+export 'src/infrastructure/home_tips_parser.dart';
+export 'src/infrastructure/home_trip_summary_parser.dart';
 export 'src/infrastructure/local_home_content_repository.dart';
 export 'src/infrastructure/remote_home_content_repository.dart';
 export 'src/presentation/home_view.dart';
+export 'src/presentation/widgets/home_crm_body.dart';
+export 'src/presentation/widgets/home_crm_countdown.dart';
+export 'src/presentation/widgets/home_crm_days_strip.dart';
+export 'src/presentation/widgets/home_crm_outline_cta.dart';
+export 'src/presentation/widgets/home_crm_tips_strip.dart';
+export 'src/presentation/widgets/home_crm_trip_card.dart';

@@ -3,11 +3,21 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../domain/models/home_crm_snapshot.dart';
 import '../domain/models/home_destination.dart';
 import '../domain/models/home_profile.dart';
 import '../domain/repositories/home_content_repository.dart';
 
 enum HomeStatus { initial, loading, ready, failure }
+
+/// Which Home shell to show.
+enum HomeShellMode {
+  /// Guest / no owned upcoming trip — hero + Destinos em alta (Home-9/10/11).
+  discovery,
+
+  /// Authenticated CRM — próxima viagem / empty suitcase (Home-1…8).
+  crm,
+}
 
 class HomeState extends Equatable {
   const HomeState({
@@ -15,6 +25,7 @@ class HomeState extends Equatable {
     this.destinations = const [],
     this.heroIndex = 0,
     this.profile = const HomeProfile(isAuthenticated: false),
+    this.crm = HomeCrmSnapshot.empty,
     this.errorMessage,
   });
 
@@ -22,6 +33,7 @@ class HomeState extends Equatable {
   final List<HomeDestination> destinations;
   final int heroIndex;
   final HomeProfile profile;
+  final HomeCrmSnapshot crm;
   final String? errorMessage;
 
   HomeDestination? get currentDestination {
@@ -30,11 +42,19 @@ class HomeState extends Equatable {
     return destinations[index];
   }
 
+  /// Paid-trip CRM only when Core returns `GET /home/trip` → `trip != null`.
+  /// Guests and auth users without a paid trip stay on discovery Home.
+  HomeShellMode get shellMode {
+    if (crm.hasPaidTrip) return HomeShellMode.crm;
+    return HomeShellMode.discovery;
+  }
+
   HomeState copyWith({
     HomeStatus? status,
     List<HomeDestination>? destinations,
     int? heroIndex,
     HomeProfile? profile,
+    HomeCrmSnapshot? crm,
     String? errorMessage,
   }) {
     return HomeState(
@@ -42,21 +62,23 @@ class HomeState extends Equatable {
       destinations: destinations ?? this.destinations,
       heroIndex: heroIndex ?? this.heroIndex,
       profile: profile ?? this.profile,
+      crm: crm ?? this.crm,
       errorMessage: errorMessage,
     );
   }
 
   @override
   List<Object?> get props => [
-    status,
-    destinations,
-    heroIndex,
-    profile,
-    errorMessage,
-  ];
+        status,
+        destinations,
+        heroIndex,
+        profile,
+        crm,
+        errorMessage,
+      ];
 }
 
-/// View-model for Home layout: guest/auth chip + destination carousel.
+/// View-model for Home layout: guest/auth chip + destination carousel + CRM.
 class HomeCubit extends Cubit<HomeState> {
   HomeCubit({
     required HomeContentRepository repository,
@@ -81,6 +103,10 @@ class HomeCubit extends Cubit<HomeState> {
         isAuthenticated: isAuthenticated,
         userId: userId,
       );
+      final crm = await _repository.fetchCrmSnapshot(
+        isAuthenticated: isAuthenticated,
+        userId: userId,
+      );
       emit(
         state.copyWith(
           status: HomeStatus.ready,
@@ -89,6 +115,7 @@ class HomeCubit extends Cubit<HomeState> {
               ? 0
               : state.heroIndex.clamp(0, destinations.length - 1),
           profile: profile,
+          crm: crm,
         ),
       );
       _restartAutoAdvance();
@@ -132,6 +159,7 @@ class HomeCubit extends Cubit<HomeState> {
   void _restartAutoAdvance() {
     _timer?.cancel();
     if (!autoAdvance || state.destinations.length < 2) return;
+    if (state.shellMode == HomeShellMode.crm) return;
     _timer = Timer.periodic(autoAdvanceInterval, (_) {
       if (isClosed) return;
       nextHero();
