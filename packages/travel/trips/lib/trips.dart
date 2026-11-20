@@ -18,6 +18,7 @@ export 'src/domain/place_details_view_data.dart';
 export 'src/domain/repositories/trips_repository.dart';
 export 'src/domain/trip_share_models.dart';
 export 'src/presentation/bloc/trips_cubit.dart';
+export 'src/presentation/place_details/lodging_details_sheet.dart';
 export 'src/presentation/place_details/place_details_page.dart';
 export 'src/presentation/place_details/place_details_sheet.dart';
 export 'src/presentation/share/trip_share_invite_sheet.dart';

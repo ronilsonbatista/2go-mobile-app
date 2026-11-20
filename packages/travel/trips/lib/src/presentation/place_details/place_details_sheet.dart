@@ -154,7 +154,7 @@ class _PlaceDetailsSheetState extends State<PlaceDetailsSheet> {
                     },
               fullWidth: true,
             ),
-            if (!meal) ...[
+            if (!meal && data.mode == PlaceDetailsMode.edit) ...[
               const SizedBox(height: 12),
               Row(
                 children: [

@@ -358,7 +358,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
               ? PlanningTimelineNodeStyle.solid
               : PlanningTimelineNodeStyle.solid,
           onOpenUrl: widget.onOpenUrl,
-          onTap: activity.isTransport || activity.isMeal
+          onTap: activity.isTransport
               ? null
               : () {
                   final open = widget.onActivityTap;

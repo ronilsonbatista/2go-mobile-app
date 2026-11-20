@@ -180,4 +180,41 @@ void main() {
       expect(view.kind, PlaceDetailsKind.mealSlot);
     });
   });
+
+  group('PlaceDetailsViewData.fromAccommodation', () {
+    const stay = TripAccommodation(
+      id: 'stay-1',
+      name: 'Hotel Doria',
+      address: 'Piazza del Viminale, 14, 00184 Roma, Itália.',
+      latitude: 41.8992,
+      longitude: 12.4942,
+    );
+
+    test('hotel kind keeps name and builds directions uri', () {
+      final view = PlaceDetailsViewData.fromAccommodation(
+        stay: stay,
+        kind: PlaceDetailsKind.hotel,
+      );
+
+      expect(view.kind, PlaceDetailsKind.hotel);
+      expect(view.isLodgingDetails, isTrue);
+      expect(view.displayName, 'Hotel Doria');
+      expect(view.address, contains('Piazza del Viminale'));
+      expect(view.latitude, 41.8992);
+      expect(view.longitude, 12.4942);
+      expect(view.mapsUri, contains('destination=41.8992,12.4942'));
+    });
+
+    test('endOfDay kind keeps address for address-only card', () {
+      final view = PlaceDetailsViewData.fromAccommodation(
+        stay: stay,
+        kind: PlaceDetailsKind.endOfDay,
+      );
+
+      expect(view.kind, PlaceDetailsKind.endOfDay);
+      expect(view.isLodgingDetails, isTrue);
+      expect(view.displayName, 'Hotel Doria');
+      expect(view.address, contains('Piazza del Viminale'));
+    });
+  });
 }
