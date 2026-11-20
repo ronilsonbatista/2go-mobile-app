@@ -33,6 +33,12 @@ class PlanningPreviewPage extends StatefulWidget {
   /// Guest Day-1: open existing Detalhes for an activity / check-in point.
   final ValueChanged<PlanningVisibleActivity>? onActivityTap;
 
+  /// Guest Day-1: Ver recomendações on meal cards (no paywall).
+  final ValueChanged<PlanningVisibleActivity>? onMealRecommendationsTap;
+
+  /// Guest Day-1: ⋯ menu on timeline cards (details / lodging flow).
+  final ValueChanged<PlanningVisibleActivity>? onItemMenuTap;
+
   /// Unlocks Share in the hero header (Edit/PDF stay blocked).
   final VoidCallback? onShare;
 
@@ -48,6 +54,8 @@ class PlanningPreviewPage extends StatefulWidget {
     this.loadCoverCatalog,
     this.onAddLodging,
     this.onActivityTap,
+    this.onMealRecommendationsTap,
+    this.onItemMenuTap,
     this.onShare,
   });
 
@@ -59,6 +67,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
   late final PlanningPreviewBloc _bloc;
   bool _dialogVisible = false;
   ImageProvider? _resolvedHeroImage;
+  ImageProvider? _resolvedHeroFallback;
   String? _heroResolutionKey;
 
   @override
@@ -134,7 +143,10 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
   Future<void> _resolveHeroCover(PlanningPreviewSummary summary) async {
     final key =
         '${summary.coverImageUrl}|${summary.destinations}|${summary.totalDays}';
-    if (_heroResolutionKey == key && _resolvedHeroImage != null) return;
+    if (_heroResolutionKey == key &&
+        (_resolvedHeroImage != null || _resolvedHeroFallback != null)) {
+      return;
+    }
     _heroResolutionKey = key;
 
     List<PreviewCoverCatalogEntry> catalog = const [];
@@ -153,17 +165,23 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
     );
     if (!mounted) return;
 
-    ImageProvider? provider;
+    ImageProvider? primary;
+    ImageProvider? fallback;
     final url = resolution?.networkUrl?.trim();
+    final asset = resolution?.toAssetImageProvider();
     if (url != null && url.isNotEmpty) {
-      provider = widget.coverImageProviderBuilder?.call(url) ??
-          NetworkImage(url);
+      primary = widget.coverImageProviderBuilder?.call(url) ?? NetworkImage(url);
+      fallback = asset;
     } else {
-      provider = resolution?.toImageProvider();
+      primary = asset ?? resolution?.toImageProvider();
+      fallback = null;
     }
 
     if (!mounted) return;
-    setState(() => _resolvedHeroImage = provider);
+    setState(() {
+      _resolvedHeroImage = primary;
+      _resolvedHeroFallback = fallback;
+    });
   }
 
   @override
@@ -261,6 +279,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
               SliverToBoxAdapter(
                 child: _HeroHeader(
                   coverImage: _resolvedHeroImage,
+                  coverImageFallback: _resolvedHeroFallback,
                   coverImageUrl: summary.resolvedCoverImageUrl,
                   destinationName: destinationName,
                   onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
@@ -340,10 +359,7 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
 
     final children = <Widget>[
       PlanningLodgingTimelineItem(
-        onTap: widget.onAddLodging ??
-            () {
-              _bloc.add(const OpenPaywallEvent(source: 'LODGING'));
-            },
+        onTap: widget.onAddLodging,
       ),
     ];
 
@@ -365,14 +381,19 @@ class _PlanningPreviewPageState extends State<PlanningPreviewPage> {
                   if (open != null) {
                     open(activity);
                   } else {
-                    _bloc.add(const OpenPaywallEvent(source: 'ACTIVITY'));
+                    // Day-1 stays interactive; paywall only on locked chips / banner.
                   }
                 },
-          onRecommendationsTap: () {
-            _bloc.add(const OpenPaywallEvent(source: 'MEAL_RECS'));
-          },
+          onRecommendationsTap: activity.isMeal
+              ? () {
+                  final open = widget.onMealRecommendationsTap ??
+                      widget.onActivityTap;
+                  open?.call(activity);
+                }
+              : null,
           onMenuTap: () {
-            _bloc.add(const OpenPaywallEvent(source: 'ITEM_MENU'));
+            final open = widget.onItemMenuTap ?? widget.onActivityTap;
+            open?.call(activity);
           },
         ),
       );
@@ -459,12 +480,14 @@ class _HeroHeader extends StatelessWidget {
     required this.destinationName,
     required this.onBack,
     this.coverImage,
+    this.coverImageFallback,
     this.coverImageUrl,
     this.coverImageProviderBuilder,
     this.onShare,
   });
 
   final ImageProvider? coverImage;
+  final ImageProvider? coverImageFallback;
   final String? coverImageUrl;
   final String destinationName;
   final VoidCallback onBack;
@@ -476,6 +499,23 @@ class _HeroHeader extends StatelessWidget {
     final url = coverImageUrl?.trim();
     if (url == null || url.isEmpty) return null;
     return coverImageProviderBuilder?.call(url) ?? NetworkImage(url);
+  }
+
+  Widget _coverLayer(ImageProvider image, {ImageProvider? fallback}) {
+    return Image(
+      image: image,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) {
+        if (fallback != null) {
+          return Image(
+            image: fallback,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _fallbackBg(),
+          );
+        }
+        return _fallbackBg();
+      },
+    );
   }
 
   @override
@@ -490,11 +530,9 @@ class _HeroHeader extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           if (image != null)
-            Image(
-              image: image,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _fallbackBg(),
-            )
+            _coverLayer(image, fallback: coverImageFallback)
+          else if (coverImageFallback != null)
+            _coverLayer(coverImageFallback!)
           else
             _fallbackBg(),
           const DecoratedBox(

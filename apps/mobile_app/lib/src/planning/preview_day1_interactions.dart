@@ -14,7 +14,7 @@ class PreviewDay1Interactions {
   Future<List<PreviewCoverCatalogEntry>> loadCoverCatalog() async {
     final destinations =
         await dependencies.homeContentRepository.fetchDestinations();
-    return destinations
+    final fromHome = destinations
         .map(
           (d) => PreviewCoverCatalogEntry(
             name: d.name,
@@ -26,7 +26,53 @@ class PreviewDay1Interactions {
                 : null,
           ),
         )
-        .toList(growable: false);
+        .toList(growable: true);
+
+    // Remote Home may return image URLs without packaged assets. Merge local
+    // destination heroes so Lisboa/Roma/… still resolve when CDN URLs fail.
+    try {
+      final local = await LocalHomeContentRepository().fetchDestinations();
+      for (final d in local) {
+        if (!d.hasLocalHero) continue;
+        final existingIndex = fromHome.indexWhere(
+          (e) =>
+              _sameDestinationName(e.name, d.name) ||
+              (e.providerPlaceId != null &&
+                  d.providerPlaceId != null &&
+                  e.providerPlaceId == d.providerPlaceId),
+        );
+        if (existingIndex >= 0) {
+          final existing = fromHome[existingIndex];
+          if (existing.assetPath == null || existing.assetPath!.isEmpty) {
+            fromHome[existingIndex] = PreviewCoverCatalogEntry(
+              name: existing.name,
+              providerPlaceId: existing.providerPlaceId ?? d.providerPlaceId,
+              imageUrl: existing.imageUrl,
+              assetPath: d.heroAssetPath,
+              assetPackage: LocalHomeContentRepository.assetPackage,
+            );
+          }
+        } else {
+          fromHome.add(
+            PreviewCoverCatalogEntry(
+              name: d.name,
+              providerPlaceId: d.providerPlaceId,
+              imageUrl: d.resolvedHeroUrl ?? d.resolvedCardUrl,
+              assetPath: d.heroAssetPath,
+              assetPackage: LocalHomeContentRepository.assetPackage,
+            ),
+          );
+        }
+      }
+    } catch (_) {
+      // Local merge is best-effort; DestinationThumbCatalog still covers names.
+    }
+
+    return List<PreviewCoverCatalogEntry>.unmodifiable(fromHome);
+  }
+
+  static bool _sameDestinationName(String a, String b) {
+    return a.trim().toLowerCase() == b.trim().toLowerCase();
   }
 
   Future<void> openAddLodging(
