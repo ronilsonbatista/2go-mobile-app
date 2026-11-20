@@ -503,6 +503,7 @@ class AppRouter {
                       tripId: tripId,
                       searchHotels: dependencies.searchHotelsUseCase,
                       getPlaceDetails: dependencies.getPlaceDetailsUseCase,
+                      searchPlaces: dependencies.searchPlacesUseCase,
                       showInviteAcceptedToast: inviteAccepted,
                       onShare: (trip) {
                         final q = <String, String>{

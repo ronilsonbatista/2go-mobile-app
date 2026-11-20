@@ -19,6 +19,9 @@ class PlaceSearchResultDto {
   /// Alternate image field some Core payloads use instead of [iconUrl].
   final String? imageUrl;
 
+  /// Core Text Search may send display dollars (`$`, `$$`, …).
+  final String? priceLevelDisplay;
+
   const PlaceSearchResultDto({
     required this.provider,
     required this.providerPlaceId,
@@ -33,6 +36,7 @@ class PlaceSearchResultDto {
     this.types = const [],
     this.iconUrl,
     this.imageUrl,
+    this.priceLevelDisplay,
   });
 
   /// Prefer [iconUrl], then [imageUrl] — both may be absent (UI uses 📍).
@@ -59,6 +63,7 @@ class PlaceSearchResultDto {
       types: (json['types'] as List<dynamic>?)?.cast<String>() ?? const [],
       iconUrl: _httpsUrl(json['iconUrl']),
       imageUrl: _httpsUrl(json['imageUrl']),
+      priceLevelDisplay: _nonEmpty(json['priceLevelDisplay']),
     );
   }
 

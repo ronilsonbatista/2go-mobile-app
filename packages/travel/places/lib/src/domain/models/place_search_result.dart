@@ -9,6 +9,12 @@ class PlaceSearchResult {
   /// Predefined locality thumb/icon from Core Places autocomplete (CDN).
   final String? iconUrl;
 
+  /// From Text Search / Details when Core sends rating.
+  final double? rating;
+
+  /// UI-ready `$` / `$$` when Core sends `priceLevelDisplay`.
+  final String? priceLevelDisplay;
+
   const PlaceSearchResult({
     required this.providerPlaceId,
     required this.name,
@@ -17,6 +23,8 @@ class PlaceSearchResult {
     this.longitude,
     this.types = const [],
     this.iconUrl,
+    this.rating,
+    this.priceLevelDisplay,
   });
 
   String get city {

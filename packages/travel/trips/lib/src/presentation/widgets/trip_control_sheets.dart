@@ -6,6 +6,7 @@ import 'package:twogo_places/places.dart';
 import '../../domain/entities/itinerary_item_entity.dart';
 import '../../domain/paid_trip_controls.dart';
 import '../../domain/repositories/trips_repository.dart';
+import '../substitute/substitute_attraction_page.dart';
 import 'alternatives_filter_sheet.dart';
 
 /// Ações da viagem paga. Sem este objeto a tela só mostra o que o GET já trouxe.
@@ -14,16 +15,20 @@ class TripControls {
   final Future<void> Function() reloadTrip;
   final SearchHotelsUseCase? searchHotels;
   final GetPlaceDetailsUseCase? getPlaceDetails;
+  final SearchPlacesUseCase? searchPlaces;
 
   const TripControls({
     required this.repository,
     required this.reloadTrip,
     this.searchHotels,
     this.getPlaceDetails,
+    this.searchPlaces,
   });
 
   bool get canSearchHotels =>
       searchHotels != null && getPlaceDetails != null;
+
+  bool get canSearchPlaces => searchPlaces != null;
 }
 
 String apiErrorMessage(Object error) {
@@ -101,13 +106,13 @@ Future<void> showAlternativesSheet(
   BuildContext context, {
   required TripControls controls,
   required String itemId,
+  String? destinationHint,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    builder: (context) {
-      return _AlternativesSheet(controls: controls, itemId: itemId);
-    },
+  return SubstituteAttractionPage.open(
+    context,
+    controls: controls,
+    itemId: itemId,
+    destinationHint: destinationHint,
   );
 }
 

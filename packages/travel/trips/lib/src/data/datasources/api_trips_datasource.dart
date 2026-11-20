@@ -88,7 +88,15 @@ class ApiTripsDataSource implements TripsRemoteDataSource {
   Future<ItineraryItemDto> addItineraryItem(
     String dayId,
     Map<String, dynamic> body,
-  ) => Future<ItineraryItemDto>.error(_missingEndpoint);
+  ) async {
+    final response = await _dio.post<dynamic>(
+      '/trip-days/${_id(dayId)}/items',
+      data: body,
+    );
+    return ItineraryItemDto.fromJson(
+      _asMap(response.data, 'POST /trip-days/:id/items'),
+    );
+  }
 
   @override
   Future<ItineraryItemDto> updateItineraryItem(
@@ -97,12 +105,17 @@ class ApiTripsDataSource implements TripsRemoteDataSource {
   ) => Future<ItineraryItemDto>.error(_missingEndpoint);
 
   @override
-  Future<void> deleteItineraryItem(String id) =>
-      Future<void>.error(_missingEndpoint);
+  Future<void> deleteItineraryItem(String id) async {
+    await _dio.delete<dynamic>('/itinerary-items/${_id(id)}');
+  }
 
   @override
-  Future<void> reorderItineraryItem(String id, int newOrder) =>
-      Future<void>.error(_missingEndpoint);
+  Future<void> reorderItineraryItem(String id, int newOrder) async {
+    await _dio.patch<dynamic>(
+      '/itinerary-items/${_id(id)}/reorder',
+      data: <String, dynamic>{'order': newOrder},
+    );
+  }
 
   @override
   Future<TripDto> generateAiItinerary(

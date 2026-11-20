@@ -157,6 +157,16 @@ void main() {
     expect(verified?.rating, 4.6);
     expect(verified?.websiteUri, isNull);
 
+    await api.deleteItineraryItem('item 1');
+    final added = await api.addItineraryItem('day 1', {
+      'title': 'Coliseu',
+      'category': 'TOURIST_ATTRACTION',
+      'order': 9,
+      'providerPlaceId': 'ChIJ-coliseu',
+    });
+    expect(added.title, 'Coliseu');
+    await api.reorderItineraryItem('item 1', 3);
+
     expect(calls.map((call) => '${call.method} ${call.path}'), [
       'GET /trips/trip%201/accommodation',
       'POST /trips/trip%201/accommodation',
@@ -171,6 +181,9 @@ void main() {
       'PATCH /itinerary-items/item%201',
       'GET /itinerary-items/item%201',
       'GET /itinerary-items/item-details',
+      'DELETE /itinerary-items/item%201',
+      'POST /trip-days/day%201/items',
+      'PATCH /itinerary-items/item%201/reorder',
     ]);
     expect(calls[1].data, {'name': 'Hotel', 'latitude': 38.71});
     expect(calls[3].query, isEmpty);
@@ -184,6 +197,13 @@ void main() {
     expect(calls[7].query, {'period': 'TARDE'});
     expect(calls[8].data, {'title': 'Trattoria'});
     expect(calls[10].data, {'duration': 90});
+    expect(calls[14].data, {
+      'title': 'Coliseu',
+      'category': 'TOURIST_ATTRACTION',
+      'order': 9,
+      'providerPlaceId': 'ChIJ-coliseu',
+    });
+    expect(calls[15].data, {'order': 3});
 
     expect(
       api.updateItineraryItem('item 1', {'title': 'não'}),
@@ -306,10 +326,11 @@ void main() {
     await tester.tap(find.text('Substituir'));
     await _settleSheet(tester);
 
-    expect(find.text('Alterações disponíveis  0 de 4'), findsWidgets);
+    expect(find.text('Substituir por'), findsOneWidget);
+    expect(find.text('Alterações disponíveis'), findsOneWidget);
+    expect(find.text('0 de 4'), findsOneWidget);
     expect(find.text('Cota de trocas esgotada'), findsOneWidget);
     expect(find.text('Galeria'), findsOneWidget);
-    expect(find.text('Usar esta'), findsNothing);
     expect(repository.substitutes, isEmpty);
   });
 
@@ -343,10 +364,10 @@ void main() {
     await tester.tap(find.text('Substituir'));
     await _settleSheet(tester);
     expect(find.text('Substituir por'), findsOneWidget);
-    expect(find.text('Alterações disponíveis  3 de 4'), findsWidgets);
+    expect(find.text('3 de 4'), findsOneWidget);
     expect(find.text('4.8'), findsOneWidget);
     expect(find.text('Filtrar'), findsOneWidget);
-    await tester.tap(find.text('Usar esta'));
+    await tester.tap(find.text('Galeria').last);
     await _settleSheet(tester);
 
     expect(repository.substitutes.single, {
@@ -589,7 +610,7 @@ void main() {
     await _pumpHandoff(tester, repository);
     await tester.tap(find.text('Substituir'));
     await _settleSheet(tester);
-    await tester.tap(find.text('Usar esta'));
+    await tester.tap(find.text('Galeria').last);
     await tester.pump();
 
     expect(
@@ -598,7 +619,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Café'), findsOneWidget);
+    expect(find.text('Substituir por'), findsOneWidget);
   });
 }
 
@@ -737,6 +758,22 @@ dynamic _payload(String method, String path) {
   }
   if (path == '/itinerary-items/item%201' && method == 'GET') {
     return {'id': 'item 1', 'title': 'Café', 'verifiedDetails': null};
+  }
+  if (path.endsWith('/items') && method == 'POST') {
+    return {
+      'id': 'item-new',
+      'tripDayId': 'day 1',
+      'title': 'Coliseu',
+      'category': 'TOURIST_ATTRACTION',
+      'order': 9,
+      'providerPlaceId': 'ChIJ-coliseu',
+    };
+  }
+  if (path.endsWith('/reorder') && method == 'PATCH') {
+    return {'id': 'item 1', 'order': 3};
+  }
+  if (method == 'DELETE' && path.startsWith('/itinerary-items/')) {
+    return {'id': 'item 1', 'title': 'Café'};
   }
   return {'id': 'item 1', 'title': 'Café', 'duration': 90};
 }

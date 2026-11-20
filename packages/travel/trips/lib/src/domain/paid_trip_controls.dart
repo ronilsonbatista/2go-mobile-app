@@ -20,10 +20,28 @@ class SwapQuota {
     );
   }
 
-  /// "Trocas: X de Y" só quando os dois contadores vieram.
+  /// Legacy: used/allowed ("Trocas: 1 de 4"). Prefer [availableChangesCounter].
   String? get label {
     if (usedSwapsCount == null || allowedSwapsCount == null) return null;
     return 'Trocas: $usedSwapsCount de $allowedSwapsCount';
+  }
+
+  /// Remaining of allowed ("3 de 4") for "Alterações disponíveis".
+  String? get availableChangesCounter {
+    final allowed = allowedSwapsCount;
+    if (allowed == null) return null;
+    final remaining = remainingSwaps ??
+        (usedSwapsCount == null ? null : (allowed - usedSwapsCount!).clamp(0, allowed));
+    if (remaining == null) return null;
+    return '$remaining de $allowed';
+  }
+
+  int get progressFilledSegments {
+    final allowed = allowedSwapsCount ?? 0;
+    if (allowed <= 0) return 0;
+    final remaining = remainingSwaps ??
+        (usedSwapsCount == null ? 0 : (allowed - usedSwapsCount!).clamp(0, allowed));
+    return remaining.clamp(0, allowed);
   }
 
   bool get canSubstitute {
@@ -211,6 +229,7 @@ class ItemAlternative {
   final bool accessible;
   final bool goodForKids;
   final bool goodForRainyDays;
+  final String? priceLevelDisplay;
   final String? imageUrl;
 
   const ItemAlternative({
@@ -232,6 +251,7 @@ class ItemAlternative {
     this.accessible = false,
     this.goodForKids = false,
     this.goodForRainyDays = false,
+    this.priceLevelDisplay,
     this.imageUrl,
   });
 
@@ -255,8 +275,20 @@ class ItemAlternative {
       accessible: json['accessible'] == true,
       goodForKids: json['goodForKids'] == true,
       goodForRainyDays: json['goodForRainyDays'] == true,
-      imageUrl: _readText(json['imageUrl']) ?? _readText(json['image']),
+      priceLevelDisplay: _readText(json['priceLevelDisplay']) ??
+          _dollarsFromCost(_readDouble(json['cost'])),
+      imageUrl: _readText(json['imageUrl']) ??
+          _readText(json['image']) ??
+          _readText(json['photoUri']),
     );
+  }
+
+  static String? _dollarsFromCost(double? cost) {
+    if (cost == null) return null;
+    if (cost <= 0) return 'Grátis';
+    if (cost < 25) return '\$';
+    if (cost < 60) return '\$\$';
+    return '\$\$\$';
   }
 
   /// Corpo de `POST /itinerary-items/:id/substitute`. Nulo sem título.

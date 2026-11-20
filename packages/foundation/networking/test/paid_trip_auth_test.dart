@@ -36,6 +36,8 @@ void main() {
       ('DELETE', '/trips/trip-1/accommodation'),
       ('GET', '/itinerary-items/item-1/alternatives'),
       ('POST', '/itinerary-items/item-1/substitute'),
+      ('DELETE', '/itinerary-items/item-1'),
+      ('POST', '/trip-days/day-1/items'),
       ('GET', '/trip-days/day-1/meal-recommendations'),
       ('PATCH', '/itinerary-items/item-1/pin-meal'),
       ('PATCH', '/itinerary-items/item-1'),
