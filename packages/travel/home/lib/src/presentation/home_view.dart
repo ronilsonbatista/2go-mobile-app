@@ -24,8 +24,8 @@ class HomeView extends StatefulWidget {
   final VoidCallback onAccessItineraries;
   final VoidCallback onProfileTap;
 
-  /// Fired when the user taps a strip destination (after hero sync).
-  /// Used by the app shell to persist into the local Q&A draft.
+  /// Fired when the user taps the hero or a "Destinos em alta" card.
+  /// App shell seeds users-defaults and opens create-itinerary / Onde.
   final ValueChanged<HomeDestination>? onDestinationSelected;
 
   @override
@@ -121,6 +121,14 @@ class _HomeViewState extends State<HomeView> {
                                     context.read<HomeCubit>().setHeroIndex(
                                       index,
                                     ),
+                                onDestinationTap: (destination) {
+                                  context.read<HomeCubit>().selectDestination(
+                                    destination.id,
+                                  );
+                                  widget.onDestinationSelected?.call(
+                                    destination,
+                                  );
+                                },
                               ),
                             ),
                             Positioned(

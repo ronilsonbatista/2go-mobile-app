@@ -24,6 +24,7 @@ Future<void> _pumpHome(
   required Size size,
   required HomeCubit homeCubit,
   required SessionCubit sessionCubit,
+  ValueChanged<HomeDestination>? onDestinationSelected,
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() async {
@@ -44,6 +45,7 @@ Future<void> _pumpHome(
             onCreateItinerary: () {},
             onAccessItineraries: () {},
             onProfileTap: () {},
+            onDestinationSelected: onDestinationSelected,
           ),
         ),
       ),
@@ -148,5 +150,66 @@ void main() {
     expect(homeCubit.state.profile.hasPhoto, isTrue);
     expect(find.text('AN'), findsNothing);
     expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
+  });
+
+  testWidgets('strip destination tap notifies selection for Onde prefill', (
+    tester,
+  ) async {
+    HomeDestination? selected;
+    final homeCubit = HomeCubit(
+      repository: LocalHomeContentRepository(forceInitialsOnly: true),
+      autoAdvance: false,
+    );
+    addTearDown(homeCubit.close);
+    await homeCubit.load(isAuthenticated: false);
+
+    await _pumpHome(
+      tester,
+      size: const Size(390, 844),
+      homeCubit: homeCubit,
+      sessionCubit: sessionCubit,
+      onDestinationSelected: (destination) => selected = destination,
+    );
+
+    await tester.ensureVisible(find.text('Capadócia').last);
+    await tester.tap(find.text('Capadócia').last);
+    await tester.pump();
+
+    expect(selected, isNotNull);
+    expect(selected!.id, 'capadocia');
+    expect(selected!.name, 'Capadócia');
+    expect(homeCubit.state.heroIndex, 0);
+  });
+
+  testWidgets('hero destination tap notifies selection for Onde prefill', (
+    tester,
+  ) async {
+    HomeDestination? selected;
+    final homeCubit = HomeCubit(
+      repository: LocalHomeContentRepository(forceInitialsOnly: true),
+      autoAdvance: false,
+    );
+    addTearDown(homeCubit.close);
+    await homeCubit.load(isAuthenticated: false);
+    homeCubit.selectDestination('rio-de-janeiro');
+
+    await _pumpHome(
+      tester,
+      size: const Size(390, 844),
+      homeCubit: homeCubit,
+      sessionCubit: sessionCubit,
+      onDestinationSelected: (destination) => selected = destination,
+    );
+
+    // Tap upper half of the hero PageView (above CTA sheet overlap).
+    final hero = find.byType(PageView);
+    expect(hero, findsOneWidget);
+    await tester.tapAt(tester.getCenter(hero) - const Offset(0, 80));
+    await tester.pump();
+
+    expect(selected, isNotNull);
+    expect(selected!.id, 'rio-de-janeiro');
+    expect(selected!.name, 'Rio de Janeiro');
+    expect(selected!.country, 'Brasil');
   });
 }

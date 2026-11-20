@@ -10,12 +10,16 @@ class HomeHeroCarousel extends StatefulWidget {
     required this.destinations,
     required this.index,
     required this.onIndexChanged,
+    this.onDestinationTap,
     super.key,
   });
 
   final List<HomeDestination> destinations;
   final int index;
   final ValueChanged<int> onIndexChanged;
+
+  /// Opens create-itinerary / Onde with the visible hero destination.
+  final ValueChanged<HomeDestination>? onDestinationTap;
 
   @override
   State<HomeHeroCarousel> createState() => _HomeHeroCarouselState();
@@ -69,45 +73,60 @@ class _HomeHeroCarouselState extends State<HomeHeroCarousel> {
           onPageChanged: widget.onIndexChanged,
           itemBuilder: (context, index) {
             final destination = widget.destinations[index];
-            return HomeDestinationImage(
-              imageUrl: destination.resolvedHeroUrl,
-              assetPath: destination.heroAssetPath,
+            return Semantics(
+              button: widget.onDestinationTap != null,
+              label: destination.caption,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: widget.onDestinationTap == null
+                    ? null
+                    : () => widget.onDestinationTap!(destination),
+                child: HomeDestinationImage(
+                  imageUrl: destination.resolvedHeroUrl,
+                  assetPath: destination.heroAssetPath,
+                ),
+              ),
             );
           },
         ),
         // Soft bottom fade so white sheet transition reads cleanly.
+        // Ignore pointer so taps reach the destination GestureDetector below.
         const Align(
           alignment: Alignment.bottomCenter,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0x00000000),
-                  Color(0x33000000),
-                ],
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x00000000),
+                    Color(0x33000000),
+                  ],
+                ),
               ),
+              child: SizedBox(height: 96, width: double.infinity),
             ),
-            child: SizedBox(height: 96, width: double.infinity),
           ),
         ),
         Positioned(
           left: TwoGoSpacing.lg,
           bottom: TwoGoSpacing.xl + 8,
           right: TwoGoSpacing.xxl,
-          child: Text(
-            current.caption,
-            style: TwoGoTypography.titleMedium.copyWith(
-              color: TwoGoColors.neutral0,
-              fontWeight: FontWeight.w500,
-              shadows: const [
-                Shadow(
-                  color: Color(0x66000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 1),
-                ),
-              ],
+          child: IgnorePointer(
+            child: Text(
+              current.caption,
+              style: TwoGoTypography.titleMedium.copyWith(
+                color: TwoGoColors.neutral0,
+                fontWeight: FontWeight.w500,
+                shadows: const [
+                  Shadow(
+                    color: Color(0x66000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
