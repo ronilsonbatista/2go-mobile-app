@@ -91,11 +91,12 @@ class _PlanningPreviewCountdownState extends State<PlanningPreviewCountdown> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
         horizontal: TwoGoSpacing.md,
-        vertical: TwoGoSpacing.xs,
+        vertical: TwoGoSpacing.sm,
       ),
       decoration: BoxDecoration(
         color: TwoGoColors.neutral100,
-        borderRadius: BorderRadius.circular(TwoGoRadius.medium),
+        // Design countdown card ~12–16 radius (DS medium=8 was too sharp).
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
@@ -107,10 +108,11 @@ class _PlanningPreviewCountdownState extends State<PlanningPreviewCountdown> {
               style: TwoGoTypography.bodyMedium.copyWith(
                 color: TwoGoColors.contentPrimary,
                 fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
           ),
-          const SizedBox(width: TwoGoSpacing.xs),
+          const SizedBox(width: TwoGoSpacing.sm),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
