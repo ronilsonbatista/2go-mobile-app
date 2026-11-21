@@ -61,7 +61,17 @@ class HomePage extends StatelessWidget {
       value: homeCubit,
       child: HomeView(
         onCreateItinerary: () => _createItinerary(context),
-        onAccessItineraries: () => context.go('/app/trips'),
+        onAccessItineraries: () {
+          // HandoffTripsView needs tripId — bare /app/trips shows empty state.
+          final tripId = homeCubit.state.crm.trip?.id;
+          if (tripId != null && tripId.isNotEmpty) {
+            context.go(
+              '/app/trips?tripId=${Uri.encodeComponent(tripId)}',
+            );
+          } else {
+            context.go('/app/trips');
+          }
+        },
         onProfileTap: () {
           final s = context.read<SessionCubit>().state;
           if (s.isAuthenticated) {

@@ -10,6 +10,11 @@ class SecureTokenStorageImpl implements TokenStorage {
 
   final FlutterSecureStorage _storage;
 
+  /// In-process fallback when Keychain rejects writes (Simulator -34018 /
+  /// missing keychain-access-groups under unsigned Debug builds).
+  /// Keeps Bearer auth usable for the current session even if Keychain is down.
+  AuthTokens? _memoryFallback;
+
   SecureTokenStorageImpl({FlutterSecureStorage? storage})
     : _storage =
           storage ??
@@ -23,8 +28,10 @@ class SecureTokenStorageImpl implements TokenStorage {
     try {
       await _storage.write(key: _accessTokenKey, value: tokens.accessToken);
       await _storage.write(key: _refreshTokenKey, value: tokens.refreshToken);
+      _memoryFallback = null;
     } on PlatformException {
-      // Simulator builds may lack keychain entitlements during local codesign workarounds.
+      // errSecMissingEntitlement (-34018) on unsigned Simulator builds.
+      _memoryFallback = tokens;
     }
   }
 
@@ -34,20 +41,28 @@ class SecureTokenStorageImpl implements TokenStorage {
       final access = await _storage.read(key: _accessTokenKey);
       final refresh = await _storage.read(key: _refreshTokenKey);
 
-      if (access == null ||
-          access.isEmpty ||
-          refresh == null ||
-          refresh.isEmpty) {
-        return null;
+      if (access != null &&
+          access.isNotEmpty &&
+          refresh != null &&
+          refresh.isNotEmpty) {
+        return AuthTokens(accessToken: access, refreshToken: refresh);
       }
-      return AuthTokens(accessToken: access, refreshToken: refresh);
     } on PlatformException {
+      // Fall through to in-memory session cache.
+    }
+
+    final fallback = _memoryFallback;
+    if (fallback == null ||
+        fallback.accessToken.isEmpty ||
+        fallback.refreshToken.isEmpty) {
       return null;
     }
+    return fallback;
   }
 
   @override
   Future<void> clearTokens() async {
+    _memoryFallback = null;
     try {
       await _storage.delete(key: _accessTokenKey);
       await _storage.delete(key: _refreshTokenKey);
