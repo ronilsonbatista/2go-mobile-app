@@ -526,6 +526,8 @@ class AppRouter {
                         : int.tryParse(dayRaw.trim());
                     final inviteAccepted =
                         state.uri.queryParameters['inviteAccepted'] == '1';
+                    final interactions =
+                        PreviewDay1Interactions(dependencies);
                     return TripsPage(
                       tripsRepository: dependencies.tripsRepository,
                       tripId: tripId,
@@ -534,8 +536,7 @@ class AppRouter {
                       getPlaceDetails: dependencies.getPlaceDetailsUseCase,
                       searchPlaces: dependencies.searchPlacesUseCase,
                       showInviteAcceptedToast: inviteAccepted,
-                      loadCoverCatalog:
-                          PreviewDay1Interactions.loadCoverCatalog,
+                      loadCoverCatalog: interactions.loadCoverCatalog,
                       onShare: (trip) {
                         final q = <String, String>{
                           'name': trip.destination.isNotEmpty
