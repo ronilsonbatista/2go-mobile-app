@@ -183,28 +183,52 @@ void main() {
     expect(repository.getTripByIdCalls, 0);
   });
 
-  testWidgets('handoff with an id opens that trip', (tester) async {
+  testWidgets('handoff with an id opens that trip in preview layout', (
+    tester,
+  ) async {
     final repository = _RecordingTripsRepository(
-      trip: const TripEntity(
+      trip: TripEntity(
         id: 'trip-9',
         userId: 'user-1',
         title: 'Porto real',
         destination: 'Porto',
-        days: [],
+        premiumUnlockedAt: DateTime.utc(2026, 1, 1),
+        days: const [
+          TripDayEntity(
+            id: 'day-1',
+            tripId: 'trip-9',
+            dayNumber: 1,
+            date: null,
+            title: 'Chegada',
+          ),
+          TripDayEntity(
+            id: 'day-2',
+            tripId: 'trip-9',
+            dayNumber: 2,
+            title: 'Dia 2',
+          ),
+        ],
       ),
     );
     await tester.pumpWidget(
       MaterialApp(
-        home: HandoffTripsView(tripsRepository: repository, tripId: 'trip-9'),
+        home: HandoffTripsView(
+          tripsRepository: repository,
+          tripId: 'trip-9',
+          initialDayNumber: 2,
+        ),
       ),
     );
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Porto real'), findsOneWidget);
+    expect(find.text('Editar roteiro'), findsOneWidget);
+    expect(find.text('Porto'), findsWidgets);
+    expect(find.text('Salvar'), findsOneWidget);
+    expect(find.text('Viagens'), findsNothing);
+    expect(find.text(TripItineraryView.paywallMessage), findsNothing);
     expect(repository.getMyTripsCalls, 0);
     expect(repository.getTripByIdCalls, 1);
-    expect(find.text(TripItineraryView.paywallMessage), findsNothing);
   });
 }
 

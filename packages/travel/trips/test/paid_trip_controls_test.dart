@@ -234,7 +234,9 @@ void main() {
     expect(find.text('Editar hospedagem'), findsNothing);
   });
 
-  testWidgets('paywalled day does not offer phase 3 actions', (tester) async {
+  testWidgets('empty day 2 stays unlocked in paid preview layout', (
+    tester,
+  ) async {
     final repository = _ScriptedTripsRepository([
       _trip(
         days: [
@@ -261,8 +263,12 @@ void main() {
     ]);
     await _pumpHandoff(tester, repository);
 
-    expect(find.text(TripItineraryView.paywallMessage), findsOneWidget);
+    expect(find.text(TripItineraryView.paywallMessage), findsNothing);
     expect(find.text('Ver recomendações'), findsOneWidget);
+    expect(find.text('Dia 2'), findsOneWidget);
+    await tester.tap(find.text('Dia 2'));
+    await tester.pump();
+    expect(find.text(TripItineraryView.paywallMessage), findsNothing);
   });
 
   testWidgets('accommodation form resends loaded fields and reloads the trip', (
@@ -287,7 +293,7 @@ void main() {
     );
     await _pumpHandoff(tester, repository);
 
-    await tester.tap(find.text('Cadastrar hospedagem'));
+    await tester.tap(find.text('Adicionar hospedagem'));
     await _settleSheet(tester);
     expect(find.text('Carregando'), findsNothing);
     await tester.enterText(
@@ -323,7 +329,7 @@ void main() {
       ],
     );
     await _pumpHandoff(tester, repository);
-    await tester.tap(find.text('Substituir'));
+    await _openItemAction(tester, 'Substituir');
     await _settleSheet(tester);
 
     expect(find.text('Substituir por'), findsOneWidget);
@@ -361,7 +367,7 @@ void main() {
       ],
     );
     await _pumpHandoff(tester, repository);
-    await tester.tap(find.text('Substituir'));
+    await _openItemAction(tester, 'Substituir');
     await _settleSheet(tester);
     expect(find.text('Substituir por'), findsOneWidget);
     expect(find.text('3 de 4'), findsOneWidget);
@@ -400,7 +406,7 @@ void main() {
     await _pumpHandoff(tester, repository);
     expect(find.text('10:00'), findsOneWidget);
 
-    await tester.tap(find.text('Duração').first);
+    await _openItemAction(tester, 'Duração');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.enterText(find.byKey(const Key('item-duration')), '120');
@@ -434,7 +440,7 @@ void main() {
       ],
     );
     await _pumpHandoff(tester, repository);
-    await tester.tap(find.text('Detalhes'));
+    await _openItemAction(tester, 'Detalhes');
     await _settleSheet(tester);
 
     expect(find.text('Mostrar detalhes'), findsOneWidget);
@@ -562,7 +568,7 @@ void main() {
       ],
     );
     await _pumpHandoff(tester, repository);
-    await tester.tap(find.text('Substituir'));
+    await _openItemAction(tester, 'Substituir');
     await _settleSheet(tester);
     await tester.tap(find.byKey(const Key('alternatives-open-filter')));
     await _settleSheet(tester);
@@ -608,7 +614,7 @@ void main() {
       ),
     );
     await _pumpHandoff(tester, repository);
-    await tester.tap(find.text('Substituir'));
+    await _openItemAction(tester, 'Substituir');
     await _settleSheet(tester);
     await tester.tap(find.text('Galeria').last);
     await tester.pump();
@@ -633,6 +639,14 @@ Future<void> _pumpHandoff(
     ),
   );
   await tester.pump();
+  await tester.pump();
+}
+
+/// Preview cards expose actions via ⋯ menu (not dense text buttons).
+Future<void> _openItemAction(WidgetTester tester, String action) async {
+  await tester.tap(find.byIcon(Icons.more_vert_rounded).first);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(action).last);
   await tester.pump();
 }
 

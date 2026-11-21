@@ -520,15 +520,22 @@ class AppRouter {
                   path: '/app/trips',
                   builder: (context, state) {
                     final tripId = state.uri.queryParameters['tripId'];
+                    final dayRaw = state.uri.queryParameters['day'];
+                    final initialDay = dayRaw == null
+                        ? null
+                        : int.tryParse(dayRaw.trim());
                     final inviteAccepted =
                         state.uri.queryParameters['inviteAccepted'] == '1';
                     return TripsPage(
                       tripsRepository: dependencies.tripsRepository,
                       tripId: tripId,
+                      initialDayNumber: initialDay,
                       searchHotels: dependencies.searchHotelsUseCase,
                       getPlaceDetails: dependencies.getPlaceDetailsUseCase,
                       searchPlaces: dependencies.searchPlacesUseCase,
                       showInviteAcceptedToast: inviteAccepted,
+                      loadCoverCatalog:
+                          PreviewDay1Interactions.loadCoverCatalog,
                       onShare: (trip) {
                         final q = <String, String>{
                           'name': trip.destination.isNotEmpty

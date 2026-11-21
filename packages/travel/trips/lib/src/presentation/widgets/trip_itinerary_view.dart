@@ -182,7 +182,8 @@ class TripItineraryView extends StatelessWidget {
   }
 
   Widget _buildDay(BuildContext context, TripDayEntity day) {
-    final locked = day.dayNumber > 1 && day.items.isEmpty;
+    // Owned paid trips unlock every day; emptiness alone is not a paywall.
+    final locked = !trip.isPremium && day.dayNumber > 1 && day.items.isEmpty;
     final items = [...day.items]..sort((a, b) => a.order.compareTo(b.order));
     final dateLabel = _dateLabel(day.date);
 
