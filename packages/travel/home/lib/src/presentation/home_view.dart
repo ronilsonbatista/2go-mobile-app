@@ -5,7 +5,9 @@ import 'package:twogo_session/twogo_session.dart';
 
 import '../application/home_cubit.dart';
 import '../domain/models/home_destination.dart';
+import '../domain/models/home_trip_day.dart';
 import '../domain/models/home_trip_summary.dart';
+import '../infrastructure/local_home_content_repository.dart';
 import 'widgets/home_crm_body.dart';
 import 'widgets/home_cta_sheet.dart';
 import 'widgets/home_destinations_strip.dart';
@@ -21,6 +23,9 @@ class HomeView extends StatefulWidget {
     required this.onProfileTap,
     this.onDestinationSelected,
     this.onTripSelected,
+    this.onDaySelected,
+    this.inspiredDestinations,
+    this.expiredDestinations = const [],
     this.showCrmAccessLink = false,
     this.now,
     super.key,
@@ -36,6 +41,16 @@ class HomeView extends StatefulWidget {
 
   /// Opens owned trip detail (próxima viagem / expired card).
   final ValueChanged<HomeTripSummary>? onTripSelected;
+
+  /// Home day chips → paid itinerary at that day index (preview layout).
+  final ValueChanged<HomeTripDay>? onDaySelected;
+
+  /// Optional inspired strip; when null, CRM picks Tokyo (or first) from
+  /// destinations / local catalog for Maurício-style demos.
+  final List<HomeDestination>? inspiredDestinations;
+
+  /// Expired promo cards for CRM Home. Empty → empty state (no SP/Paris stubs).
+  final List<HomeDestination> expiredDestinations;
 
   /// When true, CRM next-trip shows "Acessar roteiros" (Home-2).
   final bool showCrmAccessLink;
@@ -113,6 +128,9 @@ class _HomeViewState extends State<HomeView> {
                     profile: state.profile,
                     crm: state.crm,
                     destinations: state.destinations,
+                    inspiredDestinations: widget.inspiredDestinations ??
+                        _defaultInspired(state.destinations),
+                    expiredDestinations: widget.expiredDestinations,
                     onCreateItinerary: widget.onCreateItinerary,
                     onAccessItineraries: widget.onAccessItineraries,
                     onProfileTap: widget.onProfileTap,
@@ -125,6 +143,7 @@ class _HomeViewState extends State<HomeView> {
                       widget.onDestinationSelected?.call(destination);
                     },
                     onTripTap: widget.onTripSelected,
+                    onDayTap: widget.onDaySelected,
                   );
                 }
 
@@ -135,6 +154,33 @@ class _HomeViewState extends State<HomeView> {
         },
       ),
     );
+  }
+
+  /// Prefer Tokyo/Tóquio from API catalog; else local stub; else first dest.
+  static List<HomeDestination> _defaultInspired(
+    List<HomeDestination> destinations,
+  ) {
+    HomeDestination? matchIn(List<HomeDestination> list) {
+      for (final d in list) {
+        final key = d.name.toLowerCase();
+        final id = d.id.toLowerCase();
+        if (key.contains('tóquio') ||
+            key.contains('toquio') ||
+            key.contains('tokyo') ||
+            id.contains('toquio') ||
+            id.contains('tokyo')) {
+          return d;
+        }
+      }
+      return null;
+    }
+
+    final fromApi = matchIn(destinations);
+    if (fromApi != null) return [fromApi];
+    final fromLocal = matchIn(LocalHomeContentRepository.catalog);
+    if (fromLocal != null) return [fromLocal];
+    if (destinations.isNotEmpty) return [destinations.first];
+    return const [];
   }
 
   Widget _buildDiscovery(

@@ -204,12 +204,17 @@ class AppDependencies {
     );
   }
 
+  HomeCubit? _homeCubit;
+
+  /// Shared across AppShell tabs so profile edits update Home greeting/avatar.
   HomeCubit createHomeCubit({bool autoAdvance = true}) {
-    return HomeCubit(
+    return _homeCubit ??= HomeCubit(
       repository: homeContentRepository,
       autoAdvance: autoAdvance,
     );
   }
+
+  HomeCubit get homeCubit => createHomeCubit();
 
   PlanningWizardBloc createPlanningWizardBloc() {
     return PlanningWizardBloc(

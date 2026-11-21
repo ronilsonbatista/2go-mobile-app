@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:twogo_design_system/design_system.dart';
 
+import '../../domain/account_profile.dart';
 import '../../profile_tokens.dart';
 import '../account_profile_cubit.dart';
 import '../widgets/profile_back_button.dart';
@@ -10,9 +11,16 @@ import '../widgets/profile_back_button.dart';
 /// Dados pessoais — layout from design. Prefills name/email from
 /// `GET /users/me`. Salvar applies local state only (Core has no PATCH).
 class PersonalDataPage extends StatefulWidget {
-  const PersonalDataPage({super.key, this.onBack});
+  const PersonalDataPage({
+    super.key,
+    this.onBack,
+    this.onSaved,
+  });
 
   final VoidCallback? onBack;
+
+  /// Fired after local save so Home can refresh greeting/avatar.
+  final ValueChanged<AccountProfile>? onSaved;
 
   @override
   State<PersonalDataPage> createState() => _PersonalDataPageState();
@@ -51,11 +59,13 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
       return;
     }
     setState(() => _nameError = null);
-    context.read<AccountProfileCubit>().applyPersonalDataLocally(
-          displayName: name,
-          phone: _phone.text,
-          cpf: _cpf.text,
-        );
+    final cubit = context.read<AccountProfileCubit>();
+    cubit.applyPersonalDataLocally(
+      displayName: name,
+      phone: _phone.text,
+      cpf: _cpf.text,
+    );
+    widget.onSaved?.call(cubit.state.profile);
     TwoGoSnackbar.show(
       context,
       message: 'Dados salvos neste aparelho.',

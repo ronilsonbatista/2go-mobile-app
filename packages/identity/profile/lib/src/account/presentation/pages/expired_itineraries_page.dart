@@ -6,11 +6,13 @@ import '../../profile_tokens.dart';
 import '../widgets/profile_back_button.dart';
 
 /// Roteiros expirados — design layout. No Core list endpoint yet.
+///
+/// Default [items] is empty — never show São Paulo/Paris design stubs.
 class ExpiredItinerariesPage extends StatelessWidget {
   const ExpiredItinerariesPage({
     super.key,
     this.onBack,
-    this.items = ExpiredItinerary.designDemos,
+    this.items = const [],
   });
 
   final VoidCallback? onBack;
@@ -18,71 +20,86 @@ class ExpiredItinerariesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasItems = items.isNotEmpty;
+
     return Scaffold(
       backgroundColor: TwoGoColors.backgroundPrimary,
       appBar: profileAppBar(title: 'Roteiros expirados', onBack: onBack),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            ProfileTokens.pageGutter,
-            TwoGoSpacing.md,
-            ProfileTokens.pageGutter,
-            TwoGoSpacing.lg,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Vai viajar novamente para esses destinos?',
-                style: TwoGoTypography.headlineSmall.copyWith(
-                  color: TwoGoColors.contentPrimary,
-                  fontWeight: FontWeight.w700,
+        child: hasItems
+            ? SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  ProfileTokens.pageGutter,
+                  TwoGoSpacing.md,
+                  ProfileTokens.pageGutter,
+                  TwoGoSpacing.lg,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Vai viajar novamente para esses destinos?',
+                      style: TwoGoTypography.headlineSmall.copyWith(
+                        color: TwoGoColors.contentPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: TwoGoSpacing.xs),
+                    Text(
+                      'Aproveite a promoção e reative o roteiro com uma nova data.',
+                      style: TwoGoTypography.bodyMedium.copyWith(
+                        color: TwoGoColors.contentSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: TwoGoSpacing.lg),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        const gap = ProfileTokens.cardGap;
+                        final cardWidth = (constraints.maxWidth - gap) / 2;
+                        return Wrap(
+                          spacing: gap,
+                          runSpacing: gap,
+                          children: [
+                            for (final item in items)
+                              SizedBox(
+                                width: cardWidth,
+                                child: _ExpiredCard(item: item),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: TwoGoSpacing.xxl),
+                    Text(
+                      'Sobre desconto:',
+                      style: TwoGoTypography.titleMedium.copyWith(
+                        color: ProfileTokens.accentOrange,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: TwoGoSpacing.xs),
+                    Text(
+                      'Desconto é valido apenas para novas datas. Outras alterações '
+                      'criarão um novo roteiro, retornando ao valor original.',
+                      style: TwoGoTypography.bodyMedium.copyWith(
+                        color: TwoGoColors.contentSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: ProfileTokens.pageGutter,
+                  ),
+                  child: Text(
+                    'Não temos roteiros expirados por aqui.',
+                    textAlign: TextAlign.center,
+                    style: TwoGoTypography.bodyLarge,
+                  ),
                 ),
               ),
-              const SizedBox(height: TwoGoSpacing.xs),
-              Text(
-                'Aproveite a promoção e reative o roteiro com uma nova data.',
-                style: TwoGoTypography.bodyMedium.copyWith(
-                  color: TwoGoColors.contentSecondary,
-                ),
-              ),
-              const SizedBox(height: TwoGoSpacing.lg),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  const gap = ProfileTokens.cardGap;
-                  final cardWidth = (constraints.maxWidth - gap) / 2;
-                  return Wrap(
-                    spacing: gap,
-                    runSpacing: gap,
-                    children: [
-                      for (final item in items)
-                        SizedBox(
-                          width: cardWidth,
-                          child: _ExpiredCard(item: item),
-                        ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: TwoGoSpacing.xxl),
-              Text(
-                'Sobre desconto:',
-                style: TwoGoTypography.titleMedium.copyWith(
-                  color: ProfileTokens.accentOrange,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: TwoGoSpacing.xs),
-              Text(
-                'Desconto é valido apenas para novas datas. Outras alterações '
-                'criarão um novo roteiro, retornando ao valor original.',
-                style: TwoGoTypography.bodyMedium.copyWith(
-                  color: TwoGoColors.contentSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

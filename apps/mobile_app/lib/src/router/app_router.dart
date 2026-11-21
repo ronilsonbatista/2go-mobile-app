@@ -506,7 +506,7 @@ class AppRouter {
                 GoRoute(
                   path: '/app/home',
                   builder: (context, state) => HomePage(
-                    homeCubit: dependencies.createHomeCubit(),
+                    homeCubit: dependencies.homeCubit,
                     seedHomeDestinationDraft:
                         dependencies.seedHomeDestinationDraftUseCase,
                     tripShareApiClient: dependencies.tripShareApiClient,
@@ -581,6 +581,12 @@ class AppRouter {
                           path: 'personal-data',
                           builder: (context, state) => PersonalDataPage(
                             onBack: () => context.pop(),
+                            onSaved: (profile) {
+                              dependencies.homeCubit.applyProfileLocally(
+                                displayName: profile.displayName,
+                                photoUrl: profile.photoUrl,
+                              );
+                            },
                           ),
                         ),
                         GoRoute(
@@ -605,7 +611,23 @@ class AppRouter {
                             return ChangePhotoPage(
                               imagePath: path,
                               onBack: () => context.pop(),
-                              onSaved: () => context.pop(),
+                              onSaved: () {
+                                final profile = context
+                                    .read<AccountProfileCubit>()
+                                    .state
+                                    .profile;
+                                dependencies.homeCubit.applyProfileLocally(
+                                  displayName: profile.displayName,
+                                  photoUrl: profile.photoUrl,
+                                );
+                                // Avatar hit Core — also refresh /users/me.
+                                final session = sessionCubit.state;
+                                dependencies.homeCubit.refreshProfile(
+                                  isAuthenticated: session.isAuthenticated,
+                                  userId: session.userId,
+                                );
+                                context.pop();
+                              },
                             );
                           },
                         ),
