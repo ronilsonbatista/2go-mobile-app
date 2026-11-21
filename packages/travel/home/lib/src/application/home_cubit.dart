@@ -156,6 +156,54 @@ class HomeCubit extends Cubit<HomeState> {
     }
   }
 
+  /// Patches Home greeting/avatar after Dados pessoais / avatar save.
+  ///
+  /// Core has no PATCH `/users/me` for name — local AccountProfile is source
+  /// of truth until the next successful [refreshProfile] from GET `/users/me`
+  /// (avatar upload does update Core `photoUrl`).
+  void applyProfileLocally({
+    String? displayName,
+    String? photoUrl,
+    bool clearPhotoUrl = false,
+  }) {
+    if (!state.profile.isAuthenticated) return;
+    final nextName = displayName?.trim();
+    emit(
+      state.copyWith(
+        profile: HomeProfile.authenticated(
+          displayName: (nextName != null && nextName.isNotEmpty)
+              ? nextName
+              : state.profile.displayName,
+          photoUrl: clearPhotoUrl
+              ? null
+              : (photoUrl ?? state.profile.photoUrl),
+          photoAssetPath: state.profile.photoAssetPath,
+        ),
+      ),
+    );
+  }
+
+  /// Re-fetches `GET /users/me` into Home (keeps destinations/CRM).
+  Future<void> refreshProfile({
+    required bool isAuthenticated,
+    String? userId,
+  }) async {
+    if (!isAuthenticated) {
+      emit(state.copyWith(profile: HomeProfile.guest()));
+      return;
+    }
+    try {
+      final profile = await _repository.resolveProfile(
+        isAuthenticated: true,
+        userId: userId,
+      );
+      if (isClosed) return;
+      emit(state.copyWith(profile: profile));
+    } catch (_) {
+      // Soft-fail — keep existing greeting/avatar.
+    }
+  }
+
   void _restartAutoAdvance() {
     _timer?.cancel();
     if (!autoAdvance || state.destinations.length < 2) return;

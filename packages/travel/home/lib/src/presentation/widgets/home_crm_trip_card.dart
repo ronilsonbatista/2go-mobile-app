@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 
+import '../../domain/models/home_crm_cover.dart';
+import '../../domain/models/home_destination.dart';
 import '../../domain/models/home_trip_summary.dart';
 import 'home_crm_countdown.dart';
 import 'home_destination_image.dart';
@@ -10,6 +12,7 @@ class HomeCrmTripCard extends StatelessWidget {
   const HomeCrmTripCard({
     super.key,
     required this.trip,
+    this.destinations = const [],
     this.onTap,
     this.showCountdown = true,
     this.now,
@@ -18,6 +21,9 @@ class HomeCrmTripCard extends StatelessWidget {
   });
 
   final HomeTripSummary trip;
+
+  /// Home catalog used as Day-1-style cover fallback when Core URL is empty.
+  final List<HomeDestination> destinations;
   final VoidCallback? onTap;
   final bool showCountdown;
   final DateTime Function()? now;
@@ -29,6 +35,10 @@ class HomeCrmTripCard extends StatelessWidget {
     final lines = trip.stackedDestinationLines;
     final datePrimary = trip.dateRangePrimary;
     final dateSecondary = trip.dateRangeSecondary;
+    final cover = resolveHomeCrmCover(
+      trip: trip,
+      destinations: destinations,
+    );
 
     return SizedBox(
       width: width,
@@ -43,7 +53,8 @@ class HomeCrmTripCard extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               HomeDestinationImage(
-                imageUrl: trip.coverImageUrl,
+                imageUrl: cover.networkUrl,
+                assetPath: cover.assetPath,
                 fit: BoxFit.cover,
               ),
               const DecoratedBox(

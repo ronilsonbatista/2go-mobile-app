@@ -86,6 +86,15 @@ class HomePage extends StatelessWidget {
         onTripSelected: (trip) {
           context.go('/app/trips?tripId=${Uri.encodeComponent(trip.id)}');
         },
+        onDaySelected: (day) {
+          final tripId = homeCubit.state.crm.trip?.id;
+          if (tripId == null || tripId.isEmpty) return;
+          final dayNumber = day.dayNumber;
+          context.go(
+            '/app/trips?tripId=${Uri.encodeComponent(tripId)}'
+            '&day=$dayNumber',
+          );
+        },
       ),
     );
 

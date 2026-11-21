@@ -1,6 +1,7 @@
 library;
 
 export 'src/application/home_cubit.dart';
+export 'src/domain/models/home_crm_cover.dart';
 export 'src/domain/models/home_crm_snapshot.dart';
 export 'src/domain/models/home_destination.dart';
 export 'src/domain/models/home_profile.dart';
