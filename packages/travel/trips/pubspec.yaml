@@ -16,6 +16,7 @@ dependencies:
   twogo_design_system: any
   twogo_networking: any
   twogo_places: any
+  twogo_planning: any
 
 dev_dependencies:
   flutter_test:

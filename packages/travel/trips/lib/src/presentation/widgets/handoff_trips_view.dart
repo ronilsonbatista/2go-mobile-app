@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:twogo_design_system/design_system.dart';
 import 'package:twogo_places/places.dart';
+import 'package:twogo_planning/twogo_planning.dart';
 
 import '../../domain/entities/trip_entity.dart';
 import '../../domain/repositories/trips_repository.dart';
 import '../bloc/trips_cubit.dart';
+import 'paid_trip_preview_view.dart';
 import 'trip_control_sheets.dart';
-import 'trip_itinerary_view.dart';
 
 /// Aba de viagens depois do pagamento.
 ///
@@ -14,23 +15,29 @@ import 'trip_itinerary_view.dart';
 class HandoffTripsView extends StatefulWidget {
   final TripsRepository tripsRepository;
   final String? tripId;
+  final int? initialDayNumber;
   final ValueChanged<Uri>? onOpenUrl;
   final SearchHotelsUseCase? searchHotels;
   final GetPlaceDetailsUseCase? getPlaceDetails;
   final SearchPlacesUseCase? searchPlaces;
   final ValueChanged<TripEntity>? onShare;
+  final VoidCallback? onClose;
   final bool showInviteAcceptedToast;
+  final Future<List<PreviewCoverCatalogEntry>> Function()? loadCoverCatalog;
 
   const HandoffTripsView({
     super.key,
     required this.tripsRepository,
     this.tripId,
+    this.initialDayNumber,
     this.onOpenUrl,
     this.searchHotels,
     this.getPlaceDetails,
     this.searchPlaces,
     this.onShare,
+    this.onClose,
     this.showInviteAcceptedToast = false,
+    this.loadCoverCatalog,
   });
 
   @override
@@ -99,9 +106,12 @@ class _HandoffTripsViewState extends State<HandoffTripsView> {
             }
             final trip = state.trips.first;
             _maybeShowInviteToast();
-            return TripItineraryView(
+            return PaidTripPreviewView(
               trip: trip,
+              initialDayNumber: widget.initialDayNumber,
               onOpenUrl: widget.onOpenUrl,
+              onClose: widget.onClose,
+              loadCoverCatalog: widget.loadCoverCatalog,
               onShare: widget.onShare == null
                   ? null
                   : () => widget.onShare!(trip),
