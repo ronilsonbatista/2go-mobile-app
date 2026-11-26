@@ -101,6 +101,9 @@ class MockPaymentsDataSource implements PaymentsRemoteDataSource {
         discountAmount: 0.0,
         finalAmount: kCheckoutStubOriginalAmount,
         currency: kCheckoutStubCurrency,
+        amount: kCheckoutStubOriginalAmount,
+        days: 7,
+        tier: 'UP_TO_7',
       ),
       supportedPaymentMethods: const ['PIX', 'CARD'],
       paymentMethodAvailability: _availability,
@@ -135,6 +138,9 @@ class MockPaymentsDataSource implements PaymentsRemoteDataSource {
         discountAmount: discount,
         finalAmount: finalPrice,
         currency: kCheckoutStubCurrency,
+        amount: kCheckoutStubOriginalAmount,
+        days: 7,
+        tier: 'UP_TO_7',
       ),
       coupon: validation.coupon == null
           ? null
@@ -252,6 +258,9 @@ class MockPaymentsDataSource implements PaymentsRemoteDataSource {
         discountAmount: 0.0,
         finalAmount: kCheckoutStubOriginalAmount,
         currency: kCheckoutStubCurrency,
+        amount: kCheckoutStubOriginalAmount,
+        days: 7,
+        tier: 'UP_TO_7',
       ),
     );
   }

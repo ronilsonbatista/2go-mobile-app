@@ -28,7 +28,10 @@ void main() {
 
       expect(path, '/trips/trip-1/checkout-summary');
       expect(summary.tripId, 'trip-1');
-      expect(summary.pricing.finalAmount, 19.99);
+      expect(summary.pricing.finalAmount, 99.9);
+      expect(summary.pricing.amount, 99.9);
+      expect(summary.pricing.days, 7);
+      expect(summary.pricing.tier, 'UP_TO_7');
       expect(summary.supportedPaymentMethods, ['PIX', 'CARD']);
     });
 
@@ -166,13 +169,16 @@ void main() {
                   'tripId': 'trip-1',
                   'status': 'READY',
                   'publicKey': 'pk_test',
-                  'amount': 19.99,
+                  'amount': 99.9,
                   'currency': 'BRL',
                   'pricing': {
-                    'originalAmount': 19.99,
+                    'originalAmount': 99.9,
                     'discountAmount': 0,
-                    'finalAmount': 19.99,
+                    'finalAmount': 99.9,
                     'currency': 'BRL',
+                    'amount': 99.9,
+                    'days': 7,
+                    'tier': 'UP_TO_7',
                   },
                 },
               ),
@@ -191,7 +197,9 @@ void main() {
       expect(body['tripId'], 'trip-1');
       expect(body['installments'], 1);
       expect(intent.intentId, 'intent_1');
-      expect(intent.pricing?.finalAmount, 19.99);
+      expect(intent.pricing?.finalAmount, 99.9);
+      expect(intent.pricing?.amount, 99.9);
+      expect(intent.pricing?.tier, 'UP_TO_7');
     });
 
     test('POST expire and GET status paths', () async {
@@ -277,10 +285,13 @@ Map<String, dynamic> _summaryPayload() => {
         'name': 'Roteiro completo',
       },
       'pricing': {
-        'originalAmount': 19.99,
+        'originalAmount': 99.9,
         'discountAmount': 0,
-        'finalAmount': 19.99,
+        'finalAmount': 99.9,
         'currency': 'BRL',
+        'amount': 99.9,
+        'days': 7,
+        'tier': 'UP_TO_7',
       },
       'supportedPaymentMethods': ['PIX', 'CARD'],
     };

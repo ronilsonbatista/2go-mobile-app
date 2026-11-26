@@ -93,7 +93,7 @@ void main() {
 
     expect(find.text('Roma'), findsOneWidget);
     expect(find.text('Faltam apenas'), findsOneWidget);
-    expect(find.textContaining('R\$ 19,99'), findsWidgets);
+    expect(find.textContaining('R\$ 99,90'), findsWidgets);
     expect(find.text('Sáb 25/07'), findsOneWidget);
     expect(find.text('Adicionar hospedagem'), findsOneWidget);
     expect(find.text('Piazza Venezia'), findsOneWidget);
@@ -184,7 +184,10 @@ void main() {
                     productId: 'prod',
                     code: 'ITINERARY_FULL_ACCESS',
                     name: 'Roteiro Completo 2GO',
-                    price: 19.99,
+                    price: 99.90,
+                    amount: 99.90,
+                    days: 7,
+                    tier: 'UP_TO_7',
                     currency: 'BRL',
                     available: true,
                   ),
@@ -285,6 +288,9 @@ class _LisboaRepo implements PlanningRepository {
           code: 'ITINERARY_FULL_ACCESS',
           name: 'Roteiro Completo 2GO',
           price: 29.90,
+          amount: 29.90,
+          days: 7,
+          tier: 'UP_TO_7',
           currency: 'BRL',
           available: true,
         ),
@@ -431,7 +437,10 @@ class _FullRepo implements PlanningRepository {
           productId: 'prod',
           code: 'ITINERARY_FULL_ACCESS',
           name: 'Roteiro Completo 2GO',
-          price: 19.99,
+          price: 99.90,
+          amount: 99.90,
+          days: 7,
+          tier: 'UP_TO_7',
           currency: 'BRL',
           available: true,
         ),

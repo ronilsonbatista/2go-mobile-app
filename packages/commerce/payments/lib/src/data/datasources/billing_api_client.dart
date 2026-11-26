@@ -46,14 +46,7 @@ class BillingApiClient {
       valid: json['valid'] as bool? ?? false,
       code: json['code'] as String?,
       reason: json['reason'] as String?,
-      pricing: pricingJson == null
-          ? null
-          : CheckoutPricing(
-              originalAmount: (pricingJson['originalAmount'] as num?)?.toDouble() ?? 0,
-              discountAmount: (pricingJson['discountAmount'] as num?)?.toDouble() ?? 0,
-              finalAmount: (pricingJson['finalAmount'] as num?)?.toDouble() ?? 0,
-              currency: pricingJson['currency'] as String? ?? 'BRL',
-            ),
+      pricing: _parsePricing(pricingJson),
       coupon: couponJson == null
           ? null
           : AppliedCoupon(
@@ -107,14 +100,24 @@ class BillingApiClient {
       clientSecret: json['clientSecret'] as String?,
       expiresAt: json['expiresAt'] as String?,
       message: json['message'] as String?,
-      pricing: pricingJson == null
-          ? null
-          : CheckoutPricing(
-              originalAmount: (pricingJson['originalAmount'] as num?)?.toDouble() ?? 0,
-              discountAmount: (pricingJson['discountAmount'] as num?)?.toDouble() ?? 0,
-              finalAmount: (pricingJson['finalAmount'] as num?)?.toDouble() ?? 0,
-              currency: pricingJson['currency'] as String? ?? 'BRL',
-            ),
+      pricing: _parsePricing(pricingJson),
+    );
+  }
+
+  /// Parses Core pricing; charged amount is always `finalAmount` from API.
+  static CheckoutPricing? _parsePricing(Map<String, dynamic>? pricingJson) {
+    if (pricingJson == null) return null;
+    final original = (pricingJson['originalAmount'] as num?)?.toDouble() ??
+        (pricingJson['amount'] as num?)?.toDouble() ??
+        0;
+    return CheckoutPricing(
+      originalAmount: original,
+      discountAmount: (pricingJson['discountAmount'] as num?)?.toDouble() ?? 0,
+      finalAmount: (pricingJson['finalAmount'] as num?)?.toDouble() ?? original,
+      currency: pricingJson['currency'] as String? ?? 'BRL',
+      amount: (pricingJson['amount'] as num?)?.toDouble() ?? original,
+      days: (pricingJson['days'] as num?)?.toInt() ?? 0,
+      tier: pricingJson['tier'] as String? ?? '',
     );
   }
 

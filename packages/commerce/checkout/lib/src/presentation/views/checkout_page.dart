@@ -262,9 +262,10 @@ class _CheckoutViewState extends State<CheckoutView> {
 
   Future<void> _showWalletStubSheet({required bool isApple}) async {
     final ready = context.read<CheckoutCubit>().state;
+    // Charge amount always from Core summary when ready (never invent locally).
     final amount = ready is CheckoutReadyState
         ? ready.summary.pricing.finalAmount
-        : 21.99;
+        : kCheckoutStubOriginalAmount;
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: TwoGoColors.surfacePrimary,
@@ -381,7 +382,7 @@ class _CheckoutViewState extends State<CheckoutView> {
           final ready = checkoutCubit.state;
           final amount = ready is CheckoutReadyState
               ? ready.summary.pricing.finalAmount
-              : 21.99;
+              : kCheckoutStubOriginalAmount;
           return PixPaymentView(
             purchaseId: paymentState.purchaseId,
             copyPaste: paymentState.copyPaste,

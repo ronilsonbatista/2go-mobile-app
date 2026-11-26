@@ -292,8 +292,11 @@ class FakePlanningApiClient implements PlanningApiClient {
         productId: 'prod-123',
         code: 'ITINERARY_FULL_ACCESS',
         name: 'Acesso Completo',
-        price: 19.99,
+        price: 99.90,
+        amount: 99.90,
         currency: 'BRL',
+        days: 4,
+        tier: 'UP_TO_7',
         available: true,
       ),
     );

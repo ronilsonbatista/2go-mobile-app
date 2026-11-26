@@ -33,6 +33,9 @@ extension CheckoutSummaryResponseDtoMapper on CheckoutSummaryResponseDto {
         discountAmount: pricing.discountAmount,
         finalAmount: pricing.finalAmount,
         currency: pricing.currency,
+        amount: pricing.amount,
+        days: pricing.days,
+        tier: pricing.tier,
       ),
       coupon: coupon != null
           ? AppliedCoupon(
@@ -65,6 +68,9 @@ extension CheckoutQuoteResponseDtoMapper on CheckoutQuoteResponseDto {
         discountAmount: pricing.discountAmount,
         finalAmount: pricing.finalAmount,
         currency: pricing.currency,
+        amount: pricing.amount,
+        days: pricing.days,
+        tier: pricing.tier,
       ),
       coupon: coupon != null
           ? AppliedCoupon(

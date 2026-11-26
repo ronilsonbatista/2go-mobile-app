@@ -57,7 +57,10 @@ class FakePlanningRepository implements PlanningRepository {
               productId: 'prod-full-access',
               code: 'ITINERARY_FULL_ACCESS',
               name: 'Acesso Completo',
-              price: 19.99,
+              price: 99.90,
+              amount: 99.90,
+              days: 7,
+              tier: 'UP_TO_7',
               currency: 'BRL',
               available: true,
             ),
@@ -171,7 +174,7 @@ void main() {
             isA<PlanningPreviewUnlockRequestedState>()
                 .having((s) => s.journeyId, 'journey id', 'journey-123')
                 .having((s) => s.productId, 'product id', 'prod-full-access')
-                .having((s) => s.price, 'price', 19.99),
+                .having((s) => s.price, 'price', 99.90),
           ),
         );
 

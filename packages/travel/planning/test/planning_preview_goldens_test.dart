@@ -79,7 +79,10 @@ class FakePlanningRepository implements PlanningRepository {
           productId: 'prod-full-access',
           code: 'ITINERARY_FULL_ACCESS',
           name: 'Acesso Completo ao Roteiro 2GO',
-          price: 19.99,
+          price: 99.90,
+          amount: 99.90,
+          days: 7,
+          tier: 'UP_TO_7',
           currency: 'BRL',
           available: true,
         ),
@@ -182,7 +185,7 @@ void main() {
     expect(find.text('Adicionar hospedagem'), findsOneWidget);
     expect(find.text('Coliseu de Roma'), findsOneWidget);
     expect(find.text('Mapa'), findsWidgets);
-    expect(find.textContaining('R\$ 19,99'), findsWidgets);
+    expect(find.textContaining('R\$ 99,90'), findsWidgets);
 
     await tester.pumpWidget(const SizedBox());
   });

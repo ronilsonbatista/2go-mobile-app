@@ -218,8 +218,21 @@ class PlanningUnlockOfferDto {
   final String? productId;
   final String code;
   final String name;
+
+  /// Legacy alias; prefer [amount] (Core duration list price).
   final double price;
+
+  /// Canonical list price from Core duration tiers.
+  final double amount;
+
   final String currency;
+
+  /// Trip length Core used for the tier.
+  final int days;
+
+  /// `UP_TO_7` | `FROM_8_TO_12` | `FROM_13`
+  final String tier;
+
   final bool available;
 
   PlanningUnlockOfferDto({
@@ -227,17 +240,26 @@ class PlanningUnlockOfferDto {
     required this.code,
     required this.name,
     required this.price,
+    required this.amount,
     required this.currency,
+    required this.days,
+    required this.tier,
     required this.available,
   });
 
   factory PlanningUnlockOfferDto.fromJson(Map<String, dynamic> json) {
+    final amount = (json['amount'] as num?)?.toDouble() ??
+        (json['price'] as num?)?.toDouble() ??
+        0;
     return PlanningUnlockOfferDto(
       productId: json['productId'] as String?,
       code: json['code'] as String? ?? 'ITINERARY_FULL_ACCESS',
       name: json['name'] as String? ?? 'Acesso Completo ao Roteiro',
-      price: (json['price'] as num?)?.toDouble() ?? 19.99,
+      price: (json['price'] as num?)?.toDouble() ?? amount,
+      amount: amount,
       currency: json['currency'] as String? ?? 'BRL',
+      days: (json['days'] as num?)?.toInt() ?? 0,
+      tier: json['tier'] as String? ?? '',
       available: json['available'] as bool? ?? false,
     );
   }
@@ -247,7 +269,10 @@ class PlanningUnlockOfferDto {
     'code': code,
     'name': name,
     'price': price,
+    'amount': amount,
     'currency': currency,
+    'days': days,
+    'tier': tier,
     'available': available,
   };
 }

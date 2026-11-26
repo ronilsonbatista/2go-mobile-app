@@ -182,8 +182,21 @@ class PlanningUnlockOffer extends Equatable {
   final String? productId;
   final String code;
   final String name;
+
+  /// Display / list price (from Core `amount`, else local mirror).
   final double price;
+
+  /// Same as [price] when Core sent `amount`.
+  final double amount;
+
   final String currency;
+
+  /// Trip days Core used (`unlockOffer.days`).
+  final int days;
+
+  /// `UP_TO_7` | `FROM_8_TO_12` | `FROM_13`
+  final String tier;
+
   final bool available;
 
   const PlanningUnlockOffer({
@@ -191,7 +204,10 @@ class PlanningUnlockOffer extends Equatable {
     required this.code,
     required this.name,
     required this.price,
+    required this.amount,
     required this.currency,
+    required this.days,
+    required this.tier,
     required this.available,
   });
 
@@ -201,7 +217,10 @@ class PlanningUnlockOffer extends Equatable {
     code,
     name,
     price,
+    amount,
     currency,
+    days,
+    tier,
     available,
   ];
 }
