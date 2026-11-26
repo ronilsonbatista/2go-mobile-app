@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:twogo_core/twogo_core.dart';
 import 'package:twogo_design_system/design_system.dart';
 
 import '../../../domain/models/planning_preview.dart';
@@ -18,8 +19,10 @@ class PlanningUnlockSheet extends StatelessWidget {
   });
 
   String _formatPrice() {
-    final currencySymbol = offer.currency == 'BRL' ? 'R\$' : offer.currency;
-    return '$currencySymbol ${offer.price.toStringAsFixed(2).replaceAll('.', ',')}';
+    if (offer.currency == 'BRL') {
+      return TripDurationPricing.formatBrl(offer.price);
+    }
+    return '${offer.currency} ${offer.price.toStringAsFixed(2).replaceAll('.', ',')}';
   }
 
   @override

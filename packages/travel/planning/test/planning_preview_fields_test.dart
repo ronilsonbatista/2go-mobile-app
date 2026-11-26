@@ -35,7 +35,7 @@ void main() {
 
     expect(find.text('Roma'), findsOneWidget);
     expect(find.text('Faltam apenas'), findsOneWidget);
-    expect(find.textContaining('R\$ 19,99'), findsWidgets);
+    expect(find.textContaining('R\$ 99,90'), findsWidgets);
     expect(find.text('Sáb 25/07'), findsOneWidget);
     expect(find.text('Adicionar hospedagem'), findsOneWidget);
     expect(find.text('Café da manhã'), findsOneWidget);
@@ -469,7 +469,10 @@ class _PreviewRepository implements PlanningRepository {
           productId: 'prod',
           code: 'ITINERARY_FULL_ACCESS',
           name: 'Acesso',
-          price: 19.99,
+          price: 99.90,
+          amount: 99.90,
+          days: 7,
+          tier: 'UP_TO_7',
           currency: 'BRL',
           available: true,
         ),

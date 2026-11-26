@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:twogo_core/twogo_core.dart';
 import 'package:twogo_design_system/design_system.dart';
 import '../../../domain/models/planning_activity_window.dart';
 import '../../../domain/models/planning_budget_option.dart';
@@ -87,6 +88,13 @@ class ReviewStepContent extends StatelessWidget {
     final m = parts.length > 1 ? parts[1] : '00';
     return m == '00' ? '$h:00' : '$h:$m';
   }
+
+  int get _tripDays => TripDurationPricing.daysFromDestinationRanges(
+        destinations.map((d) => (d.arrivalDate, d.departureDate)),
+      );
+
+  String get _estimatedPriceLabel =>
+      TripDurationPricing.formatBrl(TripDurationPricing.amountForDays(_tripDays));
 
   @override
   Widget build(BuildContext context) {
@@ -205,6 +213,32 @@ class ReviewStepContent extends StatelessWidget {
                           ),
                       ],
                     ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: FormCourseTokens.sectionGap),
+          // Estimate until Core preview/checkout; charged amount is API-only.
+          const _SectionLabel('Valor do roteiro'),
+          const SizedBox(height: FormCourseTokens.labelToCardGap),
+          _SummaryCard(
+            onTap: () => onEditSection(1),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '$_tripDays dia${_tripDays == 1 ? '' : 's'} de viagem',
+                    style: TwoGoTypography.bodyMedium.copyWith(
+                      color: FormCourseTokens.label,
+                    ),
+                  ),
+                ),
+                Text(
+                  _estimatedPriceLabel,
+                  style: TwoGoTypography.titleLarge.copyWith(
+                    color: FormCourseTokens.black,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],

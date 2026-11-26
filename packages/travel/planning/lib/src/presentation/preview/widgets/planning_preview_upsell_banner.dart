@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:twogo_core/twogo_core.dart';
 import 'package:twogo_design_system/design_system.dart';
 
 import '../../../domain/models/planning_preview.dart';
@@ -17,8 +18,10 @@ class PlanningPreviewUpsellBanner extends StatelessWidget {
   static const Color _gold = Color(0xFFE0A93A);
 
   String get _price {
-    final symbol = offer.currency == 'BRL' ? 'R\$' : offer.currency;
-    return '$symbol ${offer.price.toStringAsFixed(2).replaceAll('.', ',')}';
+    if (offer.currency == 'BRL') {
+      return TripDurationPricing.formatBrl(offer.price);
+    }
+    return '${offer.currency} ${offer.price.toStringAsFixed(2).replaceAll('.', ',')}';
   }
 
   @override

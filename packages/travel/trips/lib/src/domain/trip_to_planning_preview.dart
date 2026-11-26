@@ -39,7 +39,10 @@ PlanningPreview tripToPlanningPreview(TripEntity trip) {
       code: 'PAID',
       name: 'Roteiro completo',
       price: 0,
+      amount: 0,
       currency: 'BRL',
+      days: 0,
+      tier: '',
       available: false,
     ),
   );

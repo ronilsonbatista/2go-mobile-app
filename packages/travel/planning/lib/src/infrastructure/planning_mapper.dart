@@ -1,4 +1,5 @@
 import 'package:app_roteiros_api/app_roteiros_api.dart';
+import 'package:twogo_core/twogo_core.dart';
 import '../domain/models/claim_journey_result.dart';
 import '../domain/models/guest_journey.dart';
 import '../domain/models/guest_journey_status.dart';
@@ -111,14 +112,43 @@ class PlanningMapper {
             ),
           )
           .toList(),
-      unlockOffer: PlanningUnlockOffer(
-        productId: dto.unlockOffer.productId,
-        code: dto.unlockOffer.code,
-        name: dto.unlockOffer.name,
-        price: dto.unlockOffer.price,
-        currency: dto.unlockOffer.currency,
-        available: dto.unlockOffer.available,
+      unlockOffer: _mapUnlockOffer(
+        dto.unlockOffer,
+        totalDays: dto.summary.totalDays,
       ),
+    );
+  }
+
+  /// Prefer Core `amount`/`days`/`tier`; local mirror only if API omits amount.
+  static PlanningUnlockOffer _mapUnlockOffer(
+    PlanningUnlockOfferDto offer, {
+    required int totalDays,
+  }) {
+    final days = offer.days > 0
+        ? offer.days
+        : (totalDays < 1 ? 1 : totalDays);
+    final apiAmount = offer.amount > 0
+        ? offer.amount
+        : (offer.price > 0 ? offer.price : null);
+    final amount = TripDurationPricing.resolveDisplayAmount(
+      days: days,
+      apiAmount: apiAmount,
+    );
+    final tier = offer.tier.isNotEmpty
+        ? offer.tier
+        : TripDurationPricing.tierForDays(days);
+    return PlanningUnlockOffer(
+      productId: offer.productId,
+      code: offer.code,
+      name: offer.name,
+      price: amount,
+      amount: amount,
+      currency: offer.currency.isNotEmpty
+          ? offer.currency
+          : TripDurationPricing.currency,
+      days: days,
+      tier: tier,
+      available: offer.available,
     );
   }
 
